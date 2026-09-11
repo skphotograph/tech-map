@@ -1,0 +1,8 @@
+{
+  "label": "データ",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "data/index"
+  }
+}

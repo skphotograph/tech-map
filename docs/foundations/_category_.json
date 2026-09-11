@@ -1,0 +1,8 @@
+{
+  "label": "共通基盤",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "foundations/index"
+  }
+}

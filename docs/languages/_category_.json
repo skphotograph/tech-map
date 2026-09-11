@@ -1,0 +1,8 @@
+{
+  "label": "言語",
+  "position": 3,
+  "link": {
+    "type": "doc",
+    "id": "languages/index"
+  }
+}

@@ -1,0 +1,58 @@
+/**
+ * Training site global tokens and typography.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+:root {
+  --train-ink: #0b1320;
+  --train-slate: #152033;
+  --train-mist: #d7e2ee;
+  --train-paper: #f4f7fb;
+  --train-accent: #0f766e;
+  --train-accent-bright: #14b8a6;
+  --train-line: rgba(15, 118, 110, 0.22);
+
+  --ifm-color-primary: #0f766e;
+  --ifm-color-primary-dark: #0d655e;
+  --ifm-color-primary-darker: #0c5f58;
+  --ifm-color-primary-darkest: #0a4e49;
+  --ifm-color-primary-light: #12877e;
+  --ifm-color-primary-lighter: #148d84;
+  --ifm-color-primary-lightest: #1aa094;
+  --ifm-font-family-base: 'IBM Plex Sans', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --ifm-heading-font-family: 'Syne', 'IBM Plex Sans', 'Hiragino Sans', sans-serif;
+  --ifm-code-font-size: 95%;
+  --ifm-navbar-background-color: rgba(244, 247, 251, 0.88);
+  --ifm-footer-background-color: var(--train-ink);
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #2dd4bf;
+  --ifm-color-primary-dark: #14b8a6;
+  --ifm-color-primary-darker: #0d9488;
+  --ifm-color-primary-darkest: #0f766e;
+  --ifm-color-primary-light: #5eead4;
+  --ifm-color-primary-lighter: #99f6e4;
+  --ifm-color-primary-lightest: #ccfbf1;
+  --ifm-navbar-background-color: rgba(11, 19, 32, 0.88);
+  --ifm-footer-background-color: #060a12;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.navbar {
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(15, 118, 110, 0.12);
+  box-shadow: none;
+}
+
+.navbar__title {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

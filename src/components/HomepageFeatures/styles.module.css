@@ -1,0 +1,123 @@
+.paths {
+  padding: 4.5rem 0 5.5rem;
+  background:
+    linear-gradient(180deg, #eef3f8 0%, #f4f7fb 40%, #ffffff 100%);
+  border-top: 1px solid rgba(15, 118, 110, 0.12);
+}
+
+.intro {
+  max-width: 36rem;
+  margin-bottom: 2.5rem;
+}
+
+.heading {
+  margin: 0 0 0.65rem;
+  font-family: var(--ifm-heading-font-family);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0b1320;
+}
+
+.subheading {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #405163;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid rgba(11, 19, 32, 0.12);
+}
+
+.item {
+  margin: 0;
+  border-bottom: 1px solid rgba(11, 19, 32, 0.12);
+}
+
+.item:nth-child(odd) {
+  border-right: 1px solid rgba(11, 19, 32, 0.12);
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.35rem 1.1rem 1.35rem 0;
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.link:hover {
+  text-decoration: none;
+  color: #0f766e;
+  padding-left: 0.4rem;
+}
+
+.title {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0b1320;
+}
+
+.link:hover .title {
+  color: #0f766e;
+}
+
+.description {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #5a6b7d;
+}
+
+[data-theme='dark'] .paths {
+  background: linear-gradient(180deg, #0b1320 0%, #101927 100%);
+  border-top-color: rgba(45, 212, 191, 0.18);
+}
+
+[data-theme='dark'] .heading,
+[data-theme='dark'] .title {
+  color: #f4f7fb;
+}
+
+[data-theme='dark'] .subheading,
+[data-theme='dark'] .description {
+  color: #9fb0c3;
+}
+
+[data-theme='dark'] .list,
+[data-theme='dark'] .item,
+[data-theme='dark'] .item:nth-child(odd) {
+  border-color: rgba(215, 226, 238, 0.14);
+}
+
+[data-theme='dark'] .link:hover .title {
+  color: #2dd4bf;
+}
+
+@media screen and (max-width: 768px) {
+  .paths {
+    padding: 3.25rem 0 4rem;
+  }
+
+  .list {
+    grid-template-columns: 1fr;
+  }
+
+  .item:nth-child(odd) {
+    border-right: none;
+  }
+
+  .link {
+    padding-right: 0;
+  }
+}
