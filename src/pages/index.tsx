@@ -1,7 +1,7 @@
 import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
@@ -9,16 +9,13 @@ import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const visual = useBaseUrl('/img/training.png');
   return (
     <header className={styles.hero}>
-      <div className={styles.heroAtmosphere} aria-hidden="true">
-        <div className={styles.heroGrid} />
-        <div className={styles.heroWash} />
-        <div className={styles.heroOrbit} />
-      </div>
+      <img className={styles.heroVisual} src={visual} alt="" />
+      <div className={styles.heroScrim} aria-hidden="true" />
       <div className={clsx('container', styles.heroInner)}>
-        <p className={styles.brand}>{siteConfig.title}</p>
+        <p className={styles.brand}>Training</p>
         <Heading as="h1" className={styles.headline}>
           技術を、体系的に。
         </Heading>

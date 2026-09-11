@@ -56,3 +56,13 @@ html {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+
+.navbar__logo {
+  margin-right: 0.55rem;
+}
+
+.navbar__logo img {
+  height: 2rem;
+  width: 2rem;
+  border-radius: 0.4rem;
+}

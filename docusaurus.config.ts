@@ -4,10 +4,31 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+const baseUrl = '/training/';
+
 const config: Config = {
   title: 'Training',
   tagline: '技術を、体系的に。',
   favicon: 'img/favicon.ico',
+
+  headTags: [
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: `${baseUrl}img/favicon-32.png`,
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'apple-touch-icon',
+        href: `${baseUrl}img/apple-touch-icon.png`,
+      },
+    },
+  ],
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -18,7 +39,7 @@ const config: Config = {
   url: 'https://skphotograph.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/training/',
+  baseUrl,
 
   // GitHub pages deployment config.
   organizationName: 'skphotograph',
@@ -39,17 +60,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/skphotograph/training/tree/main/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          editUrl: 'https://github.com/skphotograph/training/tree/main/',
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -58,15 +69,16 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/social-card.jpg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
     navbar: {
       title: 'Training',
       logo: {
-        alt: 'Training Logo',
-        src: 'img/logo.svg',
+        alt: 'Training',
+        src: 'img/logo.png',
+        srcDark: 'img/logo.png',
       },
       items: [
         {
@@ -75,7 +87,6 @@ const config: Config = {
           position: 'left',
           label: '教材',
         },
-        {to: '/blog', label: 'ブログ', position: 'left'},
         {
           href: 'https://github.com/skphotograph/training',
           label: 'GitHub',
@@ -98,10 +109,6 @@ const config: Config = {
         {
           title: 'その他',
           items: [
-            {
-              label: 'ブログ',
-              to: '/blog',
-            },
             {
               label: 'GitHub',
               href: 'https://github.com/skphotograph/training',
