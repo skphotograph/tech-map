@@ -1,0 +1,131 @@
+---
+sidebar_position: 7
+---
+
+# static と final
+
+このページでは、`static` と `final` が何を固定・共有するのかを整理します。  
+定数の置き方と、「インスタンスなしで呼べるメソッド」の意味が焦点です。
+
+## なぜこの二つが紛らわしいか
+
+`static final` と並んでいるのを見て、「全部まとめて定数」と思ってしまうことがあります。  
+実際は役割が違います。  
+**static は所属の話、final は再代入の話** です。
+
+## static フィールド：クラスに一つ
+
+インスタンスフィールドは、オブジェクトごとに別の値を持てます。  
+`static` フィールドはクラスに紐づき、**共有** されます。
+
+```java
+class TaskBoard {
+    static int openCount = 0; // ボード全体で共有
+    String title;             // 各ボードごと
+}
+```
+
+```java
+TaskBoard a = new TaskBoard();
+TaskBoard b = new TaskBoard();
+TaskBoard.openCount++;
+System.out.println(b.openCount); // 同じ場所を見ている
+```
+
+カウンタやキャッシュ、設定の置き場として便利な一方、テストやマルチスレッドでは副作用の温床にもなります。  
+「本当に全体で一つでよいか」を疑う癖が大事です。
+
+## static メソッド：インスタンスなしで呼ぶ
+
+`static` メソッドは、インスタンスを用意せずにクラス名で呼びます。  
+ユーティリティやファクトリの入口によく使います。
+
+```java
+class OrderIds {
+    static String prefix(String raw) {
+        return "ORD-" + raw;
+    }
+}
+
+// 呼び出し
+String id = OrderIds.prefix("1001");
+```
+
+制約として、**同じクラスのインスタンスフィールドやインスタンスメソッドには、レシーバなしでは触れません**。  
+`this` が無い世界だからです。
+
+```java
+class User {
+    String name;
+
+    static void printName() {
+        // System.out.println(name); // コンパイルエラー
+    }
+}
+```
+
+:::tip[覚えておくこと]
+
+static は「インスタンスに属さない」。  
+共有状態を持つなら、寿命とテスト容易性を意識する。
+
+:::
+
+## final：再代入できない
+
+`final` は、変数への **再代入を禁止** します。
+
+```java
+final int maxRetry = 3;
+// maxRetry = 5; // コンパイルエラー
+
+final User user = new User("a");
+user.setName("b"); // 中身の変更は可能（参照の付け替えだけ不可）
+// user = new User("c"); // コンパイルエラー
+```
+
+参照型の `final` は「中身が不変」を意味しません。  
+不変にしたいなら、フィールドを `final` にし、セッターを置かない、コレクションを変更不可にする、などが別途必要です。
+
+## 定数の定番パターン
+
+名前付きの定数は、よく次の形にします。
+
+```java
+public final class OrderStatus {
+    public static final String OPEN = "OPEN";
+    public static final String CLOSED = "CLOSED";
+
+    private OrderStatus() {
+        // インスタンス化させない
+    }
+}
+```
+
+- `static` … クラスから直接使う
+- `final` … 参照を付け替えない
+- 大文字スネークケース … 定数だと分かる命名慣習
+
+数値リテラルや文字列リテラルがコード中に散らかるより、名前が付いている方が意図が残ります。
+
+<details>
+<summary>enum との使い分け（入口）</summary>
+
+取りうる値が閉じた集合なら、`String` 定数より `enum` の方が型安全です。  
+ここでは「定数の形」として `static final` を先に覚え、列挙型は設計の入口で深掘りします。
+
+</details>
+
+## よくあるつまずき
+
+- `final` なリストの要素を `add` して「不変じゃなかった」と驚く（参照が final なだけ）
+- static フィールドにリクエスト固有の情報を入れて、別ユーザーの値と混ざる
+- インスタンスメソッドにすべき処理を static にし、あとから状態を持てなくなる
+
+## まとめ / 次に学ぶとよいこと
+
+- static は共有とインスタンス不要の呼び出し
+- final は再代入禁止（オブジェクト不変とは限らない）
+- 定数は `static final` ＋ 分かりやすい名前
+
+次は [継承とインタフェース](./inheritance-interface) で、型の関係とオーバーライドを見ます。

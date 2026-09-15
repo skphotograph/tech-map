@@ -1,0 +1,121 @@
+---
+sidebar_position: 10
+---
+
+# コレクションとジェネリクス
+
+このページでは、`List` / `Set` / `Map` の使い分けと、ジェネリクスの入口、空と null の違いを整理します。  
+業務データはほとんど「1 件」ではなく「まとまり」で扱います。
+
+## なぜコレクションが中心になるか
+
+`task-board` の未完了タスク、注文に紐づく明細、ユーザー ID から表示名への対応。  
+配列だけでも表現はできますが、追加・検索・一意制約など、用途に合う型を選ぶ方が安全です。  
+標準ライブラリのコレクションは、その選択を型で示してくれます。
+
+## List / Set / Map
+
+| インタフェース | 向き | 典型ユース |
+| -------------- | ---- | ---------- |
+| **List** | 順序あり、重複可 | タイムライン、明細行 |
+| **Set** | 重複なし（相等は equals） | タグ、許可 ID の集合 |
+| **Map** | キー → 値 | ID からエンティティ、設定テーブル |
+
+```java
+List<String> steps = new ArrayList<>();
+steps.add("open");
+steps.add("review");
+
+Set<String> tags = new HashSet<>();
+tags.add("urgent");
+tags.add("urgent"); // 実質ひとつ
+
+Map<String, Integer> stock = new HashMap<>();
+stock.put("item-1", 3);
+```
+
+実装クラス（`ArrayList`, `HashSet`, `HashMap` など）は性能特性が違います。  
+まずはインタフェース型で変数を持ち、必要になったら実装を選ぶ、が無難です。
+
+```java
+List<String> steps = new ArrayList<>(); // 左はインタフェース
+```
+
+## ジェネリクスの基本
+
+`<String>` のように型引数を付けると、**入れられる型がコンパイル時に縛られます**。
+
+```java
+List<String> names = new ArrayList<>();
+names.add("user-a");
+// names.add(42); // コンパイルエラー
+String first = names.get(0); // キャスト不要
+```
+
+昔の生の `List` は中身が `Object` 扱いで、取り出し時のキャストミスが実行時まで持ち越されました。  
+ジェネリクスは、その失敗を前倒しにします。
+
+ここでは「箱にラベルを貼る」感覚までで十分です。  
+「なぜ `List<Integer>` を `List<Number>` に渡せないのか」「`? extends` とは何か」は、あとの [ジェネリクスと現代的な型](./generics-and-modern-types) で、思考のステップを追って整理します。
+
+:::tip[覚えておくこと]
+
+コレクション変数は `List<T>` のように型引数付きで持つ。  
+取り出しのキャスト地獄を避けるのが第一の価値。
+
+:::
+
+<details>
+<summary>ダイヤモンド演算子</summary>
+
+```java
+List<String> names = new ArrayList<>(); // 右辺の型引数は推論できる
+```
+
+右辺に同じ型を二度書かなくてよくなります。
+
+</details>
+
+## 変更できるか（ミュータブル）
+
+多くのコレクション実装は、追加・削除で中身を変えられます。  
+一方、`List.of` や `Collections.unmodifiableList` など、変更できないビュー／コピーもあります。
+
+```java
+List<String> fixed = List.of("a", "b");
+// fixed.add("c"); // 実行時に例外
+```
+
+メソッドの戻り値を呼び出し側が勝手に `add` すると、想定外の共有変更になります。  
+「返す瞬間に固定するか」「可変のまま渡すか」は設計の一部です。
+
+## 空と null は別物
+
+| 状態 | 意味 | 呼び出し側の気持ち |
+| ---- | ---- | ------------------ |
+| 空の List | 0 件だが「結果はある」 | `isEmpty()` で分岐しやすい |
+| null | 結果そのものが無い／未設定 | NPE のリスク |
+
+```java
+List<Order> findOrders(String userId) {
+    // ヒットなしなら null より empty を返す設計が多い
+    return List.of();
+}
+```
+
+「無い」を null で表す慣習が残っている API もあります。  
+自分で返す側を設計するときは、**空コレクションを返す** 方が扱いやすい場面が多いです。
+
+## よくあるつまずき
+
+- `Map` のキーに可変オブジェクトを使い、後からフィールドを変えて探せなくなる
+- 拡張 for の最中にリストを `remove` して `ConcurrentModificationException`
+- API が null を返すのに `isEmpty()` だけ呼んで NPE
+
+## まとめ / 次に学ぶとよいこと
+
+- List は列、Set は集合、Map は対応表
+- ジェネリクスで要素型を固定する
+- 空と null を混同しない。返すなら空を優先しやすい
+
+次は [ラムダ・Stream・Optional](./lambda-stream-optional) で、まとまりを流す現代的な書き方を見ます。

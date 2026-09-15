@@ -1,0 +1,105 @@
+---
+sidebar_position: 4
+---
+
+# REST API と DTO
+
+データベースの Entity をそのまま JSON にすると、最初はコードが少なく見えます。  
+しかし、列の追加が API の変更になったり、更新させたくない項目まで入力として受け取ったりするため、HTTP の境界には専用の DTO を置く設計がよく使われます。  
+
+## このページで分かること
+
+- REST リソースと HTTP メソッドの基本的な対応
+- Request / Response DTO と Entity を分ける理由
+- アプリケーションの例外を HTTP エラーへ変換する考え方
+
+## リソースを中心に URL を考える
+
+REST API では、注文や利用者などのリソースを URL で表し、HTTP メソッドで操作を示します。  
+
+- `GET /orders/42`: 注文を取得する
+- `POST /orders`: 注文を作成する
+- `PUT /orders/42`: 注文全体を置き換える
+- `PATCH /orders/42`: 注文の一部を変更する
+- `DELETE /orders/42`: 注文を削除する
+
+実際の更新方式やステータスコードは、API の規約として決めます。  
+URL へ動詞を増やす前に、何をリソースとして公開するかを整理すると一貫性を保ちやすくなります。  
+
+## Request DTO と Response DTO
+
+DTO（Data Transfer Object）は、境界を越えてデータを受け渡すための型です。  
+Java の `record` を使うと、データ項目を簡潔に表せます。  
+
+```java
+public record CreateOrderRequest(
+    long userId,
+    List<OrderItemRequest> items
+) {
+}
+
+public record OrderResponse(
+    long orderId,
+    String status,
+    int totalAmount
+) {
+}
+```
+
+Request DTO はクライアントから受け取ってよい項目を表し、Response DTO は公開する項目を表します。  
+入力と出力を分けると、作成時には不要な ID や、外部へ出さない内部状態を明確にできます。  
+
+## Entity を直接公開しない理由
+
+Entity は、データベースや業務状態を表す内部モデルです。  
+DTO と似た項目を持つことはありますが、変更される理由が異なります。  
+
+- テーブル変更を API 利用者へ直接波及させない
+- パスワードハッシュや内部フラグなどを誤って公開しない
+- 遅延読み込みによる追加 SQL やシリアライズ失敗を境界へ持ち込まない
+- API のバージョンや表示形式を内部モデルと分ける
+
+変換コードは増えますが、公開契約と内部設計を別々に変更しやすくなります。  
+小規模な用途では同じ型を使う判断もあり得るため、公開範囲と変更リスクから決めます。  
+
+:::warning[入力項目を型で制限する]
+
+クライアントが変更してよい項目だけを Request DTO に含めます。  
+受け取った JSON をそのまま Entity へ上書きしないようにします。  
+
+:::
+
+## 例外を HTTP エラーへ変換する
+
+Service は「注文が見つからない」「在庫が不足した」のようなアプリケーションの言葉で失敗を表します。  
+HTTP 境界では、それをステータスコードとエラー本文へ変換します。  
+
+```java
+public record ErrorResponse(
+    String code,
+    String message
+) {
+}
+```
+
+たとえば、対象がない場合は `404 Not Found`、入力規則に違反した場合は `400 Bad Request` へ対応付けます。  
+Jakarta REST の例外マッパーや Spring の例外ハンドラーなど、スタックごとに共通変換を置く仕組みがあります。  
+
+予期しない例外は、内部情報を応答へ含めず `500 Internal Server Error` とし、調査に必要な詳細はログへ残します。  
+
+## よくあるつまずき
+
+- Entity の全フィールドをそのまま JSON で公開する
+- Request と Response を一つの DTO にまとめ、不要な入力まで許可する
+- すべての失敗を `200 OK` と独自フラグだけで表す
+- 例外メッセージやスタックトレースをクライアントへ返す
+- Controller ごとに異なる形式のエラー本文を組み立てる
+
+## まとめ
+
+- REST API はリソースと HTTP メソッドの意味をそろえて設計する
+- Request / Response DTO は、入力可能な項目と公開する項目を明示する
+- Entity と DTO を分けると、永続化モデルと外部契約を別々に変更しやすい
+- 例外から HTTP エラーへの変換は、境界の共通処理として一貫させる
+
+次は [データアクセス](./data-access) で、Repository の内側にある選択肢を比較します。  

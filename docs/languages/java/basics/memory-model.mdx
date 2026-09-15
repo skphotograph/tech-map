@@ -1,0 +1,324 @@
+---
+sidebar_position: 20
+---
+
+# Java メモリモデル
+
+複数スレッドが同じ変数を読むとき、「コードに書いた順」と「相手のスレッドから見える順」は同じとは限りません。  
+このページでは、並行処理で使ったロックや `volatile` が、メモリの見え方として何を保証するかを整理します。
+
+毎日の業務コードで happens-before を組み立てる必要はありません。  
+先に [並行処理](./concurrency) の `ExecutorService` や並行コレクションを正しく使う方が重要です。  
+そのうえで、「なぜ同期なしのフラグは止まらないことがあるのか」を説明できるようにします。
+
+## このページで分かること
+
+- 可視性の問題と、コンパイラ／CPU の最適化との関係
+- happens-before が保証すること（時刻の前後ではない）
+- `volatile` と `synchronized` の役割の違い
+- 安全な公開と、標準の並行 API を境界にする判断
+
+## Java メモリモデルとは
+
+Java メモリモデル（JMM）は、複数スレッドが同じデータを扱うときに、読み書きがどのように見えるかを定めるルールです。
+
+問題は「同時に書き換えると壊れる」だけではありません。
+
+- あるスレッドの書き込みが、別スレッドから見えるとは限らない
+- コンパイラや CPU の最適化で、処理順が入れ替わって見えることがある
+- 一つの代入が原子的でも、可視性が保証されるとは限らない
+
+単一スレッドの中では、ソースの順で結果を考えてほぼ問題ありません。  
+危ないのは、**共有された可変データを、同期なしに読み書きする** ときです。
+
+## 可視性：書いたつもりが見えない
+
+次のコードは、別スレッドから `stop()` を呼べばループが終わりそうに見えます。
+
+```java
+class Worker {
+    private boolean stopped = false;
+
+    void run() {
+        while (!stopped) {
+            // 作業
+        }
+    }
+
+    void stop() {
+        stopped = true;
+    }
+}
+```
+
+`run` と `stop` が別スレッドだと、`stopped = true` が `run` 側から必ず見える保証はありません。
+
+```text
+スレッド A: run()
+  stopped を false として見続けることがある
+
+スレッド B: stop()
+  stopped に true を書く
+```
+
+ソース上は同じフィールドです。  
+同期が無い通常フィールドでは、「共有メモリまで毎回読みに行く」ことが言語ルールとして強制されません。
+
+JIT は、ループ内でそのスレッド自身が `stopped` を変えていないなら、値をレジスタに置いたまま回すような最適化を、単一スレッドの意味が変わらない範囲で行えます。  
+CPU にもコアごとのキャッシュがあります。  
+B が書いた値が、A のキャッシュにすぐ届くとは限りません。
+
+これは「Java の変数は信用できない」という意味ではありません。
+
+- 一つのスレッドの中の計算は、普段どおり考えてよい
+- 共有する可変状態には、可視性を作る仕組みが要る
+- `volatile`、`synchronized`、並行コレクション、`Future#get()` などがその仕組みになる
+
+フラグ用途なら、次のように可視性を付けます。
+
+```java
+class Worker {
+    private volatile boolean stopped = false;
+
+    void run() {
+        while (!stopped) {
+            // 作業
+        }
+    }
+
+    void stop() {
+        stopped = true;
+    }
+}
+```
+
+`volatile` は、書き込みを他スレッドから見えるようにする仕組みです。  
+ただし、複数操作をひとまとめにはしません。
+
+```java
+count++; // 読み取り、加算、書き込み
+```
+
+`volatile int count` にしても、複数スレッドからの `count++` は安全になりません。  
+原子的な加算が必要なら `AtomicInteger` やロックを使います。
+
+:::info[原子性と可視性は別]
+
+「途中の値が混ざらない」ことと、「書いた値が相手に届く」ことは別の保証です。  
+`long` や `double` の非 volatile な代入は、JVM によっては分割して見える議論もありますが、実務では共有する可変状態に同期を付ける、で十分です。
+
+:::
+
+## happens-before は「見える」の契約
+
+happens-before は、JMM における「この操作の結果は、後続の操作から見えるべき」という関係です。  
+名前から実時間の前後だけを想像しがちですが、要点は **可視性と順序の保証** です。
+
+操作 A が操作 B に happens-before しているとき、B は A の結果を見られる前提で進めます。  
+逆に、壁時計では A のあと B でも、関係が無ければ B が A を見られるとは限りません。
+
+`volatile` の代表ルールは次です。
+
+> ある `volatile` 変数への write は、その後の同じ変数への read に happens-before する。
+
+これだけだとピンと来ないので、合図のフラグとして使います。  
+フラグを立てる **前** に準備した値も、相手がフラグを読んだ **あと** に見える、という波及がポイントです。
+
+```java
+class MessageBox {
+    String message;
+    volatile boolean ready;
+}
+```
+
+```java
+// スレッド A
+box.message = "completed";
+box.ready = true; // volatile write
+
+// スレッド B
+if (box.ready) { // volatile read
+    System.out.println(box.message);
+}
+```
+
+`ready` が普通の `boolean` だと、B から見て `ready == true` なのに `message` がまだ古い、という見え方が起こり得ます。  
+`ready` を `volatile` にすると、その write より前の A の書き込みも、対応する read のあとの B から見える契約になります。
+
+代表的な関係です。
+
+| 関係 | 意味 |
+| ---- | ---- |
+| 同一スレッド内の前後 | 同じスレッドでは、前の操作は後の操作に happens-before |
+| `synchronized` | あるモニタの unlock は、その後の同じモニタの lock に happens-before |
+| `volatile` | volatile 変数への write は、その後の同じ変数の read に happens-before |
+| `Thread.start()` | start より前の操作は、開始されたスレッド内の操作に happens-before |
+| `Thread.join()` | 終了したスレッド内の操作は、join から戻ったあとに happens-before |
+
+プログラム順が同一スレッド内で happens-before を持つので、「自分のスレッドがさっき書いた値を、自分が読めない」という心配は通常しません。  
+スレッドをまたぐときだけ、表のどれかの橋が必要です。
+
+## `synchronized` は排他と可視性の両方
+
+`synchronized` は「同時に入れない」だけではありません。  
+同じモニタを介した unlock → lock で、中で行った書き込みが見えるようになります。
+
+```java
+class Counter {
+    private int count;
+
+    synchronized void increment() {
+        count++;
+    }
+
+    synchronized int get() {
+        return count;
+    }
+}
+```
+
+同じインスタンスのモニタなら、`increment` を抜けたあと `get` に入ったスレッドは、更新後の `count` を読めます。
+
+```text
+スレッド A:
+  lock
+  count を更新
+  unlock
+
+スレッド B:
+  lock
+  count を読む
+  unlock
+```
+
+守る状態に対して **同じロック** を使うことが条件です。
+
+```java
+private final Object writeLock = new Object();
+private final Object readLock = new Object();
+
+void increment() {
+    synchronized (writeLock) {
+        count++;
+    }
+}
+
+int get() {
+    synchronized (readLock) {
+        return count;
+    }
+}
+```
+
+これではモニタが違うため、排他も可視性の橋も、意図したようには掛かりません。  
+`synchronized` と書いてあることと、同じ鍵であることは別です。
+
+## 並行 API の境界を使う
+
+低レイヤの関係を自前で組むより、標準ライブラリの同期境界を使う方が安全です。
+
+```java
+Future<String> future = executor.submit(() -> loadValue());
+String value = future.get();
+```
+
+タスクがどのワーカースレッドで動いたかを細かく追わなくても、`get` のあとでは結果が見える契約があります。  
+`Future#get()` が「完了し、結果が見えるまで待つ」境界です。
+
+```java
+BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+
+// スレッド A
+queue.put("packed");
+
+// スレッド B
+String status = queue.take();
+```
+
+入れた値が、取り出した側から使えることも、キューの契約に含まれます。  
+自前の `boolean loaded` でポーリングするより、渡す経路自体を同期境界にした方が漏れにくいです。
+
+`ConcurrentHashMap` や `AtomicInteger` も、個々の API が想定する範囲では可視性や原子性を考慮して設計されています。  
+ただし、マップの `get` と `put` をまたぐ複数キーの整合いは、別途ロックやトランザクションが要ります。
+
+:::tip[先に標準 API]
+
+フラグと `volatile` を組み合わせる前に、キュー、`Future`、並行コレクション、アクター的なメッセージ渡しで表現できないかを見ます。
+
+:::
+
+## 安全な公開
+
+あるスレッドで作ったオブジェクトを、別スレッドのフィールドへ載せることを **公開** と呼びます。
+
+```java
+holder.shared = new MutableLabel("SHIPPED");
+```
+
+参照が見えたなら中身も完成している、とは限りません。  
+初期化の書き込みと、参照の代入のあいだに、同期が無いと壊れ得ます。
+
+```java
+class LabelHolder {
+    MutableLabel shared;
+}
+
+class MutableLabel {
+    private String text;
+
+    MutableLabel(String text) {
+        this.text = text;
+    }
+
+    String text() {
+        return text;
+    }
+}
+```
+
+```java
+// スレッド A
+holder.shared = new MutableLabel("SHIPPED");
+
+// スレッド B
+if (holder.shared != null) {
+    System.out.println(holder.shared.text());
+}
+```
+
+B が `shared != null` を見ても、`text` の初期化が見える保証は、同期が無ければありません。
+
+安全な公開の代表例です。
+
+- `final` フィールドを持つ不変オブジェクトにし、生成後に状態を変えない
+- `volatile` フィールドへ参照を載せる
+- 同じ `synchronized` の内側で書く／読む
+- `BlockingQueue` や `ConcurrentHashMap` 経由で渡す
+- `ExecutorService` と `Future#get()` で結果を受け取る
+
+```java
+record Label(String text) {}
+```
+
+状態を後から変えない形にすると、「見ている最中に中身が変わる」問題が減ります。  
+受け渡しには、上のどれかの経路を使います。
+
+コンストラクタで `this` を他スレッドへ渡す（リスナー登録など）は、初期化途中の公開になりやすく、避けます。
+
+## よくあるつまずき
+
+- 実時間で先に代入したから、他スレッドも見えていると思う
+- `volatile` を付ければ `count++` も安全だと思う
+- 読み取りと書き込みで別オブジェクトを `synchronized` する
+- 不変に見えて、内部のリストだけ後から `add` している
+- 並行コレクションを使えば、複数操作のまとまりも自動で安全だと思う
+
+## まとめ
+
+- JMM は、スレッドをまたいだ読み書きの「見え方」のルールである
+- 同期の無い共有フィールドは、更新が見えないことがある
+- happens-before は時刻ではなく、可視性の橋である
+- `volatile` は可視性、`synchronized` は排他と可視性。どちらも同じ対象に掛ける
+- 実務では標準の並行 API と不変オブジェクトで、橋を自分で組む場面を減らす
+
+次は [アノテーションとリフレクション](./annotations-reflection) で、実行時に型と注釈を読む仕組みへ進みます。

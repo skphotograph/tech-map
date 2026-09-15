@@ -1,0 +1,230 @@
+---
+sidebar_position: 6
+---
+
+# マルチモジュールと運用
+
+プロジェクトが大きくなると、API、ドメイン、データアクセスなどを別の成果物として管理したくなることがあります。  
+ただし、分割した数だけバージョンやビルド順序を手作業で合わせるのでは、構成が複雑になるほどミスが増えます。  
+Maven のマルチモジュール構成では、共通設定とビルド対象を親 POM で整理し、Reactor が依存順にビルドします。  
+
+## このページで分かること
+
+- 親 POM と `modules` を使ったマルチモジュール構成
+- 継承と集約の違い
+- 一部のモジュールだけを関連モジュールと一緒にビルドする方法
+- Maven ビルドで問題が起きたときの調査手順
+- Maven と Gradle を中立的に比較する観点
+
+## マルチモジュール構成
+
+次の例では、`order-domain` と `order-api` を 1 つのルートプロジェクトからビルドします。  
+
+```text
+order-system/
+├── pom.xml
+├── order-domain/
+│   ├── pom.xml
+│   └── src/
+└── order-api/
+    ├── pom.xml
+    └── src/
+```
+
+ルートの POM は `packaging` を `pom` にし、`modules` へ子モジュールのディレクトリを列挙します。  
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>order-system</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>order-domain</module>
+    <module>order-api</module>
+  </modules>
+</project>
+```
+
+子モジュールは `parent` で親 POM の座標を指定できます。  
+
+```xml
+<parent>
+  <groupId>com.example</groupId>
+  <artifactId>order-system</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <relativePath>../pom.xml</relativePath>
+</parent>
+
+<artifactId>order-domain</artifactId>
+```
+
+子 POM は親から `groupId`、`version`、プロパティ、依存関係やプラグインの管理設定などを継承できます。  
+すべての要素が継承されるわけではないため、最終的な設定は `help:effective-pom` で確認します。  
+
+## 継承と集約は別の関係
+
+親子関係には、混同しやすい 2 つの役割があります。  
+
+- 継承: 子 POM の `parent` が親を指し、設定を受け継ぐ
+- 集約: ルート POM の `modules` が、同時にビルドするモジュールを列挙する
+
+同じ POM が両方を担う構成はよくありますが、必須ではありません。  
+外部の親 POMから設定を継承しつつ、別のルート POM でモジュールを集約することもできます。  
+
+:::info[modules の順番だけに頼らない]
+
+Reactor はモジュール間の依存関係を基にビルド順を決めます。  
+先に必要なモジュールは、利用側の `dependencies` で明示します。  
+
+:::
+
+## モジュール間の依存関係
+
+`order-api` が `order-domain` を使う場合、通常の依存関係と同じく座標で宣言します。  
+
+```xml
+<dependency>
+  <groupId>${project.groupId}</groupId>
+  <artifactId>order-domain</artifactId>
+  <version>${project.version}</version>
+</dependency>
+```
+
+ルートでビルドすると、Maven Reactor がモジュール間の関係を読み取り、`order-domain` を先にビルドします。  
+
+```bash
+mvn clean verify
+```
+
+すべて成功すると、末尾付近に Reactor Summary が表示されます。  
+
+```text
+[INFO] Reactor Summary for order-system 1.0.0-SNAPSHOT:
+[INFO]
+[INFO] order-system ....................................... SUCCESS
+[INFO] order-domain ....................................... SUCCESS
+[INFO] order-api .......................................... SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+```
+
+各モジュールの `SUCCESS` または `FAILURE` と、最終行のビルド結果を確認します。  
+途中のモジュールが失敗すると、それに依存する後続モジュールは `SKIPPED` になることがあります。  
+
+## 一部のモジュールを関連モジュールとビルドする
+
+変更したモジュールだけを確認したい場合、`-pl` で対象を指定できます。  
+`-am` を加えると、対象のビルドに必要なモジュールも同時にビルドします。  
+
+```bash
+mvn verify -pl order-api -am
+```
+
+この例では `order-api` と、それが依存する `order-domain` などが Reactor の対象になります。  
+逆に依存している側も含めたい場合は `-amd` を使えますが、影響範囲と実行時間を確認して選びます。  
+
+:::tip[部分ビルドと全体ビルドを使い分ける]
+
+開発中は `-pl` と `-am` で素早く確認し、変更を統合する前にはルートから全モジュールを検証します。  
+
+:::
+
+## ビルド失敗を順番に調べる
+
+長いログの末尾だけを見ると、後続モジュールの `SKIPPED` に目を奪われ、最初の失敗を見落とすことがあります。  
+次の順序で事実を集めると、設定を手当たり次第に変えずに済みます。  
+
+1. Reactor Summary で最初に `FAILURE` となったモジュールを探す
+2. そのモジュールのログをさかのぼり、最初の `ERROR` と `Caused by` を確認する
+3. `mvn --version` で Maven と Java の版を確認する
+4. 同じコミットとコマンドで再現するか確認する
+5. 依存問題なら `dependency:tree`、設定問題なら `help:effective-pom` を確認する
+6. 変更を 1 つずつ行い、同じコマンドで再検証する
+
+詳細なスタックトレースが必要な場合は `-e`、デバッグログまで必要な場合は `-X` を使います。  
+
+```bash
+mvn verify -e
+```
+
+`-X` の出力には環境変数、パス、リポジトリ情報などが含まれる可能性があります。  
+ログを共有する前に、トークン、ユーザー名、URL などの機密情報がないか確認します。  
+
+### 依存関係を取得できない
+
+エラー中の座標、参照先リポジトリ、HTTP ステータス、認証エラーの有無を確認します。  
+`settings.xml` の mirror ID と server ID、ネットワーク接続、対象バージョンが実際に公開されているかを順に調べます。  
+
+一時的な取得失敗がローカルリポジトリへ記録されている場合、更新確認を強制する `-U` で再試行できます。  
+
+```bash
+mvn verify -U
+```
+
+何度実行しても改善しない場合は、回線やリポジトリ障害、認証、座標の誤りを先に確認します。  
+ローカルリポジトリ全体の削除は、全依存関係の再取得を招き、原因を隠すこともあるため最初の手段にはしません。  
+
+### ローカルでは成功し、CI では失敗する
+
+Java と Maven の版、環境変数、有効なプロファイル、`settings.xml`、ファイル名の大文字・小文字、文字コードを比較します。  
+端末にだけ存在する SNAPSHOT や `mvn install` 済み成果物へ依存していないかも確認します。  
+CI は空の環境からビルドできることを確かめる場所なので、共有リポジトリにない成果物を前提にしません。  
+
+### テストが不安定に失敗する
+
+テストの実行順、時刻、乱数、外部サービス、共有ファイル、ポート、並列実行への依存を調べます。  
+再実行で成功しても解決とは限りません。  
+失敗条件を記録し、テストが自分で必要な状態を用意して後片付けするように直します。  
+
+<details>
+<summary>Maven Wrapper を使う理由</summary>
+
+Maven Wrapper は、プロジェクトが指定した Maven バージョンを取得して実行する仕組みです。  
+Wrapper のファイルをプロジェクトで共有すると、開発端末と CI の Maven バージョンをそろえやすくなります。  
+ただし、Java のバージョンや `settings.xml` まで自動的に一致するわけではないため、それらは別に管理します。  
+</details>
+
+## Maven と Gradle をどう比較するか
+
+Maven と Gradle は、どちらも依存管理、コンパイル、テスト、成果物作成を自動化できるビルドツールです。  
+優劣を一律に決めるのではなく、既存資産、チームの経験、必要なカスタマイズ、ビルド時間、運用方法から選びます。  
+
+Maven には次の傾向があります。  
+
+- XML の POM と標準ライフサイクルにより、構成の見通しをそろえやすい
+- 規約に合うプロジェクトは、少ない独自処理でビルドできる
+- 複雑な条件分岐や独自処理は、POM が長くなったりプラグイン開発が必要になったりする
+
+Gradle には次の傾向があります。  
+
+- Groovy または Kotlin の DSL で、ビルド処理を柔軟に記述できる
+- 増分ビルドやビルドキャッシュなど、性能を高める仕組みを活用できる
+- 自由度が高い分、独自処理を増やしすぎると構成の理解や保守に知識が必要になる
+
+既存プロジェクトでは、別のツールへ置き換える費用も無視できません。  
+「設定ファイルが短くなるか」だけでなく、移行、CI、プラグイン、成果物、開発者教育まで含めて判断します。  
+
+## よくあるつまずき
+
+- 継承と集約を同じ仕組みだと考える
+- モジュール間の依存関係を宣言せず、`modules` の記述順だけでビルド順を制御する
+- 後続モジュールの `SKIPPED` を原因だと考え、最初の `FAILURE` を見ない
+- ローカルリポジトリ全体をすぐ削除し、取得元や認証の問題を調べない
+- Maven と Gradle を機能の多さだけで比較し、既存運用や保守性を考慮しない
+
+## まとめ
+
+- 親 POM の継承は設定を共有し、`modules` による集約は Reactor のビルド対象をまとめる
+- モジュール間の依存関係を宣言すると、Reactor が適切な順序でビルドする
+- トラブル時は最初に失敗したモジュールとエラーを起点に、環境、依存関係、実効設定を調べる
+- Maven と Gradle は、プロジェクトの要件と運用を基準に中立的に選ぶ
+
+[Java 言語](../basics/) で学んだ標準 API や JVM の知識と組み合わせると、コンパイルやテストのログをより具体的に読めます。  
+次は [Java 設計の入口](../design/) で、ビルドできるコードを変更しやすい構造へ整理する考え方を学びましょう。  

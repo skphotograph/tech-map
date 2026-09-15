@@ -1,0 +1,181 @@
+---
+sidebar_position: 8
+---
+
+# DDD の入口
+
+仕様書では「注文を確定する」と書かれているのに、コードでは `updateFlag(2)` と表現されていると、業務上の意味を読み解くために変換が必要です。  
+ドメイン駆動設計（Domain-Driven Design、DDD）は、複雑な業務領域を理解し、その理解をモデルとコードへ反映し続ける考え方です。  
+
+## このページで分かること
+
+- ユビキタス言語で会話とコードをそろえる意味
+- Entity と Value Object の違い
+- Aggregate が守る整合性の境界
+- DDD を導入するときの小さな始め方
+
+## ドメインとモデル
+
+ドメインは、ソフトウェアが扱う業務や問題領域です。  
+注文サービスなら、注文、明細、支払い、配送などの概念と規則が含まれます。  
+
+モデルは、ドメインを目的に合わせて抽象化した表現です。  
+現実をすべて再現するのではなく、ソフトウェアが判断するために必要な概念と関係を選びます。  
+
+DDD は Entity や Repository といった部品を使うことだけではありません。  
+業務に詳しい人と開発者が理解を更新し、その結果を言葉とモデルへ反映する活動が中心です。  
+
+## ユビキタス言語
+
+ユビキタス言語（Ubiquitous Language）は、対象範囲で共有し、会話、仕様、テスト、コードで一貫して使う言葉です。  
+
+たとえば「注文を完了する」と「注文を確定する」が同じ意味なのか、異なる状態遷移なのかを明確にします。  
+異なる意味なら別の用語にし、同じ意味ならコードも `confirm()` など一つの表現へそろえます。  
+
+```java
+order.confirm();
+```
+
+`setStatus(2)` より、業務上の操作と意図が伝わります。  
+用語集を一度作って終わりにせず、会話で曖昧さが見つかるたびにモデルと一緒に更新します。  
+
+:::tip[言葉のずれは設計の手掛かり]
+
+同じ言葉を人によって違う意味で使っていたら、境界やモデルを見直す機会です。  
+
+:::
+
+## Entity
+
+Entity は、属性が変化しても同一性によって追跡されるオブジェクトです。  
+注文金額や状態が変わっても、同じ注文 ID を持つ注文は同じ注文として扱います。  
+
+```java
+final class Order {
+    private final OrderId id;
+    private OrderStatus status;
+
+    Order(OrderId id) {
+        this.id = Objects.requireNonNull(id);
+        this.status = OrderStatus.DRAFT;
+    }
+
+    void confirm() {
+        if (status != OrderStatus.DRAFT) {
+            throw new IllegalStateException("下書きだけ確定できます");
+        }
+        status = OrderStatus.CONFIRMED;
+    }
+}
+
+record OrderId(UUID value) {
+    OrderId {
+        Objects.requireNonNull(value);
+    }
+}
+```
+
+Entity の比較や識別には、変更される属性ではなく安定した識別子を使います。  
+識別子の採番方法は、生成時期や分散環境の要件に合わせて決めます。  
+
+## Value Object
+
+Value Object（値オブジェクト）は、識別子ではなく値そのものによって等価性が決まります。  
+金額、期間、メールアドレス、座標などが候補です。  
+
+```java
+record Money(BigDecimal amount, Currency currency) {
+    Money {
+        Objects.requireNonNull(amount);
+        Objects.requireNonNull(currency);
+        if (amount.signum() < 0) {
+            throw new IllegalArgumentException("金額は 0 以上です");
+        }
+    }
+
+    Money add(Money other) {
+        if (!currency.equals(other.currency)) {
+            throw new IllegalArgumentException("通貨が異なります");
+        }
+        return new Money(amount.add(other.amount), currency);
+    }
+}
+```
+
+Value Object は不変にし、操作の結果として新しい値を返すと扱いやすくなります。  
+文字列や数値だけでは表せなかった検証、単位、利用可能な操作を型へ閉じ込められます。  
+
+すべてのプリミティブ値を専用型にする必要はありません。  
+規則がある値、取り違えが危険な値、同じ処理が各所へ散らばる値から導入します。  
+
+## Aggregate
+
+Aggregate（集約）は、一貫した規則を守るために、複数の Entity や Value Object をひとまとまりとして扱う境界です。  
+外部からの操作は Aggregate Root（集約ルート）を通します。  
+
+注文と注文明細をひとつの集約とするなら、呼び出し側が明細リストを直接変更せず、注文の操作を使います。  
+
+```java
+final class Order {
+    private final List<OrderLine> lines = new ArrayList<>();
+
+    void addLine(ProductId productId, int unitPrice, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("数量は 1 以上です");
+        }
+        lines.add(new OrderLine(productId, unitPrice, quantity));
+    }
+
+    List<OrderLine> lines() {
+        return List.copyOf(lines);
+    }
+}
+```
+
+Aggregate の境界内では、ひとつの操作で整合性を守ります。  
+別の Aggregate は ID で参照し、必要以上に大きなオブジェクトグラフをひとつのトランザクションへ載せないようにします。  
+
+境界を大きくすると強い整合性を守りやすい一方、同時更新の競合や読み込み量が増えます。  
+小さくすると独立して処理しやすい一方、境界をまたぐ整合性は結果整合性や別の調整が必要になる場合があります。  
+
+<details>
+<summary>Repository と Domain Service</summary>
+
+Repository は Aggregate の保存と復元を、コレクションのような契約で表します。  
+永続化の詳細はアダプターへ置きます。  
+
+Domain Service は、重要な業務規則でありながら、ひとつの Entity や Value Object へ自然に置けない操作を表します。  
+Entity が何も判断しない状態に戻さないよう、安易にすべてを Service へ集めないことが大切です。  
+</details>
+
+## DDD を小さく始める
+
+DDD は複雑な業務規則がある領域で効果を発揮します。  
+単純な参照・更新だけの機能へ、すべての戦術パターンを導入すると費用が上回ることがあります。  
+
+次の順で小さく始められます。  
+
+1. 会話とコードで意味がずれている用語を見つける
+2. 状態遷移や計算規則を、関係するオブジェクトへ移す
+3. 規則のある値を Value Object にする
+4. 同時に守るべき不変条件から Aggregate の境界を探る
+
+このページは DDD 全体の入口です。  
+境界づけられたコンテキスト、ドメインイベント、コンテキストマップなどは、複数のモデルやチーム境界を扱う段階で学ぶテーマです。  
+
+## よくあるつまずき
+
+- テーブル一行をそのまま Entity と考え、業務上の同一性や振る舞いを検討しない
+- Entity のフィールドへ setter を公開し、不変条件を外側へ任せる
+- Aggregate を画面表示に必要な範囲で決め、巨大な境界にする
+- すべての処理を Domain Service へ置き、Entity をデータ入れ物に戻す
+- DDD の用語やフォルダー構成だけを導入し、業務の言葉を更新しない
+
+## まとめ
+
+- ユビキタス言語は、業務の会話とコードの表現を一致させる
+- Entity は同一性、Value Object は値で区別する
+- Aggregate は不変条件を守る整合性と変更の境界
+- DDD は業務理解を深める活動であり、必要な領域から段階的に使う
+
+次は [分散システムの設計スタイル](./distributed-styles) で、モデルやサービスを分けた先の選択肢を見渡します。  

@@ -1,0 +1,145 @@
+---
+sidebar_position: 18
+---
+
+# JDBC の基礎
+
+SQL が正しくても、接続を閉じ忘れたり、途中で失敗した更新だけが残ったりすると、アプリケーション全体の問題になります。  
+JDBC では、SQL の実行だけでなく接続、パラメーター、トランザクションの境界を一緒に扱います。  
+
+## このページで分かること
+
+- JDBC Driver、`Connection`、`PreparedStatement` の役割
+- パラメーター化した SQL が必要な理由
+- `commit` と `rollback` によるトランザクションの基本
+
+## JDBC の登場人物
+
+JDBC は、Java からリレーショナルデータベースを操作する標準 API です。  
+
+- JDBC Driver: JDBC の呼び出しを各データベース固有の通信へ変換する
+- `Connection`: データベースとの接続とトランザクション境界を表す
+- `PreparedStatement`: パラメーター化した SQL を実行する
+- `ResultSet`: 検索結果を順に読み取る
+
+Driver は通常、利用するデータベースに対応した依存関係として追加します。  
+接続 URL や Driver の設定方法は製品ごとに異なるため、公式ドキュメントを確認します。  
+
+## PreparedStatement で検索する
+
+次は、指定した ID の注文を検索する例です。  
+
+```java
+String sql = """
+    SELECT order_id, user_name, amount
+      FROM orders
+     WHERE order_id = ?
+    """;
+
+try (Connection connection = dataSource.getConnection();
+     PreparedStatement statement = connection.prepareStatement(sql)) {
+
+    statement.setLong(1, orderId);
+
+    try (ResultSet result = statement.executeQuery()) {
+        if (result.next()) {
+            long id = result.getLong("order_id");
+            String userName = result.getString("user_name");
+            int amount = result.getInt("amount");
+        }
+    }
+}
+```
+
+`?` の位置に `setLong` などで値を設定します。  
+列名を明示すると、SQL と Java 側の対応を追いやすくなります。  
+
+:::warning[SQL を文字列連結で組み立てない]
+
+外部入力を SQL 文字列へ連結すると、SQL インジェクションにつながります。  
+値は `PreparedStatement` のプレースホルダーへ設定します。  
+
+:::
+
+値ではなく、テーブル名や並び順などの SQL 構造はプレースホルダーにできません。  
+動的に切り替える必要がある場合は、許可した候補から選ぶ設計にします。  
+
+## 更新件数を確認する
+
+```java
+String sql = "UPDATE orders SET amount = ? WHERE order_id = ?";
+
+try (Connection connection = dataSource.getConnection();
+     PreparedStatement statement = connection.prepareStatement(sql)) {
+
+    statement.setInt(1, newAmount);
+    statement.setLong(2, orderId);
+
+    int updated = statement.executeUpdate();
+    if (updated != 1) {
+        throw new IllegalStateException("unexpected update count: " + updated);
+    }
+}
+```
+
+`executeUpdate` は更新した行数を返します。  
+1 件のはずが 0 件や複数件なら、条件やデータの前提が崩れていないか確認できます。  
+
+## commit と rollback
+
+複数の更新をまとめて成功または失敗させるには、トランザクションを使います。  
+
+```java
+try (Connection connection = dataSource.getConnection()) {
+    connection.setAutoCommit(false);
+
+    try {
+        updateOrder(connection, orderId);
+        insertHistory(connection, orderId);
+        connection.commit();
+    } catch (SQLException e) {
+        connection.rollback();
+        throw e;
+    }
+}
+```
+
+`setAutoCommit(false)` で自動コミットを止め、すべて成功したら `commit` します。  
+途中で失敗したら `rollback` し、中途半端な更新を残さないようにします。  
+
+実際のアプリケーションでは、フレームワークやトランザクション管理機能が境界を管理する場合があります。  
+その場合でも、どの処理が同じトランザクションに含まれるかを理解する必要があります。  
+
+<details>
+<summary>例外と rollback の扱い</summary>
+
+`rollback` 自体も失敗する可能性があります。  
+本来の例外を失わないよう、利用するライブラリやプロジェクトの例外処理方針に従います。  
+接続プールへ返す前に接続状態を復元する処理は、通常は DataSource や管理基盤へ任せます。  
+</details>
+
+## ORM や SQL マッパーとの関係
+
+JPA のような ORM は、Java オブジェクトとテーブルの対応付けを抽象化します。  
+MyBatis のような SQL マッパーは、SQL を明示しながら結果との対応付けを支援します。  
+どちらも選択肢であり、データモデル、SQL の制御範囲、チームの運用などで適性が変わります。  
+
+これらの仕組みも下層では JDBC やデータベース接続を利用します。  
+JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザクション境界の調査に役立ちます。  
+
+## よくあるつまずき
+
+- 外部入力を SQL 文字列へ連結する
+- `Connection`、`PreparedStatement`、`ResultSet` を閉じない
+- 更新件数を確認せず、対象がなかったことを見逃す
+- トランザクションの範囲を広げすぎ、接続やロックを長く保持する
+- ORM を使えば SQL やトランザクションを理解しなくてよいと考える
+
+## まとめ
+
+- JDBC では接続、SQL、結果、トランザクションを明示的に扱う
+- 値は `PreparedStatement` に設定し、SQL インジェクションを防ぐ
+- 複数更新は `commit` と `rollback` で一貫性を守る
+- JPA や MyBatis などの上位層を使う場合も、JDBC の理解は調査に役立つ
+
+次は [並行処理](./concurrency) で、複数のタスクを安全に実行する考え方を学びます。  

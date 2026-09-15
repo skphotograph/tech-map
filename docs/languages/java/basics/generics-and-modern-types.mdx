@@ -1,0 +1,347 @@
+---
+sidebar_position: 13
+---
+
+# ジェネリクスと現代的な型
+
+ジェネリクスは、「難しい記号の書き方」に見えやすいテーマです。  
+ここで押さえたいのは記号そのものより、次の思考の順番です。
+
+1. 中身の型を固定すると、取り違えにいつ気づけるか
+2. なぜ「整数のリスト」を「数のリスト」として渡せないのか
+3. それでも関連する型をまとめたいとき、どう書くか（PECS）
+4. コンパイルを通したあと、実行時に何が残るか（型消去）
+
+`record` / `enum` / `sealed` は、同じ「型で意図を残す」延長として後半で触れます。  
+ジェネリクスの入口（`List<String>`）は [コレクションとジェネリクス](./collections-generics) にもあります。  
+このページは、そこで引っかかったあとに進む想定です。
+
+## このページで分かること
+
+- 型パラメータが「使う側が決める穴」であること
+- `List<Integer>` を `List<Number>` にできない理由
+- 読み取り用と書き込み用でワイルドカードを使い分ける判断（PECS）
+- 型消去のせいで、実行時にできないこと
+- `record`、`enum`、`sealed` の使いどころ
+
+## ステップ1: まず「何が困るのか」を思い出す
+
+ジェネリクスが無い書き方では、リストに何でも入ります。
+
+```java
+List values = new ArrayList();
+values.add("Java");
+values.add(100);
+
+String first = (String) values.get(0);
+String second = (String) values.get(1); // 実行時に ClassCastException
+```
+
+困る点は二つです。
+
+- 取り出すたびにキャストが要る
+- 間違いに気づくのが実行時になる
+
+型を付けると、同じ失敗がコンパイルで止まります。
+
+```java
+List<String> values = new ArrayList<>();
+values.add("Java");
+// values.add(100); // コンパイルエラー
+String first = values.get(0); // キャスト不要
+```
+
+ここまでの感覚は、「箱にラベルを貼る」で十分です。  
+次のステップは、そのラベルを **自分で穴として開ける** 側に回ることです。
+
+## ステップ2: `T` は「あとで決める型」の名前
+
+次の `Box` は、中身の型をクラス定義の時点では決めていません。
+
+```java
+final class Box<T> {
+    private final T value;
+
+    Box(T value) {
+        this.value = value;
+    }
+
+    T value() {
+        return value;
+    }
+}
+```
+
+`T` はプレースホルダです。  
+使う側が具体型を埋めると、その箱はその型専用になります。
+
+```java
+Box<String> nameBox = new Box<>("Taro");
+String name = nameBox.value();
+
+Box<Integer> ageBox = new Box<>(20);
+Integer age = ageBox.value();
+```
+
+同じ `Box` という形を再利用しつつ、`String` 用と `Integer` 用を取り違えない——それが型パラメータの価値です。
+
+メソッドだけに穴を開けることもできます。
+
+```java
+static <T> Optional<T> first(List<T> values) {
+    if (values.isEmpty()) {
+        return Optional.empty();
+    }
+    return Optional.of(values.get(0));
+}
+```
+
+読み方は次です。
+
+- `<T>` … 「このメソッドの中で使う型の穴を一つ用意する」
+- `List<T>` … その穴と同じ型のリストを受け取る
+- `Optional<T>` … 同じ穴の型で返す
+
+`first(List.of("a", "b"))` なら `T` は `String` に決まり、戻りも `Optional<String>` です。  
+キャストせずに「先頭は文字列」と続けられます。
+
+:::tip[ここまでのチェック]
+
+自分にこう言えるか確認してください。  
+`T` はクラスやメソッドを書く人が決める型ではなく、使う側が埋める型の名前である。
+
+:::
+
+ロー型（`List` のように型引数を書かない形）は、昔のコードとの互換のための名残です。  
+新規コードでは使いません。警告が出たら、まず型引数を付けられないかを見ます。
+
+## ステップ3: 「似ている型」でもリストごと渡せない
+
+ここが最初の大きなつまずきです。
+
+```java
+List<Integer> ints = new ArrayList<>();
+List<Number> numbers = ints; // コンパイルエラー
+```
+
+「`Integer` は `Number` の一種なのに、なぜ？」と感じるのが自然です。  
+答えは、**要素の話と、リスト全体の話は別** だからです。
+
+もし代入できてしまうと、次が起きえます。
+
+```java
+numbers.add(3.14);          // Double を追加できてしまう
+Integer first = ints.get(0); // ints 側から見ると破綻
+```
+
+`ints` は「整数だけ」という約束の箱です。  
+それを `List<Number>` という「数なら何でも足せる箱」として扱うと、約束が壊れます。
+
+だから Java のジェネリクスでは、だいたい次のように覚えます。
+
+> `Integer` は `Number` の一種でも、`List<Integer>` は `List<Number>` の一種ではない。
+
+これを **不変（invariant）** と呼びます。  
+配列はもう少し緩い（`Integer[]` を `Number[]` に渡せる）代わりに、実行時に `ArrayStoreException` が起き得ます。  
+リストは、その失敗をコンパイル時に止める側を選びました。
+
+ここまで理解できると、次の問いが自然に出ます。
+
+> では、`List<Integer>` も `List<Double>` も受け取って合計したいときは、どう書くのか？
+
+その答えがワイルドカードです。
+
+## ステップ4: 読みたいのか、書きたいのかで記号が変わる
+
+やりたいことが「中身を読む」なのか「中身を足す」なのかで、安全な書き方が分かれます。
+
+### 読みたい（合計する・一覧する）
+
+```java
+static double total(List<? extends Number> values) {
+    double sum = 0;
+    for (Number value : values) {
+        sum += value.doubleValue();
+    }
+    return sum;
+}
+```
+
+`? extends Number` は、「`Number` か、その子のどれか」のリスト、という意味です。  
+`List<Integer>` も `List<Double>` も渡せます。
+
+中身は少なくとも `Number` として読めるので、合計できます。  
+一方、リストの本当の要素型が何かをメソッドは知らないので、**足すことは原則できません**。
+
+```java
+List<? extends Number> values = List.of(1, 2, 3);
+Number n = values.get(0); // OK
+// values.add(10);        // コンパイルエラー
+```
+
+「読めるが、何を足してよいか分からない箱」だと考えると腹落ちしやすいです。
+
+### 書きたい（デフォルト値を足す）
+
+```java
+static void addDefaults(List<? super Integer> destination) {
+    destination.add(10);
+    destination.add(20);
+}
+```
+
+`? super Integer` は、「`Integer` を受け取れる箱」です。  
+`List<Integer>` でも、`List<Number>` でも、`List<Object>` でも、`Integer` を足す分には安全です。
+
+読むときは、中身が `Integer` とは限らないので、静的には `Object` として扱うのが安全です。
+
+```java
+List<? super Integer> destination = new ArrayList<Number>();
+destination.add(10); // OK
+Object any = destination.get(0);
+```
+
+### 判断の覚え方（PECS）
+
+迷ったら、先に目的を言葉にします。
+
+| やりたいこと | 書くもの | 覚え方 |
+| ------------ | -------- | ------ |
+| 中身を取り出して使う | `? extends T` | Producer Extends（出す側は extends） |
+| 中身を入れて使う | `? super T` | Consumer Super（入れる側は super） |
+| 同じリストを読み書きする | `List<T>` | ワイルドカードを急がない |
+
+:::tip[PECS の使いどころ]
+
+PECS は暗記カードより、「今の引数は読む役か、書く役か」の自問です。  
+両方やるなら、まず `List<T>` で表せないかを考えます。
+
+:::
+
+戻り値にまで `List<? extends T>` を付けると、受け取った側が追加できず使いにくいことがあります。  
+柔軟さが必要なのは多くの場合 **引数** で、戻りは具体的な `List<T>` や不変リストの方が扱いやすいです。
+
+<details>
+<summary>`T extends` と `? extends` の使い分け</summary>
+
+- `<T extends Number>` … メソッドの中で、その型に名前（`T`）を付けて使いたいとき
+- `List<? extends Number>` … 「Number 系のどれか」でよく、名前を付ける必要がないとき
+
+名前が要るなら型パラメータ、呼び出し側の柔軟性だけが要るならワイルドカード、と分けると迷いにくいです。
+
+</details>
+
+## ステップ5: コンパイルを通したあと、実行時には何が残るか
+
+ジェネリクスは、主に **コンパイル時の検査** です。  
+実行時のバイトコードでは、多くの型引数は消えるか、上限（多くは `Object`）に置き換わります。  
+これを **型消去** と呼びます。
+
+```text
+ソース上: List<String>
+実行時に近い姿: List
+```
+
+「消えるなら意味がないのでは？」と感じるかもしれません。  
+意味は、**間違った型を入れる失敗を、実行より前に止められること** にあります。  
+実行時までラベルを厚く残す代わりに、古い JVM やライブラリとの両立を選んだ、という経緯です。
+
+型消去があるので、次はできません。
+
+```java
+// どれもコンパイルできない／意味をなさない、というイメージ
+new T();
+new List<String>[10];
+if (list instanceof List<String>) { ... }
+```
+
+実行時に分かるのはだいたい「リストであること」までで、「要素が String であること」は普通は残っていません。
+
+だから、実行時に具体型が必要な API は、型情報を別に渡します。
+
+```java
+static <T> T readJson(String body, Class<T> type) {
+    return parser.parse(body, type);
+}
+```
+
+ライブラリが `TypeReference` のような入れ物を使うのも、「消えた型を補う」ためです。
+
+<details>
+<summary>よく見るコンパイルメッセージの読み方</summary>
+
+| メッセージのイメージ | いまのステップで考えること |
+| -------------------- | -------------------------- |
+| List\<Integer\> cannot be converted to List\<Number\> | ステップ3。リスト全体は親子にならない |
+| capture of ? | ステップ4。`?` の中身を名前付き `T` のように扱えない |
+| cannot instantiate the type T | ステップ5。`T` は実行時に具体型として残っていない |
+| unchecked cast | ロー型や無理なキャストで、コンパイル時の保証を外している |
+
+</details>
+
+## 補足: 型でデータの形を表す（record / enum / sealed）
+
+ジェネリクスが「穴を型で塞ぐ」道具だとすれば、次の三つは「データの意味そのものを型にする」道具です。  
+ここも仕様の暗記より、向き不向きの感覚が先です。
+
+### record … 値のまとまり
+
+```java
+record OrderSummary(long orderId, String userName, int totalAmount) {
+    OrderSummary {
+        if (totalAmount < 0) {
+            throw new IllegalArgumentException("totalAmount must be non-negative");
+        }
+    }
+}
+```
+
+コンストラクタ、アクセサ、`equals`、`hashCode`、`toString` が揃います。  
+コンポーネントへの再代入はできませんが、中の `List` まで自動で不変になるわけではありません。
+
+### enum … 取り得る値が閉じている
+
+```java
+enum OrderStatus {
+    RECEIVED,
+    PAID,
+    SHIPPED,
+    CANCELLED
+}
+```
+
+文字列よりタイポが減ります。  
+外部から来た文字列を `valueOf` で直接変換すると、未知値で例外になるので、入力境界では変換方針を決めます。
+
+### sealed … 継承先を限定する
+
+```java
+sealed interface OrderResult permits Accepted, Rejected {}
+
+record Accepted(long orderId) implements OrderResult {}
+
+record Rejected(String reason) implements OrderResult {}
+```
+
+成功／失敗のような閉じた形に向きます。  
+第三者が自由に実装を足す拡張点には向きません。
+
+## よくあるつまずき
+
+- `Integer` が `Number` の子だから、リストも同じだと思う
+- `extends` / `super` を暗記だけで使い、読む役か書く役かを考えていない
+- 型消去を知らず `new T()` で詰まり、「ジェネリクスは嘘だ」と感じる
+- 戻り値までワイルドカードにして、呼び出し側を縛る
+- `record` の中の可変リストまで不変だと思い込む
+
+## まとめ
+
+思考の順番だけ持ち帰っても、十分です。
+
+1. 型を付けると、取り違えにコンパイルで気づける
+2. `T` は使う側が埋める穴
+3. 要素の親子と、リストの親子は別
+4. 読むなら `extends`、書くなら `super`、両方なら `List<T>`
+5. 実行時には型引数が消えることが多い。必要なときは別に渡す
+
+次は [設計としてのコレクション](./collections-as-design) で、コレクションを API 境界にどう公開するかを考えます。

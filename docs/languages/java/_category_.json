@@ -1,0 +1,8 @@
+{
+  "label": "Java",
+  "position": 1,
+  "link": {
+    "type": "doc",
+    "id": "languages/java/index"
+  }
+}

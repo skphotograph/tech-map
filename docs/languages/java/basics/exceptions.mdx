@@ -1,0 +1,299 @@
+---
+sidebar_position: 9
+---
+
+# 例外とリソース解放
+
+このページでは、失敗の伝え方（例外）と、ファイルや接続のような **外部リソースの閉じ方** をセットで整理します。  
+戻り値のマジックナンバーで失敗を表すと見落とされやすく、閉じ忘れは長時間稼働で資源を食い潰します。
+
+## このページで分かること
+
+- 例外が「通常の戻り値とは別経路」である理由
+- checked と unchecked の違いと、自作例外の置き方
+- `try` / `catch` / `finally` と、例外の握りつぶし・ラップ
+- try-with-resources と `AutoCloseable`（GC では閉じられない理由）
+- 複数リソースや、close 時の例外の扱い
+
+## なぜ例外を使うか
+
+注文の保存に失敗したとき、`-1` を返すメソッドだと、呼び出し側が戻り値を見落とすと壊れます。  
+例外は、**成功時の戻り値の経路とは別の経路で失敗を伝える** 手段です。
+
+```java
+int code = save(order);
+if (code < 0) {
+    // 忘れやすい
+}
+```
+
+適切に使うと、成功時のコードが読みやすく残り、失敗時の対処を `catch` や上位のハンドラへまとめられます。  
+「すべての失敗を例外にする」が正解ではなく、**呼び出し側が見落としたときに困る失敗** を例外向き、と捉えると判断しやすいです。
+
+## checked と unchecked
+
+大きく二つに分かれます。
+
+| 種類 | 代表例 | コンパイル時の扱い |
+| ---- | ------ | ------------------ |
+| **checked** | `IOException`、自作で `Exception` を継承したものなど | キャッチするか、`throws` で宣言が必要 |
+| **unchecked** | `RuntimeException` とその子（`NullPointerException`、`IllegalArgumentException` など） | 宣言なしでもコンパイル可 |
+
+```java
+void readConfig() throws IOException {
+    // ファイル I/O など、呼び出し側に対処か委譲を求める
+}
+
+void requirePositive(int n) {
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive");
+    }
+}
+```
+
+階層のイメージです。
+
+```text
+Throwable
+  ├── Error          （OutOfMemoryError など。アプリが通常 catch しない）
+  └── Exception
+        ├── IOException など（checked）
+        └── RuntimeException（unchecked）
+```
+
+`Error` は JVM や環境の深刻な状態を表すことが多く、業務コードで捕まえて続行するものではありません。  
+学習と実務の会話では、まず `Exception` 配下の checked / unchecked を区別します。
+
+現場の感覚としては、次が目安です。
+
+- 呼び出し側に必ず対処してほしい／回復や代替手段があり得る → checked、または明示的なエラー型
+- プログラマの前提破り（不正引数、到達しないはずの状態） → unchecked が多い
+- フレームワークや API の流儀に合わせる（同じ層で checked と unchecked を混ぜすぎない）
+
+:::tip[覚えておくこと]
+
+checked は「対処か宣言が必要」。  
+unchecked はコンパイルが通っても、無視してよい失敗という意味ではない。
+
+:::
+
+どちらか一方が常に正しいわけではありません。  
+checked を避けるためだけに、意味のない unchecked へ変換すると、契約が呼び出し側から消えます。  
+逆に、すべての失敗を checked にすると、シグネチャが長くなり形骸化することもあります。
+
+## throw と throws
+
+- `throw` … 例外オブジェクトを実際に投げる
+- `throws` … 「このメソッドはこういう checked を外に出すかも」と宣言する
+
+```java
+class OrderService {
+    void place(String userId) throws OrderException {
+        if (userId == null || userId.isBlank()) {
+            throw new OrderException("userId is required");
+        }
+        // ...
+    }
+}
+```
+
+自作例外は、用途に応じて `Exception`（checked）か `RuntimeException`（unchecked）を継承します。  
+メッセージには、人が次の行動を決められる情報を入れます。  
+パスワードやトークン、個人情報は載せません。
+
+## try / catch / finally
+
+```java
+try {
+    service.place(userId);
+} catch (OrderException e) {
+    log.warn("order failed: {}", e.getMessage());
+    showMessage("注文を受け付けできませんでした");
+} finally {
+    metrics.increment("order.place.finished");
+}
+```
+
+- `try` … 失敗しうる処理
+- `catch` … 種類ごとに対処（複数並べられる。具体的な型から書く）
+- `finally` … 成功・失敗どちらでも実行したい後始末（`return` しても基本的に通る）
+
+複数の `catch` では、サブクラスを先に書きます。  
+親の `Exception` を先に書くと、以降が到達不能になります。
+
+```java
+try {
+    importOrders(path);
+} catch (FileNotFoundException e) {
+    // ファイルが無いとき専用
+} catch (IOException e) {
+    // その他の I/O
+}
+```
+
+例外を捕まえて何もしない（ログも再 throw もない）と、原因が消えて調査不能になります。  
+握りつぶすなら、意図・ログ・メトリクスを残します。
+
+:::warning[広い catch に注意]
+
+`catch (Exception e)` ですべて飲むと、バグ（想定外の `NullPointerException` など）まで隠します。  
+境界（コントローラの最外周など）でまとめて扱う場合でも、ログにスタックトレースを残し、再スローやエラー応答方針を決めます。
+
+:::
+
+## 例外のラップと cause
+
+下位の checked を、業務例外に包んで再 throw することがあります。  
+そのとき **原因例外を `cause` として渡す** と、スタックトレースで根本まで辿れます。
+
+```java
+try {
+    return files.readString(path);
+} catch (IOException e) {
+    throw new OrderException("failed to read order file: " + path, e);
+}
+```
+
+`getCause()` やログフレームワークの cause 対応で、表面の業務メッセージと下の I/O 原因の両方を残せます。  
+逆に、cause なしでメッセージだけ載せ替えると、「何が起きたか」が調査から消えます。
+
+複数の失敗をまとめる `addSuppressed` は、後述の try-with-resources でも使われます。
+
+## リソースは GC では閉じない
+
+ファイル、ソケット、DB 接続、スレッドプールなど、OS や外部が握る資源は、Java オブジェクトの GC とは別寿命です。  
+参照が切れても、すぐ OS 側のハンドルが返るとは限りません。  
+[ヒープとガベージコレクション](./heap-and-gc) が回収するのは、主にヒープ上のオブジェクトです。
+
+```java
+// 悪い例: 成功時しか閉じない
+InputStream in = Files.newInputStream(path);
+parse(in);
+in.close(); // parse が例外を投げると到達しない
+```
+
+昔は `finally` で `close` していました。
+
+```java
+InputStream in = null;
+try {
+    in = Files.newInputStream(path);
+    parse(in);
+} finally {
+    if (in != null) {
+        in.close(); // close 自体も例外を投げうる
+    }
+}
+```
+
+`close` が例外を投げると、元の例外が上書きされて見えなくなる、という古くからの落とし穴もあります。
+
+## try-with-resources が基本形
+
+いまは **try-with-resources** で自動クローズするのが基本です。  
+`AutoCloseable`（または旧来の `Closeable`）を実装した資源が対象です。
+
+```java
+try (var reader = Files.newBufferedReader(path)) {
+    return reader.readLine();
+}
+```
+
+`try` を抜けるとき（正常終了でも例外でも）、資源は閉じられます。  
+複数あるときは、宣言の逆順で閉じられます。
+
+```java
+try (
+    var input = Files.newInputStream(source);
+    var output = Files.newOutputStream(target)
+) {
+    input.transferTo(output);
+}
+```
+
+本体の処理で例外が飛び、続けて `close` でも例外が飛ぶと、主な例外は本体側が残り、`close` 側は **suppressed**（抑制された例外）としてぶら下がります。  
+ログやデバッガで `getSuppressed()` を見ると、閉じるときの失敗も追えます。
+
+```java
+} catch (IOException e) {
+    for (Throwable suppressed : e.getSuppressed()) {
+        log.warn("suppressed while closing", suppressed);
+    }
+    throw e;
+}
+```
+
+:::tip[覚えておくこと]
+
+開ける資源は、try-with-resources の括弧内で開く。  
+GC 任せにしない。`finally` での手書き `close` より、構文に任せる。
+
+:::
+
+自前クラスを資源にするときは `AutoCloseable` を実装し、`close` を冪等（何度呼んでも安全）に近づけると扱いやすいです。
+
+```java
+final class ReportBuffer implements AutoCloseable {
+    private BufferedWriter writer;
+    // ...
+
+    @Override
+    public void close() throws IOException {
+        if (writer != null) {
+            writer.close();
+            writer = null;
+        }
+    }
+}
+```
+
+NIO.2 のパス操作や大きなファイルの読み方は [ファイルとリソース管理](./files-and-resources) へ進みます。  
+ここでは、「失敗の経路」と「閉じる経路」を同じページで結びます。
+
+<details>
+<summary>finally と return</summary>
+
+`finally` は、`try` / `catch` 内で `return` しても実行されます。  
+ただし `finally` で別の値を `return` したり、例外を投げ直したりすると、元の戻り値や例外が上書きされ、読み手が混乱します。  
+後始末以外の制御を `finally` に置かない方が安全です。  
+資源クローズは try-with-resources に寄せると、この悩み自体が減ります。
+
+</details>
+
+## どこで捕まえるか
+
+すべてを発生箇所で `catch` する必要はありません。
+
+- **すぐ回復できる**（リトライ、デフォルト値、ユーザーへの入力促し）→ 近い層で catch
+- **その層では決められない** → `throws` で上へ伝える、または業務例外へラップ
+- **システム境界**（HTTP の入口、メッセージリスナーの外周）→ ログ、エラー応答、再送方針をまとめる
+
+チェック例外をメソッドの奥深くからずっと `throws` で運び続けると、シグネチャが汚染されます。  
+境界で意図の伝わる例外型へ変換するか、層の規約に沿って unchecked へ寄せるかを、プロジェクトで揃えます。
+
+## 実務での目安
+
+- 成功経路をまっすぐ書き、失敗は例外または明示的な結果型で表す
+- checked / unchecked の選択理由を、層の規約として揃える
+- 捕まえるならログや cause を残す。空の `catch` は置かない
+- ファイル・接続・ストリームは try-with-resources
+- メッセージに秘密情報を載せない
+- 「握りつぶし」と「意図的に無視」を、コメントやメトリクスで区別する
+
+## よくあるつまずき
+
+- 広い `catch (Exception e)` ですべて飲み、想定外のバグまで隠す
+- checked を避けるためだけに、意味のない unchecked へ変換する
+- `finally` と try-with-resources を重ね、二重に `close` する
+- 例外時にストリームや接続が閉じられず、徐々に資源が枯渇する
+- cause を付けずにラップし、根本原因がログから消える
+- GC があれば接続もいつか閉じると信じる
+
+## まとめ / 次に学ぶとよいこと
+
+- 例外は失敗を別経路で伝える。checked は対処か宣言が必要
+- ラップするときは cause を残す
+- 外部リソースは GC ではなく try-with-resources で閉じる
+- 閉じるときの例外は suppressed として残ることがある
+
+次は [コレクションとジェネリクス](./collections-generics) で、複数件のデータの置き方を見ます。

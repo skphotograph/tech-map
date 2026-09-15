@@ -1,0 +1,358 @@
+---
+sidebar_position: 19
+---
+
+# 並行処理
+
+処理を速くしようとスレッドを増やしたら、まれに件数が合わない、停止時にプロセスが終わらない、といった問題が起こることがあります。  
+並行処理では、**タスクを誰が実行するか** と **共有状態をどう守るか** を分けて考えます。  
+スレッド間の「見え方」のルール自体は、次の [Java メモリモデル](./memory-model) で扱います。  
+このページは、現場で先に必要な実務側です。
+
+## このページで分かること
+
+- `Thread` を直接増やすより、`ExecutorService` にタスクを渡す理由
+- プールの種類、終了、割り込みの扱い
+- レースコンディションと、同期・原子クラス・並行コレクションの使い分け
+- `CompletableFuture` で非同期を組み立てるときの注意
+- デッドロックを避けるロックの取り方
+
+## 並行処理が必要になる場面
+
+Java の業務アプリでは、次のようなところで複数の実行が同時に進みます。
+
+- Web サーバがリクエストごとにワーカースレッドを割り当てる
+- バッチで独立した集計を並列化する
+- 外部 API の待ち時間のあいだに別処理を進める
+- タイマーやメッセージ受信が本筋と並行に動く
+
+速さのためだけにスレッドを増やすと、共有状態のバグと、スレッド過多による遅さの両方を呼びます。  
+「並列にしたい仕事は何か」「状態は共有せざるを得ないか」を先に書きます。
+
+:::tip[先に共有を減らす]
+
+いちばん安全な共有状態は、そもそも共有しないことです。  
+不変オブジェクト、メソッド内のローカル変数、キューでメッセージを渡す設計を、ロックより先に検討します。
+
+:::
+
+## Thread は実行単位、アプリはタスクを渡す
+
+スレッドは、プログラム内で処理を進める実行単位です。
+
+```java
+Thread thread = new Thread(() -> System.out.println("background"));
+thread.start();
+```
+
+`start` で別スレッドが動き始めます。  
+ただし業務コードで `new Thread` をリクエストやジョブごとに繰り返すと、次が起きやすいです。
+
+- スレッド作成コストが積み上がる
+- 上限がなく、負荷時にスレッドが爆発する
+- 終了や例外の扱いがバラバラになる
+
+アプリケーションでは、実行したい処理を **タスク** として渡し、スレッドの再利用とキューイングを `ExecutorService` に任せるのが基本です。
+
+```java
+ExecutorService executor = Executors.newFixedThreadPool(4);
+
+try {
+    Future<Integer> future = executor.submit(() -> loadOrderAmount(1001L));
+    int amount = future.get();
+    System.out.println(amount);
+} finally {
+    executor.shutdown();
+}
+```
+
+- `submit` … タスクを渡し、結果を表す `Future` を返す
+- `get` … 完了まで呼び出し元スレッドを待つ。タスク内の例外は `ExecutionException` に包まれる
+- `execute` … 結果が要らない fire-and-forget（失敗の観測が弱くなりやすい）
+
+:::tip[Executor の所有者を決める]
+
+Executor を作成した側は、原則として終了処理にも責任を持ちます。  
+フレームワークやアプリケーション基盤が提供するプールは、利用側が勝手に `shutdown` しないよう契約を確認します。
+
+:::
+
+## プールの選び方
+
+`Executors` のファクトリは便利ですが、用途を間違えると危険です。
+
+| 作り方 | 向き | 注意 |
+| ------ | ---- | ---- |
+| `newFixedThreadPool(n)` | 同時実行数を上限したい CPU／混在負荷 | キューは無制限。投入過多でメモリが膨らむ |
+| `newCachedThreadPool()` | 短時間のバースト | スレッド数が事実上無制限に増えうる |
+| `newSingleThreadExecutor()` | 順序を保ちたい一本化 | その一本が止まると全体が滞る |
+| `newScheduledThreadPool(n)` | 遅延・定期実行 | 長時間タスクでスロットが埋まりやすい |
+
+本番寄りのコードでは、`ThreadPoolExecutor` を明示し、次を決めることが多いです。
+
+- コア数・最大数
+- キューの種類と容量（有界か無界か）
+- 拒否されたときの方針（捨てる、呼び出し元で実行、例外）
+- スレッド名のプレフィックス（ログとスレッドダンプで追跡しやすくする）
+
+```java
+AtomicInteger sequence = new AtomicInteger();
+ThreadFactory factory = runnable -> {
+    Thread thread = new Thread(runnable);
+    thread.setName("order-worker-" + sequence.incrementAndGet());
+    return thread;
+};
+
+ExecutorService executor = new ThreadPoolExecutor(
+    4,
+    8,
+    60L,
+    TimeUnit.SECONDS,
+    new ArrayBlockingQueue<>(200),
+    factory,
+    new ThreadPoolExecutor.CallerRunsPolicy()
+);
+```
+
+:::warning[無制限プールと無制限キュー]
+
+`newCachedThreadPool` と、固定プール＋無制限キューの組み合わせは、障害時にスレッドまたはタスクが増え続けます。  
+上限と拒否方針を、負荷試験の前提と揃えておきます。
+
+:::
+
+## 終了と割り込み
+
+プールを作りっぱなしにすると、JVM が終了できなかったり、テストがハングしたりします。
+
+```java
+executor.shutdown(); // 新規受付を止め、実行中と待ち行列は続ける
+if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+    executor.shutdownNow(); // 割り込みで打ち切りを試みる
+}
+```
+
+- `shutdown` … 優雅な停止の入口
+- `awaitTermination` … 終わりを待つ
+- `shutdownNow` … 待ちタスクを返し、実行中へ割り込みを試みる（必ずすぐ止まる保証ではない）
+
+タスク側は、割り込みを無視しないことが重要です。
+
+```java
+executor.submit(() -> {
+    try {
+        while (!Thread.currentThread().isInterrupted()) {
+            doWorkChunk();
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // 割り込み状態を戻す
+    }
+});
+```
+
+`InterruptedException` を握りつぶすと、停止要求が消えます。  
+再設定（`interrupt()`）するか、メソッドの `throws` で伝播するかを決めます。
+
+`Future#get` にはタイムアウト付きがあります。  
+無限待ちは、相手が死んだときに呼び出し元まで固めます。
+
+```java
+Integer amount = future.get(5, TimeUnit.SECONDS);
+```
+
+## レースコンディション
+
+複数スレッドが同じ変更可能な状態を読み書きし、実行順序によって結果が変わる問題をレースコンディションと呼びます。
+
+```java
+class NaiveCounter {
+    int count;
+
+    void increment() {
+        count++; // 読み取り → 加算 → 書き込み
+    }
+}
+```
+
+`count++` は一文に見えて複数操作です。  
+二つのスレッドが同じ値を読み、どちらも +1 して書くと、更新が一つ消えます。
+
+```text
+スレッド A: count を 10 と読む
+スレッド B: count を 10 と読む
+スレッド A: 11 を書く
+スレッド B: 11 を書く   ← 12 になるはずが 11
+```
+
+守り方の代表です。
+
+```java
+final class OrderCounter {
+    private int count;
+
+    synchronized void increment() {
+        count++;
+    }
+
+    synchronized int current() {
+        return count;
+    }
+}
+```
+
+`synchronized` は、同じモニターを使う区間を一度に 1 スレッドへ制限し、抜けたあとの可視性も橋渡しします（詳細は [Java メモリモデル](./memory-model)）。
+
+単純なカウンタなら原子クラスも選択肢です。
+
+```java
+AtomicInteger count = new AtomicInteger();
+count.incrementAndGet();
+```
+
+`AtomicInteger` は、そのフィールドに対する単一の更新操作を原子的にします。  
+「カウンタを増やし、かつ別のリストへ追加する」のような複数状態のまとまりには、ロックや別設計が要ります。
+
+## 同期の範囲を決める
+
+ロックは狭いほど待ちが減ります。  
+ただし狭すぎて、不変条件をまたげないと意味がありません。
+
+```java
+synchronized (this) {
+    if (!inventory.hasStock(itemId)) {
+        return false;
+    }
+    inventory.reserve(itemId);
+    return true;
+}
+```
+
+確認と予約のあいだに別スレッドが入ると、在庫なしなのに予約が通ることがあります。  
+その二つは同じロック（または同じ原子的な API）の内側に置きます。
+
+ロックを持ったまま、外部 HTTP や長い DB クエリを呼ぶと、他スレッドが長く待たされます。  
+I/O はロックの外へ出し、共有構造の更新だけを短く守る形を目指します。
+
+## 並行コレクション
+
+共有 `Map` に通常の `HashMap` を使うと、データ破損や無限ループに近い症状が出ることがあります。  
+並行アクセスするなら、並行コレクションを使います。
+
+```java
+ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
+counts.merge("PAID", 1L, Long::sum);
+```
+
+`get` のあとに `put` する二段構えは、そのあいだに他スレッドが割り込めます。  
+`compute` / `merge` / `putIfAbsent` など、API が用意する複合操作を使えないか先に見ます。
+
+```java
+// 危ない例: 複合操作が原子的ではない
+Long current = counts.get("PAID");
+counts.put("PAID", current == null ? 1L : current + 1L);
+```
+
+:::info[並行コレクションの限界]
+
+個々の呼び出しがスレッドセーフでも、「複数キーをまとめて一貫して更新する」までは保証しません。  
+複数構造にまたがる不変条件は、別途ロックや単一スレッド化が必要です。
+
+:::
+
+`CopyOnWriteArrayList` は読みが多く書きが稀なときに向きます。  
+書きのたびに配列コピーが走るので、更新が多い経路には向きません。
+
+## CompletableFuture の入口
+
+`CompletableFuture` は、非同期処理の結果を変換・合成できます。
+
+```java
+CompletableFuture<String> summary =
+    CompletableFuture
+        .supplyAsync(() -> loadOrder(1001L), executor)
+        .thenApply(order -> "order=" + order.id())
+        .exceptionally(error -> "order unavailable");
+
+String text = summary.join();
+```
+
+- `supplyAsync` … 値を返す非同期。実行する Executor を明示できる
+- `thenApply` … 前段の結果を同期的に変換
+- `thenCompose` … 結果から別の非同期処理へつなぎ、入れ子の Future を避ける
+- `exceptionally` / `handle` … 失敗時の回復やログ
+- `join` / `get` … 完了待ち（`join` はチェック例外を包まない）
+
+`supplyAsync` に Executor を渡さないと、共通の ForkJoinPool に載ります。  
+誰のプールで動いているかが曖昧になると、負荷の切り分けが難しくなります。
+
+非同期を始めた直後に毎回 `get` / `join` すると、実質直列です。  
+変換をパイプラインでつなぎ、**待つ境界**（HTTP 応答を返す直前、バッチの区切りなど）を決めます。  
+タイムアウト、キャンセル、失敗時に部分成功を許すかも、同じ設計の一部です。
+
+```java
+CompletableFuture<Order> order =
+    CompletableFuture.supplyAsync(() -> loadOrder(id), executor);
+CompletableFuture<User> user =
+    CompletableFuture.supplyAsync(() -> loadUser(userId), executor);
+
+CompletableFuture<String> page =
+    order.thenCombine(user, (o, u) -> o.id() + ":" + u.name());
+```
+
+独立した I/O を並べ、最後に合成する形は、待ち時間の隠蔽に向きます。
+
+## デッドロック
+
+複数スレッドが、互いに相手の持つロックを待ち続ける状態がデッドロックです。
+
+```text
+スレッド A: lock1 取得 → lock2 待ち
+スレッド B: lock2 取得 → lock1 待ち
+```
+
+避け方の基本です。
+
+- 複数ロックが必要なら、**取得順を全体で統一**する
+- ロック保持中に、別ロックを取る長い処理や外部 I/O を置かない
+- 可能ならロックを一つにまとめる、またはメッセージ渡しで共有を減らす
+- `tryLock` とタイムアウトで、永遠に待たない設計も検討する
+
+:::warning[ロック範囲を広げすぎない]
+
+範囲が広いと待ち時間が増え、別ロックとの循環も起こりやすくなります。  
+守る状態と処理を明確にし、必要最小限にします。
+
+:::
+
+再現が難しいときは、スレッドダンプで「何待ちか」を見ます。  
+`jcmd <pid> Thread.print` や、実行環境のスレッド一覧で、同じモニターを奪い合っていないかを確認します。
+
+## 実務での目安
+
+- タスクとスレッド管理を分け、上限のあるプールを使う
+- 共有可変状態を減らし、残った場所だけ同期する
+- `HashMap` を並行更新しない。複合操作は API の原子的メソッドを優先する
+- 非同期はパイプラインでつなぎ、待ち境界とタイムアウトを決める
+- 停止時は `shutdown` → 待機 → 必要なら `shutdownNow`、タスクは割り込みに協力する
+- 「たまにしか壊れない」はレースの典型。ログのスレッド名とダンプを味方にする
+
+## よくあるつまずき
+
+- タスクごとに無制限に `new Thread` する
+- `newCachedThreadPool` を本番の受け皿にする
+- Executor を終了せず、アプリやテストが止まらない
+- `InterruptedException` を空 catch する
+- 通常の `HashMap` を複数スレッドから更新する
+- `ConcurrentHashMap` なら複数操作全体も安全だと思い込む
+- 非同期の直後に毎回 `get` / `join` する
+- 複数ロックの取得順を統一しない
+
+## まとめ
+
+- アプリはタスクを渡し、プールがスレッドを管理する
+- レースは共有可変状態の問題。減らす・原子的にする・ロックする
+- 並行コレクションは単一 API 呼び出しの範囲で効く
+- `CompletableFuture` は合成と失敗処理の道具。実行場所と待ち境界を設計する
+- デッドロックは順序と範囲で防ぐ
+
+次は [Java メモリモデル](./memory-model) で、同期が「見える」ことをどう保証するかを扱います。

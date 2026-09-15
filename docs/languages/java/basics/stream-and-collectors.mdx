@@ -1,0 +1,222 @@
+---
+sidebar_position: 15
+---
+
+# Stream と Collector
+
+[ラムダ・Stream・Optional](./lambda-stream-optional) で、filter / map / 終端までの入口を見ました。  
+このページでは、同じ考え方のまま、一歩だけ先へ進みます。
+
+1. もう少し長いパイプラインを、目的の言葉で読む
+2. Stream が返す Optional を、どう受け取るか
+3. 「最後にどんな形で欲しいか」を Collector で表す
+
+新しい記号を増やすことが目的ではありません。  
+**for で集めていた結果の形を、終端の選び方に置き換える** 感覚を掴むことが目的です。
+
+## このページで分かること
+
+- 複数の filter / map を、上から声に出して追う読み方
+- Stream が向く処理と、通常のループが向く処理
+- `Optional` を戻り値として扱う判断
+- `groupingBy` など、よく使う Collector の選び方
+
+## ステップ1: 長いパイプラインも、やっていることは同じ
+
+次のコードを、記号の前に言葉で読んでみます。
+
+```java
+record Order(long id, String status, int amount) {}
+
+List<Long> largePaidOrderIds = orders.stream()
+    .filter(order -> order.status().equals("PAID"))
+    .filter(order -> order.amount() >= 10_000)
+    .map(Order::id)
+    .toList();
+```
+
+声に出すと、こうなります。
+
+```text
+orders を流す
+  → ステータスが PAID のものだけ残す
+  → 金額が 1 万以上のものだけ残す
+  → ID に変える
+  → リストとして受け取る
+```
+
+`filter` が二つあるのは、「条件を二つ同時に書かなければ」というより、**残す条件を段階に分けた** だけです。  
+一つの `filter` に `&&` で書いても動きます。読みやすさで選びます。
+
+`filter` と `map` は中間操作、`toList` が終端操作です。  
+中間操作は終端が呼ばれるまで実行されないため、Stream を作っただけでは結果は得られません。  
+入口ページと同じルールです。
+
+:::tip[Stream を使う判断]
+
+絞り込み、変換、集計の流れを、副作用なしで表せるなら Stream が向きます。  
+複雑な分岐、途中終了、複数の状態更新が中心なら、通常のループの方が読みやすいことがあります。
+
+:::
+
+## ステップ2: 「0 件かもしれない」結果は Optional
+
+`findFirst` や `max` は、対象が空かもしれないので `Optional` を返します。  
+これは「失敗」ではなく、「無いかもしれない」を型で受け取っているだけです。
+
+```java
+Optional<Order> largestOrder = orders.stream()
+    .max(Comparator.comparingInt(Order::amount));
+
+largestOrder.ifPresent(order ->
+    System.out.println("最大金額: " + order.amount())
+);
+```
+
+考え方の順番です。
+
+1. 一覧から最大を取る（無いこともある）
+2. 結果は `Optional<Order>`
+3. あったときだけ使う（`ifPresent`）、または無かったときの方針を決める
+
+値が必須なら、文脈に合う例外へ変換できます。
+
+```java
+Order order = findOrder(orderId)
+    .orElseThrow(() -> new IllegalArgumentException("order not found"));
+```
+
+`Optional` は主に戻り値で使います。  
+フィールドやメソッド引数に常に使うと、かえって複雑になるため、必要性を個別に判断します。  
+`Optional` 自体を `null` にはしません。
+
+`get()` を存在確認なしで呼ぶと、空のときに例外になります。  
+入口ページと同じく、「無かったとき」を先に決める書き方に寄せます。
+
+## ステップ3: 終端で「欲しい形」を選ぶ（Collector）
+
+ここまでの終端は `toList` や `count` が中心でした。  
+実務では、「状態ごとにグループ化したい」「ID から引ける Map にしたい」もよくあります。  
+for なら、次のような一時変数を自分で用意していた処理です。
+
+```java
+Map<String, List<Order>> ordersByStatus = new HashMap<>();
+for (Order order : orders) {
+    ordersByStatus
+        .computeIfAbsent(order.status(), key -> new ArrayList<>())
+        .add(order);
+}
+```
+
+Stream では、同じ「最後に欲しい形」を Collector に任せます。
+
+### 状態ごとにまとめたい → groupingBy
+
+```java
+Map<String, List<Order>> ordersByStatus = orders.stream()
+    .collect(Collectors.groupingBy(Order::status));
+```
+
+読み方は、「流した注文を、ステータスをキーにしてリストへ振り分ける」です。  
+件数だけが必要なら、下流に `counting` を足します。
+
+```java
+Map<String, Long> countByStatus = orders.stream()
+    .collect(Collectors.groupingBy(
+        Order::status,
+        Collectors.counting()
+    ));
+```
+
+「グループ化したあと、さらにどう集計するか」を二段で書いている、と捉えると追いやすいです。
+
+### 真偽の 2 群に分けたい → partitioningBy
+
+```java
+Map<Boolean, List<Order>> partitioned = orders.stream()
+    .collect(Collectors.partitioningBy(
+        order -> order.amount() >= 10_000
+    ));
+```
+
+キーは常に `true` / `false` の二つです。  
+「大きい注文とそれ以外」のように、境界が一つの条件で切れるときに向きます。
+
+### ID から引きたい → toMap
+
+```java
+Map<Long, Order> orderById = orders.stream()
+    .collect(Collectors.toMap(Order::id, Function.identity()));
+```
+
+`Function.identity()` は「要素そのものを使う」という意味です。  
+キーが重複すると `toMap` は例外になります。  
+重複があり得るなら、先を残す・後を残す・エラーにする、をマージ関数で明示します。
+
+```java
+Map<Long, Order> orderById = orders.stream()
+    .collect(Collectors.toMap(
+        Order::id,
+        Function.identity(),
+        (existing, replacement) -> replacement
+    ));
+```
+
+for で Map を作るときに「同じキーが来たらどうするか」を決めていたのと、同じ判断です。
+
+### 文字列に繋ぐ・数字を要約する
+
+```java
+String ids = orders.stream()
+    .map(order -> Long.toString(order.id()))
+    .collect(Collectors.joining(", "));
+
+IntSummaryStatistics statistics = orders.stream()
+    .collect(Collectors.summarizingInt(Order::amount));
+```
+
+`joining` は「区切り文字でつなぐ」、`summarizingInt` は件数・合計・最小・最大・平均をまとめて取る、という終端の形です。  
+必要な統計が一つだけなら `mapToInt(...).sum()` のような書き方もあります。欲しい結果の形から選びます。
+
+<details>
+<summary>parallelStream を先に使わない理由</summary>
+
+並列化には、タスク分割やスレッド間調整のコストがあります。  
+データ量や処理内容によっては、逐次より遅くなります。  
+共有状態やスレッドに依存する処理も事故の原因になるため、計測と安全性の確認なしに切り替えないようにします。
+
+</details>
+
+## ステップ4: Collector を選ぶときの自問
+
+迷ったら、for に戻して自問します。
+
+| 欲しい結果 | 向く終端の例 |
+| ---------- | ------------ |
+| リスト | `toList` |
+| 件数 | `count` / `Collectors.counting` |
+| キーごとのリスト | `groupingBy` |
+| 真偽の 2 群 | `partitioningBy` |
+| キーから 1 件 | `toMap`（重複方針も決める） |
+| 1 本の文字列 | `joining` |
+| 合計や平均など | `summarizingInt` や数値 Stream |
+
+「モダンだから Collector」ではなく、**いま欲しいデータの形は何か** が先です。
+
+## よくあるつまずき
+
+- パイプラインを記号のまま追って、声に出す言葉を持たない
+- `peek` で状態更新を行い、処理の意味を追いにくくする
+- Stream の中から外側の可変コレクションへ要素を追加する
+- `Optional.get()` を存在確認なしで呼ぶ
+- `toMap` のキー重複を想定しない
+- 短いループまで無理に Stream 化する
+
+## まとめ
+
+- 長い Stream も、「残す・変える・受け取る」の延長で読める
+- 0 件かもしれない結果は Optional で受け、無かったときの方針を先に決める
+- Collector は、for で作っていた結果の形を終端に任せる道具
+- 欲しい形が決まってから、groupingBy / toMap などを選ぶ
+
+次は [日時 API](./datetime) で、時刻の種類とタイムゾーンを安全に扱います。

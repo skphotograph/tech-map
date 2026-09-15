@@ -1,0 +1,175 @@
+---
+sidebar_position: 2
+---
+
+# オブジェクト指向の基礎
+
+注文を確定する処理が長くなると、金額計算、状態確認、更新がばらばらに置かれ、どの順序なら安全なのか分かりにくくなります。  
+オブジェクト指向は、関係するデータと振る舞いをまとめ、不正な操作を起こしにくくする考え方です。  
+
+## このページで分かること
+
+- 手続き型とオブジェクト指向の違い
+- クラス、インスタンス、カプセル化の役割
+- 継承、ポリモーフィズム、抽象化、委譲の使い分け
+- オブジェクト指向分析（OOA）とオブジェクト指向設計（OOD）の違い
+
+## 手続き型とオブジェクト指向
+
+手続き型では、データとそのデータを処理する手続きを別々に考えます。  
+処理の流れが中心となるため、小さな変換や順序の明確なバッチ処理では素直に表現できます。  
+
+```java
+record OrderData(int amount, String status) {}
+
+static OrderData confirm(OrderData order) {
+    if (!order.status().equals("DRAFT")) {
+        throw new IllegalStateException("下書きだけ確定できます");
+    }
+    return new OrderData(order.amount(), "CONFIRMED");
+}
+```
+
+オブジェクト指向では、状態と、その状態を扱う操作をひとつの単位にまとめます。  
+
+```java
+final class Order {
+    private final int amount;
+    private OrderStatus status = OrderStatus.DRAFT;
+
+    Order(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("金額は 0 以上です");
+        }
+        this.amount = amount;
+    }
+
+    void confirm() {
+        if (status != OrderStatus.DRAFT) {
+            throw new IllegalStateException("下書きだけ確定できます");
+        }
+        status = OrderStatus.CONFIRMED;
+    }
+}
+
+enum OrderStatus {
+    DRAFT, CONFIRMED
+}
+```
+
+どちらかが常に優れているわけではありません。  
+計算の途中状態を持たない変換なら関数で十分なこともあり、複数の操作にまたがって守る規則があるならオブジェクトへまとめる効果が高まります。  
+
+## クラスとインスタンス
+
+クラスは、どのデータと操作を持つかを定義する型です。  
+インスタンスは、その型から作られた個別の実体で、それぞれ異なる状態を持ちます。  
+
+```java
+Order first = new Order(3000);
+Order second = new Order(5000);
+
+first.confirm();
+```
+
+`first` を確定しても、`second` の状態は変わりません。  
+ただし、同じインスタンスを複数の変数が参照していれば、片方からの変更はもう片方からも見えます。  
+
+## カプセル化は不正な状態を隠す
+
+カプセル化は、フィールドを `private` にするだけではありません。  
+状態を直接書き換えさせず、意味のある操作を通して規則を守ることが目的です。  
+
+`setStatus("CONFIRMED")` より `confirm()` の方が、許可する操作と事前条件を表せます。  
+値を取り出す getter と書き換える setter を機械的に作ると、内部表現を公開したままになる点に注意します。  
+
+:::tip[振る舞いを置く場所]
+
+その状態を知っているオブジェクト自身に判断させると、規則が呼び出し側へ散らばりにくくなります。  
+
+:::
+
+## 継承とポリモーフィズム
+
+継承は「A は B の一種である」という関係を表し、親型の契約を子型が引き継ぎます。  
+ポリモーフィズムは、呼び出し側が共通の型だけを知り、実行時に異なる振る舞いを選べる性質です。  
+
+```java
+interface DiscountPolicy {
+    int discountFor(Order order);
+}
+
+final class NoDiscount implements DiscountPolicy {
+    @Override
+    public int discountFor(Order order) {
+        return 0;
+    }
+}
+
+final class FixedDiscount implements DiscountPolicy {
+    private final int amount;
+
+    FixedDiscount(int amount) {
+        this.amount = amount;
+    }
+
+    @Override
+    public int discountFor(Order order) {
+        return amount;
+    }
+}
+```
+
+呼び出し側は `DiscountPolicy` に依存し、条件分岐を増やさず方針を差し替えられます。  
+一方、実装を共有したいという理由だけでクラス継承を使うと、親の変更が子へ広がりやすくなります。  
+
+## 抽象化、インタフェース、委譲
+
+抽象化は、目的に必要な特徴を残し、実装の細部を隠すことです。  
+インタフェースは Java で抽象化された契約を表す代表的な手段ですが、抽象化そのものはクラス名やメソッド名、公開範囲でも行います。  
+
+委譲は、自分で処理を実装せず、保持している別のオブジェクトへ任せる方法です。  
+
+```java
+final class OrderService {
+    private final DiscountPolicy discountPolicy;
+
+    OrderService(DiscountPolicy discountPolicy) {
+        this.discountPolicy = discountPolicy;
+    }
+
+    int finalAmount(Order order, int originalAmount) {
+        return originalAmount - discountPolicy.discountFor(order);
+    }
+}
+```
+
+`OrderService` は割引計算を `DiscountPolicy` に委譲しています。  
+委譲は継承より関係を組み替えやすく、必要な能力だけを利用できます。  
+
+## OOA と OOD
+
+オブジェクト指向分析（Object-Oriented Analysis、OOA）は、対象業務にどんな概念、役割、規則があるかを整理する活動です。  
+注文、明細、確定といった業務上の言葉を探し、何が起きるかに注目します。  
+
+オブジェクト指向設計（Object-Oriented Design、OOD）は、その理解をソフトウェアの型や協調関係へ落とし込む活動です。  
+インタフェースをどこに置くか、どのオブジェクトが保存を依頼するかといった実装可能な構造を決めます。  
+
+分析と設計は完全に一方向ではありません。  
+コードへ落とす過程で業務理解の不足に気付き、分析へ戻ることもあります。  
+
+## よくあるつまずき
+
+- 名詞を見つけるたびにクラスを作り、振る舞いのないデータ入れ物を増やす
+- すべての処理をひとつのサービスクラスへ集め、状態を持つ側が何も判断しない
+- コード再利用だけを目的に深い継承階層を作る
+- インタフェースを作ること自体が目的になり、差し替える理由のない抽象を増やす
+
+## まとめ
+
+- 手続き型は処理の流れ、オブジェクト指向は状態と振る舞いのまとまりに注目する
+- カプセル化は、意味のある操作を通して不変条件を守る
+- 継承より委譲が柔軟な場面は多く、インタフェースは必要な契約を表す
+- OOA は業務の理解、OOD はソフトウェア構造への落とし込みを中心に扱う
+
+次は [日常で使う設計原則](./everyday-principles) で、設計判断に使いやすい短い原則を学びます。  

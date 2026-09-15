@@ -1,0 +1,132 @@
+---
+sidebar_position: 16
+---
+
+# 日時 API
+
+画面では同じ「2026-09-15 10:00」に見えても、東京の 10 時とロンドンの 10 時は別の瞬間です。  
+日時の不具合を防ぐには、日付、ローカル時刻、世界で一意な瞬間を区別して型を選びます。  
+
+## このページで分かること
+
+- `LocalDate`、`LocalDateTime`、`Instant` の違い
+- `ZoneId` を使ったタイムゾーン変換
+- 文字列との相互変換と、期間の計算
+
+## 何を表すかで型を選ぶ
+
+| 型 | 表すもの | 例 |
+| --- | --- | --- |
+| `LocalDate` | タイムゾーンを持たない日付 | 誕生日、締め日 |
+| `LocalTime` | タイムゾーンを持たない時刻 | 毎日の開店時刻 |
+| `LocalDateTime` | タイムゾーンを持たない日付と時刻 | 利用者が入力した現地日時 |
+| `Instant` | UTC の時間軸上の一瞬 | イベント発生時刻、監査時刻 |
+| `ZonedDateTime` | タイムゾーン付きの日時 | 地域の規則を含む予定 |
+| `OffsetDateTime` | UTC との差を持つ日時 | オフセット付き API 入出力 |
+
+「日時だから `LocalDateTime`」と決めるのではなく、その値が一意な瞬間を表すのかを確認します。  
+
+## 日付を扱う
+
+```java
+LocalDate orderDate = LocalDate.of(2026, 9, 15);
+LocalDate dueDate = orderDate.plusDays(7);
+
+long days = ChronoUnit.DAYS.between(orderDate, dueDate);
+System.out.println(dueDate);
+System.out.println(days);
+```
+
+実行結果:
+
+```text
+2026-09-22
+7
+```
+
+`java.time` の主要な型は不変です。  
+`plusDays` は元の値を変更せず、新しい値を返すため、戻り値を受け取ります。  
+
+## Instant と ZoneId を変換する
+
+保存やシステム間連携では `Instant` を使い、表示時に利用者のタイムゾーンへ変換する方法があります。  
+
+```java
+Instant occurredAt = Instant.parse("2026-09-15T01:00:00Z");
+ZoneId zone = ZoneId.of("Asia/Tokyo");
+
+ZonedDateTime localTime = occurredAt.atZone(zone);
+System.out.println(localTime);
+```
+
+実行結果:
+
+```text
+2026-09-15T10:00+09:00[Asia/Tokyo]
+```
+
+`Z` は UTC を示します。  
+`Asia/Tokyo` の規則を適用すると、同じ瞬間が日本時間の 10 時として表示されます。  
+
+:::tip[タイムゾーンを明示する]
+
+サーバのデフォルトタイムゾーンに依存すると、実行環境の変更で結果が変わります。  
+業務上必要な地域は `ZoneId` として明示します。  
+
+:::
+
+## 文字列を解析・整形する
+
+ISO 8601 形式なら、標準の解析機能を優先できます。  
+
+```java
+LocalDate date = LocalDate.parse("2026-09-15");
+Instant instant = Instant.parse("2026-09-15T01:00:00Z");
+```
+
+独自形式には `DateTimeFormatter` を使います。  
+
+```java
+DateTimeFormatter formatter =
+    DateTimeFormatter.ofPattern("uuuu/MM/dd");
+
+LocalDate date = LocalDate.parse("2026/09/15", formatter);
+String text = date.format(formatter);
+```
+
+フォーマッターは不変かつスレッドセーフです。  
+形式をアプリケーション内で共有すると、解析と表示のずれを減らせます。  
+
+## Date と Calendar は新規コードで避ける
+
+古い API やライブラリとの接続では `java.util.Date` や `Calendar` に出会います。  
+これらは変更可能で、月の扱いやタイムゾーンの操作も分かりにくいため、新規コードでは原則として `java.time` を使います。  
+
+```java
+Date legacyDate = Date.from(instant);
+Instant converted = legacyDate.toInstant();
+```
+
+既存 API との境界だけで変換し、内部では `java.time` の型にそろえると影響を限定できます。  
+
+<details>
+<summary>夏時間で存在しない・重複する時刻</summary>
+
+夏時間の切り替えがある地域では、時計が進んで存在しないローカル時刻や、時計が戻って 2 回現れるローカル時刻があります。  
+厳密な予約処理では `LocalDateTime` だけで確定せず、対象の `ZoneId` と業務上の選択ルールを確認します。  
+</details>
+
+## よくあるつまずき
+
+- 保存した `LocalDateTime` を、どの地域の時刻か分からないまま扱う
+- `plusDays` が元の値を変更すると考え、戻り値を捨てる
+- サーバのデフォルトタイムゾーンへ無意識に依存する
+- 表示用の独自文字列を、そのままシステム間連携の形式にする
+
+## まとめ
+
+- 日付には `LocalDate`、一意な瞬間には `Instant` など、意味に合う型を選ぶ
+- 地域の時刻へ変換するときは `ZoneId` を明示する
+- 新規コードでは `Date` や `Calendar` より `java.time` を優先する
+
+次は [ファイルとリソース管理](./files-and-resources) で、入出力と確実なクローズを学びます。  

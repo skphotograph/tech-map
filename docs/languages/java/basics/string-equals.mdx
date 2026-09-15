@@ -1,0 +1,275 @@
+---
+sidebar_position: 6
+---
+
+# String と equals
+
+このページでは、`String` の扱いと、`==` / `equals` / `hashCode` の関係を、コレクションで壊れないところまで落とします。  
+「ログでは同じ文字列なのに比較が合わない」「入れたはずのキーが Map から消える」は、ここが曖昧なときに起きます。
+
+## このページで分かること
+
+- `String` が参照型であることと、不変であることの意味
+- `==`（同一性）と `equals`（同値）の違い
+- 文字列プールに頼った比較が危険な理由
+- `equals` と `hashCode` の契約、`HashMap` / `HashSet` での壊れ方
+- 可変オブジェクトをキーにしない理由
+
+## 文字列比較でつまずきやすい理由
+
+画面から受け取った注文 ID と、DB から読んだ注文 ID を `==` で比べたら `false`。  
+ログに出すと同じ `"ORD-1001"` に見える。  
+中身が同じでも、**参照が同じか** と **中身が同じか** は別問題です。
+
+テストデータが全部ソース上のリテラルだと、`==` でも通ってしまうことがあります。  
+本番の入力やファイル由来では別オブジェクトになり、突然壊れます。
+
+## String は参照型で、中身は変えられない
+
+`String` はクラスなので参照型です。  
+リテラル `"hello"` も、内部的には文字列オブジェクトへの参照になります。
+
+```java
+String label = "SHIPPED";
+```
+
+`String` の重要な性質は **不変（immutable）** であることです。  
+`toUpperCase` や `substring` は、元のオブジェクトを書き換えず、別の `String` を返します。
+
+```java
+String status = "paid";
+String upper = status.toUpperCase();
+System.out.println(status); // paid
+System.out.println(upper);  // PAID
+```
+
+不変なので、同じ文字列を複数箇所で共有しても、片方の「書き換え」で他方が壊れる心配がありません。  
+キーやメッセージの受け渡しに向く理由のひとつです。  
+逆に、大量の連結を `+` のループで行うと中間 `String` が増えます。繰り返し連結は `StringBuilder` を検討します。
+
+<details>
+<summary>文字コードと長さ</summary>
+
+`length()` は UTF-16 のコードユニット数です。  
+絵文字などでは「人が数える文字数」と一致しないことがあります。  
+厳密な文字数や正規化が必要なら、用途に合った API（コードポイント単位など）を選びます。  
+業務の ID 比較では、まず「同じ正規化規則か」（前後空白、大文字小文字）を揃える方が先です。
+
+</details>
+
+## 文字列プールと `==`
+
+```java
+String a = "order";
+String b = "order";
+String c = new String("order");
+String d = readFromRequest(); // 外部入力
+```
+
+JVM は同じ内容の文字列リテラルを、**文字列プール**上の同じインスタンスへまとめることがあります。  
+そのため `a == b` が `true` になることはあります。  
+一方 `c` は明示的に別オブジェクトを作りやすく、`d` は入力経路次第で別物です。
+
+```java
+System.out.println(a == b);      // true になりやすい（プール）
+System.out.println(a == c);      // false になりやすい
+System.out.println(a.equals(c)); // true
+```
+
+プールの挙動に頼った比較は危険です。  
+コンパイラの最適化や実行経路で結果が変わり、**テストだけ通る** 典型になります。
+
+`String.intern()` はプールへ載せる操作ですが、寿命と競合の副作用があるため、同値比較の代わりには使いません。  
+中身の比較は常に `equals`（または `Objects.equals`）です。
+
+## `==` と `equals`
+
+| 演算 / メソッド | 見ているもの | 文字列での使い方 |
+| --------------- | ------------ | ---------------- |
+| `==` | 参照が同じか（プリミティブなら値） | 原則使わない |
+| `equals` | オブジェクトが「等しい」と定義した内容 | 中身の比較に使う |
+
+```java
+String left = new String("task");
+String right = new String("task");
+
+System.out.println(left == right);      // false になりやすい
+System.out.println(left.equals(right)); // true
+```
+
+ユーザー入力、ファイル、HTTP、DB から来た文字列は、ほぼ確実に別オブジェクトです。  
+**中身の比較は `equals`**、と決めておくと事故が減ります。
+
+参照の同一性を意図して見るときは `==` で構いません。  
+「同じキャッシュエントリか」「検知したインスタンスが同一か」など、同値ではない問いのときです。
+
+:::tip[覚えておくこと]
+
+文字列の同値比較は `equals`。  
+`==` は「同一インスタンスか」を見るときに限る。
+
+:::
+
+## null と空白・大文字小文字
+
+左側が null のとき `left.equals(right)` は NPE になります。
+
+```java
+import java.util.Objects;
+
+"order".equals(left);        // left が null でも false
+Objects.equals(left, right); // 両方 null なら true、片方だけなら false
+```
+
+見た目が同じでも、次で `equals` は false になります。
+
+- 前後の空白（`"ORD-1"` と `"ORD-1 "`）
+- 大文字小文字（`"Paid"` と `"paid"`）
+- Unicode の見た目は近いが正規化が違う文字
+
+入力境界では、trim やポリシーに沿った正規化を **比較の前に一度** 行うか、比較専用のメソッド（`equalsIgnoreCase` など）を明示します。  
+「画面では同じに見える」を、ログにコードポイントや長さを出して疑う習慣があると早いです。
+
+## equals の契約
+
+自作クラスで「同じ業務上の ID なら等しい」と決めたいとき、`equals` をオーバーライドします。  
+契約（`Object` のドキュメントが求める性質）の要点です。
+
+- **反射律** … `x.equals(x)` は true
+- **対称律** … `x.equals(y)` と `y.equals(x)` は同じ結果
+- **推移律** … 連鎖しても矛盾しない
+- **一貫性** … 比較に使う情報が変わらないなら、結果も安定する
+- **null** … `x.equals(null)` は false（NPE にしない）
+
+```java
+public final class UserId {
+    private final String value;
+
+    public UserId(String value) {
+        this.value = Objects.requireNonNull(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserId other)) {
+            return false;
+        }
+        return value.equals(other.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+}
+```
+
+継承階層で `equals` を拡張すると、対称律を壊しやすいです。  
+値を表す型は `final` にする、または `record` にする方が安全です。
+
+## hashCode とのセット
+
+`HashSet` や `HashMap` のキーでは、次の流れで探します。
+
+1. `hashCode` で桶（バケット）を決める
+2. その桶の中で `equals` により同値を探す
+
+契約の核心です。
+
+> `equals` が true なら、`hashCode` も同じでなければならない。  
+> `hashCode` が同じでも、`equals` は false でもよい（衝突）。
+
+`equals` だけオーバーライドして `hashCode` を放置すると、次が起きます。
+
+```java
+Set<UserId> ids = new HashSet<>();
+ids.add(new UserId("u-1"));
+System.out.println(ids.contains(new UserId("u-1"))); // false になりうる
+```
+
+別インスタンスでも業務上は同じ ID なのに、ハッシュが食い違って別桶を見にいくためです。
+
+```mermaid
+flowchart LR
+    add["add したインスタンス<br/>hash = A"] --> bucketA["桶 A"]
+    contains["contains するインスタンス<br/>hash = B"] --> bucketB["桶 B"]
+```
+
+桶が違うと、`equals` まで到達しません。
+
+:::warning[片方だけ変えない]
+
+`equals` を触ったら `hashCode` も揃える。  
+`hashCode` だけ変えるのも同様に危険です。  
+IDE や `Objects.hash(...)` で、比較に使うフィールドを同じ集合にします。
+
+:::
+
+## Map のキーが可変だと壊れる
+
+`hashCode` に使っているフィールドを、キーとして入れたあとに書き換えると、オブジェクトは別の桶にあるべき位置へ移りません。
+
+```java
+// 悪い例: 可変なキー
+class MutableCode {
+    String code;
+    // equals / hashCode が code 依存
+}
+
+MutableCode key = new MutableCode();
+key.code = "A";
+map.put(key, order);
+key.code = "B"; // もう map から見つけにくい
+```
+
+キーにする型は、不変にするか、入れる前にコピーして二度と変えないかです。  
+`String`、`record`、値オブジェクトが向くのはこのためです。
+
+`enum` をキーにするのは安全で分かりやすい選択です。  
+取り得る値が閉じている状態遷移などに向きます。
+
+## record と生成コード
+
+`record` は成分に基づく `equals` / `hashCode` / `toString` を生成します。
+
+```java
+record UserId(String value) {
+    UserId {
+        Objects.requireNonNull(value);
+    }
+}
+```
+
+手書きする場合は、比較対象フィールドの追加漏れに注意します。  
+生成ツールを使う場合も、フィールド追加のたびに再生成や差分確認が必要です。
+
+配列の `equals` は参照比較なので、中身を比べるなら `Arrays.equals` です。  
+`List` などコレクションは、要素の `equals` に委譲する実装が多く、要素型の契約がそのまま効きます。
+
+## 実務での目安
+
+- 文字列の同値は `Objects.equals` または定数左側の `equals`
+- 入力は比較前に正規化方針を決める（trim、大文字小文字）
+- キーや Set の要素にする型は、不変＋`equals`/`hashCode` セット
+- 「入れたのに取れない」は、まず契約と可変キーを疑う
+- ログに出すときは、長さや引用符付きで空白差が見えるようにする
+
+## よくあるつまずき
+
+- テストが全部リテラルで、`==` でも通ってしまう
+- `equals` だけ実装して Map / Set が壊れる
+- 可変オブジェクトをキーにしたままフィールドを書き換える
+- 大文字小文字や前後空白を、画面の見た目だけで同じだと思う
+- `hashCode` に乱数や現在時刻を混ぜて、桶が安定しない
+
+## まとめ / 次に学ぶとよいこと
+
+- `String` は参照型で不変。中身の比較は `equals`
+- `==` は同一性。プールの偶然に頼らない
+- `equals` と `hashCode` はセット。ハッシュベースのコレクションの前提
+- キーは不変に保つ
+
+次は [static と final](./static-final) で、共有と再代入禁止の意味を見ます。

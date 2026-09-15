@@ -1,0 +1,176 @@
+---
+sidebar_position: 4
+---
+
+# SOLID と CQS
+
+ひとつの修正で関係のないテストまで壊れる、実装を差し替えたら呼び出し側の条件分岐も直すことになる、といった問題は責務と依存関係に手掛かりがあります。  
+SOLID はオブジェクト指向設計を見直す五つの観点、CQS はメソッドの役割を明確にする考え方です。  
+
+## このページで分かること
+
+- SOLID の五原則が防ごうとしている問題
+- Java のクラスとインタフェースへ原則を適用する方法
+- コマンド・クエリ分離（CQS）で副作用を見通しやすくする方法
+
+## S: 単一責任の原則
+
+単一責任の原則（Single Responsibility Principle、SRP）は、クラスが「ひとつの変更理由」を持つようにします。  
+メソッド数をひとつにする原則ではありません。  
+
+注文の規則、データ保存、通知文面を一つのクラスへ置くと、業務規則、データベース、通知仕様の変更が同じクラスへ集まります。  
+変更理由に沿って `Order`、`OrderRepository`、`OrderNotifier` などへ分けると、影響範囲を見積もりやすくなります。  
+
+分割の単位は文脈によります。  
+変更が常に一緒に起きる小さな処理まで分離すると、かえって理解しにくくなります。  
+
+## O: オープン・クローズドの原則
+
+オープン・クローズドの原則（Open/Closed Principle、OCP）は、振る舞いを拡張でき、安定した既存コードの修正を減らせる構造を目指します。  
+
+```java
+interface ShippingPolicy {
+    int feeFor(Order order);
+}
+
+final class StandardShipping implements ShippingPolicy {
+    @Override
+    public int feeFor(Order order) {
+        return 500;
+    }
+}
+
+final class FreeShippingCampaign implements ShippingPolicy {
+    @Override
+    public int feeFor(Order order) {
+        return 0;
+    }
+}
+```
+
+呼び出し側が `ShippingPolicy` だけに依存すれば、新しい方針を追加しても計算の流れを修正せずに済む場合があります。  
+ただし、変化しない箇所まで先回りして抽象化する必要はありません。  
+
+## L: リスコフの置換原則
+
+リスコフの置換原則（Liskov Substitution Principle、LSP）は、子型を親型として使っても、親型の契約を壊さないことを求めます。  
+
+たとえば `TaskQueue` が「追加したタスクを受け付ける」と約束しているのに、読み取り専用の子クラスだけが `add` で例外を投げるなら、置換可能とは言いにくい設計です。  
+継承関係を作る前に、次を確認します。  
+
+- 子型が親型より厳しい事前条件を要求していないか
+- 親型が保証する結果を子型も保証するか
+- 親型で許されない副作用を子型が追加していないか
+
+契約を守れない場合は、継承ではなく別のインタフェースや委譲を検討します。  
+
+## I: インタフェース分離の原則
+
+インタフェース分離の原則（Interface Segregation Principle、ISP）は、利用側が使わない操作へ依存しないようにします。  
+
+```java
+interface TaskReader {
+    Optional<Task> findById(long id);
+}
+
+interface TaskWriter {
+    void save(Task task);
+}
+```
+
+一覧表示だけを行うクラスは `TaskReader` だけに依存できます。  
+巨大な `TaskRepository` に検索、保存、削除、集計、ファイル出力まで並べるより、利用者の必要に沿った契約を作れます。  
+
+小さく分けすぎると型の数と配線が増えるため、利用者や変更理由が実際に異なる境界で分けます。  
+
+## D: 依存性逆転の原則
+
+依存性逆転の原則（Dependency Inversion Principle、DIP）は、重要な方針を持つ上位の処理が、データベースや通信などの詳細へ直接依存しないようにします。  
+上位と下位の両方が、目的を表す抽象へ依存します。  
+
+```java
+interface OrderRepository {
+    void save(Order order);
+}
+
+final class PlaceOrder {
+    private final OrderRepository repository;
+
+    PlaceOrder(OrderRepository repository) {
+        this.repository = repository;
+    }
+
+    void execute(Order order) {
+        order.confirm();
+        repository.save(order);
+    }
+}
+```
+
+`PlaceOrder` は保存方法を知りません。  
+リレーショナルデータベース、メモリ上のテスト用実装などは、外側で `OrderRepository` を実装します。  
+
+:::tip[依存を逆転する意味]
+
+インタフェースを置くことが目的ではなく、守りたい業務ルールから変更しやすい技術詳細を切り離すことが目的です。  
+
+:::
+
+## SOLID は組み合わせて使う
+
+五原則は独立したチェック項目ではありません。  
+SRP で責務を分け、ISP で利用者ごとの契約を小さくし、DIP で依存方向を整えるといった形で重なります。  
+
+すべてのクラスにインタフェースを作る、必ず一クラス一メソッドにするといった機械的な適用は、SOLID の目的ではありません。  
+変更の頻度と影響を観察し、必要な境界を選びます。  
+
+## CQS: 更新と問い合わせを分ける
+
+コマンド・クエリ分離（Command-Query Separation、CQS）は、メソッドを次のどちらかとして設計する考え方です。  
+
+- **コマンド**: 状態を変更し、通常は問い合わせ結果を返さない
+- **クエリ**: 値を返し、観察可能な状態を変更しない
+
+```java
+final class Task {
+    private boolean completed;
+
+    void complete() {          // コマンド
+        completed = true;
+    }
+
+    boolean isCompleted() {    // クエリ
+        return completed;
+    }
+}
+```
+
+`completeAndReturnStatus()` のように更新と問い合わせを混ぜると、呼ぶだけで状態が変わることを見落としやすくなります。  
+CQS に沿うと、副作用がある場所を名前と戻り値から推測しやすくなり、テストも分けやすくなります。  
+
+ただし、集合への追加結果を返す `Set.add` や、原子的な更新結果が必要な処理など、更新と戻り値をまとめる合理的な API もあります。  
+並行性や性能、外部 API の制約がある場合は、原則から外れる理由を明確にします。  
+
+<details>
+<summary>CQS と CQRS の違い</summary>
+
+CQS は主にメソッド単位で更新と問い合わせを分ける原則です。  
+CQRS はシステムやモデルの単位で書き込み側と読み取り側を分けるアーキテクチャパターンです。  
+名前は似ていますが、導入規模と運用上の影響が大きく異なります。  
+</details>
+
+## よくあるつまずき
+
+- SRP を「短いクラスにすること」と捉え、同じ変更理由の処理まで分散させる
+- OCP のために、変化の兆候がない箇所へ抽象を増やす
+- 子型が親型の未対応メソッドで例外を投げ、LSP を壊す
+- DIP を「すべてにインタフェースを作ること」と誤解する
+- 値を読む名前のメソッドで、永続化や状態更新も行う
+
+## まとめ
+
+- SOLID は責務、拡張、置換可能性、契約の大きさ、依存方向を見直す観点
+- 原則は変更の兆候がある場所へ、目的を説明できる範囲で適用する
+- CQS で更新と問い合わせを分けると、副作用を予測しやすくなる
+
+次は [GRASP](./grasp) で、責務をどのオブジェクトへ置くかを考えます。  

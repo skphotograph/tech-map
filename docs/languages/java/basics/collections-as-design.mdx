@@ -1,0 +1,121 @@
+---
+sidebar_position: 14
+---
+
+# 設計としてのコレクション
+
+メソッドが返した一覧を呼び出し側で変更したら、元のオブジェクトの状態まで変わってしまうことがあります。  
+コレクションはデータを入れる箱であると同時に、API が許す操作を表す設計要素です。  
+
+## このページで分かること
+
+- 引数や戻り値でインターフェースを優先する理由
+- 変更可能な内部状態を外へ漏らさない方法
+- 空のコレクションと `null` の使い分け
+
+## API 境界では必要な能力だけを示す
+
+メソッドが順番に要素を読むだけなら、引数を `ArrayList` に限定する理由はありません。  
+`List` や、さらに要件が小さければ `Collection`、`Iterable` を受け取ると、呼び出し側が実装を選べます。  
+
+```java
+static int totalAmount(Collection<Order> orders) {
+    return orders.stream()
+        .mapToInt(Order::amount)
+        .sum();
+}
+
+record Order(long id, int amount) {}
+```
+
+実装クラスは、生成する場所で選びます。  
+
+```java
+List<Order> orders = new ArrayList<>();
+orders.add(new Order(1001L, 3000));
+```
+
+:::tip[型を狭くする基準]
+
+「現在使っている実装」ではなく、「そのメソッドが必要とする操作」で引数の型を決めます。  
+
+:::
+
+## 内部のコレクションをそのまま返さない
+
+次のクラスは、登録済みの注文を `List.copyOf` でコピーして返します。  
+
+```java
+final class OrderBook {
+    private final List<Order> orders = new ArrayList<>();
+
+    void add(Order order) {
+        orders.add(Objects.requireNonNull(order));
+    }
+
+    List<Order> orders() {
+        return List.copyOf(orders);
+    }
+}
+```
+
+呼び出し側は返されたリストへ追加・削除できません。  
+また、返したあとに `OrderBook` 内部のリストが変化しても、すでに返したコピーの内容は変わりません。  
+
+`Collections.unmodifiableList(orders)` は、変更操作を拒否するビューを返します。  
+元の `orders` が変化するとビューにも反映されるため、スナップショットが必要なら `List.copyOf` が適しています。  
+
+<details>
+<summary>浅い不変性に注意する</summary>
+
+不変リストにしても、要素そのものが変更可能なら、その要素の状態は変えられます。  
+境界全体を不変にしたい場合は、要素を `record` などの不変な値にするか、要素もコピーする必要があります。  
+</details>
+
+## 「結果なし」は空で返す
+
+複数件を返す検索では、結果がなければ空のコレクションを返すのが一般的です。  
+
+```java
+static List<Order> findLargeOrders(List<Order> orders, int minimum) {
+    return orders.stream()
+        .filter(order -> order.amount() >= minimum)
+        .toList();
+}
+```
+
+呼び出し側は `null` チェックをせずに、そのままループできます。  
+
+```java
+for (Order order : findLargeOrders(orders, 5000)) {
+    System.out.println(order.id());
+}
+```
+
+単一の値が見つからない可能性は `Optional<T>`、複数件の結果がない場合は空の `List<T>` という区別が、API の意図を伝えやすくします。  
+ただし、`null` に特別な意味を持たせた既存 API と接続するときは、その契約に従って境界で変換します。  
+
+## コレクションを選ぶ観点
+
+- `List`: 順序と重複を許す
+- `Set`: 重複を許さず、所属判定を表す
+- `Map`: キーから値を探す
+- `Queue` / `Deque`: 処理待ちや先頭・末尾からの操作を表す
+
+順序が必要なのに `Set` を使う、キーの重複方針を決めずに `Map` へ変換する、といった選択は不具合につながります。  
+データ量が小さい段階から性能だけで選ぶのではなく、まず意味に合う型を選びます。  
+
+## よくあるつまずき
+
+- 引数を `ArrayList` に限定し、別の `List` 実装を渡せなくする
+- 内部の変更可能なリストをそのまま返す
+- 不変ビューとコピーの違いを意識しない
+- 0 件を `null` で返し、すべての呼び出し側に分岐を増やす
+
+## まとめ
+
+- API 境界では、必要な操作を表すインターフェースを使う
+- 内部状態を守るには、不変ビューとコピーの違いを理解して選ぶ
+- 複数件の結果がない場合は、原則として `null` ではなく空のコレクションを返す
+
+次は [Stream と Collector](./stream-and-collectors) で、コレクションの変換や集計を読みやすく表現します。  
