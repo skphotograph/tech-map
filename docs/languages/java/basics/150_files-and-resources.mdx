@@ -5,7 +5,7 @@ sidebar_position: 17
 # ファイルとリソース管理
 
 ファイルを読めたことだけ確認して処理を終えると、例外時にストリームが閉じられず、長時間動くアプリケーションで資源不足になることがあります。  
-ファイル操作では、パスの組み立てとリソースの寿命を明確にすることが大切です。  
+ファイル操作では、パスの組み立てとリソースの寿命を明確にすることが大切です。
 
 ## このページで分かること
 
@@ -16,7 +16,7 @@ sidebar_position: 17
 ## Path で場所を表す
 
 `Path` は、ファイルやディレクトリの場所を表します。  
-文字列の連結ではなく `resolve` を使うと、区切り文字を実行環境へ任せられます。  
+文字列の連結ではなく `resolve` を使うと、区切り文字を実行環境へ任せられます。
 
 ```java
 Path dataDirectory = Path.of("data");
@@ -32,18 +32,20 @@ data/orders.csv
 ```
 
 Windows では区切りが `\` で表示されることがあります。  
-どちらも `Path` が実行環境に合わせて表した結果です。  
+どちらも `Path` が実行環境に合わせて表した結果です。
 
 <QuizChoice
-  title="Path の組み立て"
-  options={[
-    {id: 'a', label: '文字列連結 "data" + "/" + "orders.csv" が推奨'},
-    {id: 'b', label: 'Path.of と resolve で場所を表す'},
-    {id: 'c', label: '常に絶対パスの文字列だけを使う'},
-  ]}
-  answer="b"
-  explanation="区切り文字は実行環境に任せ、Path と resolve で組み立てます。"
+title="Path の組み立て"
+options={[
+{id: 'a', label: '文字列連結 "data" + "/" + "orders.csv" が推奨'},
+{id: 'b', label: 'Path.of と resolve で場所を表す'},
+{id: 'c', label: '常に絶対パスの文字列だけを使う'},
+]}
+answer="b"
+explanation="区切り文字は実行環境に任せ、Path と resolve で組み立てます。"
+
 >
+
   <div>次の書き方に近い方針はどれですか。</div>
   <pre className="language-java"><code>{`Path dataDirectory = Path.of("data");
 Path orderFile = dataDirectory.resolve("orders.csv");`}</code></pre>
@@ -51,7 +53,7 @@ Path orderFile = dataDirectory.resolve("orders.csv");`}</code></pre>
 
 ## Files で読み書きする
 
-小さなテキストファイルなら、一度に読み込めます。  
+小さなテキストファイルなら、一度に読み込めます。
 
 ```java
 List<String> lines = Files.readAllLines(
@@ -60,7 +62,7 @@ List<String> lines = Files.readAllLines(
 );
 ```
 
-書き込みでは、文字コードとオプションを明示します。  
+書き込みでは、文字コードとオプションを明示します。
 
 ```java
 Files.writeString(
@@ -73,18 +75,18 @@ Files.writeString(
 ```
 
 `TRUNCATE_EXISTING` は既存内容を切り詰めて置き換えます。  
-追記が必要なら `APPEND` を選び、同時書き込みや途中失敗をどう扱うかも検討します。  
+追記が必要なら `APPEND` を選び、同時書き込みや途中失敗をどう扱うかも検討します。
 
 :::warning[外部入力のパスをそのまま使わない]
 
-利用者が指定した `../` などで許可範囲の外へアクセスできないよう、基準ディレクトリに解決したあとの正規化と範囲確認が必要です。  
+利用者が指定した `../` などで許可範囲の外へアクセスできないよう、基準ディレクトリに解決したあとの正規化と範囲確認が必要です。
 
 :::
 
 ## 大きなファイルは逐次処理する
 
 `readAllLines` は全内容をメモリに載せます。  
-サイズが大きい、または上限が分からないファイルでは、`Files.lines` や `BufferedReader` で逐次処理します。  
+サイズが大きい、または上限が分からないファイルでは、`Files.lines` や `BufferedReader` で逐次処理します。
 
 ```java
 try (Stream<String> lines =
@@ -98,18 +100,20 @@ try (Stream<String> lines =
 ```
 
 `Files.lines` が返す Stream は、背後で開いたファイルを保持します。  
-そのため `try-with-resources` で閉じます。  
+そのため `try-with-resources` で閉じます。
 
 <QuizChoice
-  title="大きなファイル"
-  options={[
-    {id: 'a', label: '常に readAllLines で一度に読む'},
-    {id: 'b', label: 'サイズが大きい／不明なら、逐次処理（lines や BufferedReader）を検討する'},
-    {id: 'c', label: 'Files を使えばメモリは自動で足りる'},
-  ]}
-  answer="b"
-  explanation="readAllLines は全内容をメモリに載せます。大きいファイルや上限が分からない入力は、ストリームで逐次処理し、try-with-resources で閉じます。"
+title="大きなファイル"
+options={[
+{id: 'a', label: '常に readAllLines で一度に読む'},
+{id: 'b', label: 'サイズが大きい／不明なら、逐次処理（lines や BufferedReader）を検討する'},
+{id: 'c', label: 'Files を使えばメモリは自動で足りる'},
+]}
+answer="b"
+explanation="readAllLines は全内容をメモリに載せます。大きいファイルや上限が分からない入力は、ストリームで逐次処理し、try-with-resources で閉じます。"
+
 >
+
   <div>次の方針として、適切なものはどれですか。</div>
   <pre className="language-java"><code>{`try (Stream<String> lines =
          Files.lines(orderFile, StandardCharsets.UTF_8)) {
@@ -122,7 +126,7 @@ try (Stream<String> lines =
 ## try-with-resources で確実に閉じる
 
 例外とクローズの考え方の本体は [例外とリソース解放](./exceptions) にあります。  
-ここでは NIO.2 の読み書きに、同じ構文を当てはめます。  
+ここでは NIO.2 の読み書きに、同じ構文を当てはめます。
 
 `AutoCloseable` を実装したオブジェクトは、`try` の丸括弧内で宣言できます。
 
@@ -136,7 +140,7 @@ try (BufferedReader reader = Files.newBufferedReader(
 ```
 
 正常終了でも例外終了でも、自動的に `close()` が呼ばれます。  
-データベース接続、HTTP クライアントのレスポンス、独自リソースなどにも同じ考え方を適用できます。  
+データベース接続、HTTP クライアントのレスポンス、独自リソースなどにも同じ考え方を適用できます。
 
 ```java
 final class TemporaryResource implements AutoCloseable {
@@ -147,15 +151,14 @@ final class TemporaryResource implements AutoCloseable {
 }
 ```
 
-複数のリソースは宣言と逆の順序で閉じられます。  
+複数のリソースは宣言と逆の順序で閉じられます。
 
 <details>
 <summary>close でも例外が起きた場合</summary>
 
 本体の処理と `close()` の両方が例外を投げた場合、本体の例外が主例外になり、クローズ時の例外は suppressed exception として保持されます。  
-`Throwable#getSuppressed()` で確認でき、ログ基盤があれば通常はスタックトレースにも表示されます。  
+`Throwable#getSuppressed()` で確認でき、ログ基盤があれば通常はスタックトレースにも表示されます。
 </details>
-
 
 ## よくあるつまずき
 
@@ -171,4 +174,4 @@ final class TemporaryResource implements AutoCloseable {
 - ファイルサイズに応じて、一括読み込みと逐次処理を選ぶ
 - `AutoCloseable` な資源は `try-with-resources` で確実に閉じる
 
-次は [JDBC の基礎](./jdbc-basics) で、データベース接続とトランザクションを扱います。  
+次は [JDBC の基礎](./jdbc-basics) で、データベース接続とトランザクションを扱います。

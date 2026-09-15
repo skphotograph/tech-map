@@ -110,15 +110,17 @@ count++; // 読み取り、加算、書き込み
 :::
 
 <QuizChoice
-  title="可視性"
-  options={[
-    {id: 'a', label: 'stop() を呼べば、run 側のループは必ずすぐ終わる'},
-    {id: 'b', label: '同期が無いので、run 側から stopped の更新が見えないことがある'},
-    {id: 'c', label: 'stopped が非 volatile でも、別スレッドからの書き込みは常にすぐ見える'},
-  ]}
-  answer="b"
-  explanation="同期や volatile などの橋が無いと、書き込みが他スレッドから見えないことがあります。フラグ用途なら volatile などが候補です。"
+title="可視性"
+options={[
+{id: 'a', label: 'stop() を呼べば、run 側のループは必ずすぐ終わる'},
+{id: 'b', label: '同期が無いので、run 側から stopped の更新が見えないことがある'},
+{id: 'c', label: 'stopped が非 volatile でも、別スレッドからの書き込みは常にすぐ見える'},
+]}
+answer="b"
+explanation="同期や volatile などの橋が無いと、書き込みが他スレッドから見えないことがあります。フラグ用途なら volatile などが候補です。"
+
 >
+
   <div>別スレッドから stop() を呼ぶとき、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`class Worker {
     private boolean stopped = false;
@@ -132,6 +134,7 @@ count++; // 読み取り、加算、書き込み
     void stop() {
         stopped = true;
     }
+
 }`}</code></pre>
 </QuizChoice>
 
@@ -173,13 +176,13 @@ if (box.ready) { // volatile read
 
 代表的な関係です。
 
-| 関係 | 意味 |
-| ---- | ---- |
-| 同一スレッド内の前後 | 同じスレッドでは、前の操作は後の操作に happens-before |
-| `synchronized` | あるモニタの unlock は、その後の同じモニタの lock に happens-before |
-| `volatile` | volatile 変数への write は、その後の同じ変数の read に happens-before |
-| `Thread.start()` | start より前の操作は、開始されたスレッド内の操作に happens-before |
-| `Thread.join()` | 終了したスレッド内の操作は、join から戻ったあとに happens-before |
+| 関係                 | 意味                                                                  |
+| -------------------- | --------------------------------------------------------------------- |
+| 同一スレッド内の前後 | 同じスレッドでは、前の操作は後の操作に happens-before                 |
+| `synchronized`       | あるモニタの unlock は、その後の同じモニタの lock に happens-before   |
+| `volatile`           | volatile 変数への write は、その後の同じ変数の read に happens-before |
+| `Thread.start()`     | start より前の操作は、開始されたスレッド内の操作に happens-before     |
+| `Thread.join()`      | 終了したスレッド内の操作は、join から戻ったあとに happens-before      |
 
 プログラム順が同一スレッド内で happens-before を持つので、「自分のスレッドがさっき書いた値を、自分が読めない」という心配は通常しません。  
 スレッドをまたぐときだけ、表のどれかの橋が必要です。
@@ -240,25 +243,27 @@ int get() {
 `synchronized` と書いてあることと、同じ鍵であることは別です。
 
 <QuizChoice
-  title="同じロック"
-  options={[
-    {id: 'a', label: 'writeLock と readLock が別でも、count の更新は常に見える'},
-    {id: 'b', label: '読む側と書く側で同じモニタを共有しないと、橋が掛からない'},
-    {id: 'c', label: 'synchronized があれば、ロック対象は何でも同じ効果'},
-  ]}
-  answer="b"
-  explanation="happens-before の橋は、同じモニタを介した unlock → lock で掛かります。別オブジェクトだと意図した可視性がありません。"
+title="同じロック"
+options={[
+{id: 'a', label: 'writeLock と readLock が別でも、count の更新は常に見える'},
+{id: 'b', label: '読む側と書く側で同じモニタを共有しないと、橋が掛からない'},
+{id: 'c', label: 'synchronized があれば、ロック対象は何でも同じ効果'},
+]}
+answer="b"
+explanation="happens-before の橋は、同じモニタを介した unlock → lock で掛かります。別オブジェクトだと意図した可視性がありません。"
+
 >
+
   <div>次のコードについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`private final Object writeLock = new Object();
 private final Object readLock = new Object();
 private int count;
 
 void increment() {
-    synchronized (writeLock) { count++; }
+synchronized (writeLock) { count++; }
 }
 int get() {
-    synchronized (readLock) { return count; }
+synchronized (readLock) { return count; }
 }`}</code></pre>
 </QuizChoice>
 
@@ -353,7 +358,6 @@ record Label(String text) {}
 受け渡しには、上のどれかの経路を使います。
 
 コンストラクタで `this` を他スレッドへ渡す（リスナー登録など）は、初期化途中の公開になりやすく、避けます。
-
 
 ## よくあるつまずき
 

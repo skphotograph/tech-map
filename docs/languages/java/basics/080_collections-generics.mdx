@@ -15,11 +15,11 @@ sidebar_position: 10
 
 ## List / Set / Map
 
-| インタフェース | 向き | 典型ユース |
-| -------------- | ---- | ---------- |
-| **List** | 順序あり、重複可 | タイムライン、明細行 |
-| **Set** | 重複なし（相等は equals） | タグ、許可 ID の集合 |
-| **Map** | キー → 値 | ID からエンティティ、設定テーブル |
+| インタフェース | 向き                      | 典型ユース                        |
+| -------------- | ------------------------- | --------------------------------- |
+| **List**       | 順序あり、重複可          | タイムライン、明細行              |
+| **Set**        | 重複なし（相等は equals） | タグ、許可 ID の集合              |
+| **Map**        | キー → 値                 | ID からエンティティ、設定テーブル |
 
 ```java
 List<String> steps = new ArrayList<>();
@@ -42,15 +42,17 @@ List<String> steps = new ArrayList<>(); // 左はインタフェース
 ```
 
 <QuizChoice
-  title="List / Set / Map"
-  options={[
-    {id: 'a', label: '順序ありの明細行 → Set、タグの重複なし → List'},
-    {id: 'b', label: '順序ありの明細行 → List、タグの重複なし → Set、ID 対応 → Map'},
-    {id: 'c', label: 'どれも Map で足りるので、List と Set は使わない'},
-  ]}
-  answer="b"
-  explanation="List は順序と重複可、Set は重複なし、Map はキーから値です。用途に合うインタフェースを選びます。"
+title="List / Set / Map"
+options={[
+{id: 'a', label: '順序ありの明細行 → Set、タグの重複なし → List'},
+{id: 'b', label: '順序ありの明細行 → List、タグの重複なし → Set、ID 対応 → Map'},
+{id: 'c', label: 'どれも Map で足りるので、List と Set は使わない'},
+]}
+answer="b"
+explanation="List は順序と重複可、Set は重複なし、Map はキーから値です。用途に合うインタフェースを選びます。"
+
 >
+
   <div>次の用途に合う組み合わせはどれですか。</div>
   <pre className="language-java"><code>{`// 明細の行（順番あり）
 // 許可タグ（同じ文字は一つ）
@@ -82,15 +84,17 @@ String first = names.get(0); // キャスト不要
 :::
 
 <QuizChoice
-  title="ジェネリクスの効果"
-  options={[
-    {id: 'a', label: 'コンパイルでき、実行時に Integer が入る'},
-    {id: 'b', label: 'コンパイルエラーになる'},
-    {id: 'c', label: 'コンパイルは通るが、取り出し時に必ず例外になる'},
-  ]}
-  answer="b"
-  explanation="List&lt;String&gt; には String 以外を入れられません。失敗をコンパイル時に止めます。"
+title="ジェネリクスの効果"
+options={[
+{id: 'a', label: 'コンパイルでき、実行時に Integer が入る'},
+{id: 'b', label: 'コンパイルエラーになる'},
+{id: 'c', label: 'コンパイルは通るが、取り出し時に必ず例外になる'},
+]}
+answer="b"
+explanation="List&lt;String&gt; には String 以外を入れられません。失敗をコンパイル時に止めます。"
+
 >
+
   <div>次の 2 行目はどうなりますか。</div>
   <pre className="language-java"><code>{`List<String> names = new ArrayList<>();
 names.add(42);`}</code></pre>
@@ -122,10 +126,10 @@ List<String> fixed = List.of("a", "b");
 
 ## 空と null は別物
 
-| 状態 | 意味 | 呼び出し側の気持ち |
-| ---- | ---- | ------------------ |
-| 空の List | 0 件だが「結果はある」 | `isEmpty()` で分岐しやすい |
-| null | 結果そのものが無い／未設定 | NPE のリスク |
+| 状態      | 意味                       | 呼び出し側の気持ち         |
+| --------- | -------------------------- | -------------------------- |
+| 空の List | 0 件だが「結果はある」     | `isEmpty()` で分岐しやすい |
+| null      | 結果そのものが無い／未設定 | NPE のリスク               |
 
 ```java
 List<Order> findOrders(String userId) {
@@ -138,15 +142,17 @@ List<Order> findOrders(String userId) {
 自分で返す側を設計するときは、**空コレクションを返す** 方が扱いやすい場面が多いです。
 
 <QuizChoice
-  title="空と null"
-  options={[
-    {id: 'a', label: 'A（null）の方が、呼び出し側で isEmpty しやすい'},
-    {id: 'b', label: 'B（空リスト）の方が、呼び出し側で isEmpty しやすい'},
-    {id: 'c', label: 'どちらでも呼び出し側の書き方は同じ'},
-  ]}
-  answer="b"
-  explanation="空リストなら isEmpty で分岐できます。null を返すと、その前に null チェックが必要で、忘れれば NPE になります。"
+title="空と null"
+options={[
+{id: 'a', label: 'A（null）の方が、呼び出し側で isEmpty しやすい'},
+{id: 'b', label: 'B（空リスト）の方が、呼び出し側で isEmpty しやすい'},
+{id: 'c', label: 'どちらでも呼び出し側の書き方は同じ'},
+]}
+answer="b"
+explanation="空リストなら isEmpty で分岐できます。null を返すと、その前に null チェックが必要で、忘れれば NPE になります。"
+
 >
+
   <div>呼び出し側が次のように書くとき、API の戻りとして扱いやすいのはどれですか。</div>
   <pre className="language-java"><code>{`List<Order> orders = findOrders(userId);
 if (orders.isEmpty()) {

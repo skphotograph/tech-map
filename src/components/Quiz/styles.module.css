@@ -13,7 +13,11 @@
 
 .questionFold {
   border-color: color-mix(in srgb, var(--ifm-color-primary) 35%, transparent);
-  background: color-mix(in srgb, var(--ifm-color-primary) 8%, var(--ifm-background-color));
+  background: color-mix(
+    in srgb,
+    var(--ifm-color-primary) 8%,
+    var(--ifm-background-color)
+  );
 }
 
 .answerFold {
@@ -22,7 +26,11 @@
 }
 
 [data-theme='dark'] .questionFold {
-  background: color-mix(in srgb, var(--ifm-color-primary) 16%, var(--ifm-background-color));
+  background: color-mix(
+    in srgb,
+    var(--ifm-color-primary) 16%,
+    var(--ifm-background-color)
+  );
 }
 
 [data-theme='dark'] .answerFold {
@@ -125,7 +133,12 @@
   margin: 0;
   padding: 0.7rem 0.8rem;
   border-radius: 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--ifm-color-primary) 22%, var(--ifm-color-emphasis-300));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--ifm-color-primary) 22%,
+      var(--ifm-color-emphasis-300)
+    );
   background: color-mix(in srgb, var(--ifm-background-color) 88%, white);
   cursor: pointer;
 }
@@ -136,7 +149,8 @@
 
 .option:has(input:checked) {
   border-color: var(--ifm-color-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--ifm-color-primary) 45%, transparent);
 }
 
 .option input {
@@ -171,7 +185,8 @@
 }
 
 .fillInput:focus {
-  outline: 2px solid color-mix(in srgb, var(--ifm-color-primary) 55%, transparent);
+  outline: 2px solid
+    color-mix(in srgb, var(--ifm-color-primary) 55%, transparent);
   outline-offset: 1px;
 }
 

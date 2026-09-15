@@ -37,10 +37,10 @@ Java の文法は書けても、変数が「値」なのか「行き先」なの
 
 Java の型は大きく二つです。
 
-| 種類 | 例 | 変数が持っているもの |
-| ---- | -- | -------------------- |
-| **プリミティブ** | `int`, `long`, `boolean`, `double` など | 値そのもの |
-| **参照型** | クラス、配列、`String`、コレクションなど | オブジェクトへの参照（行き先） |
+| 種類             | 例                                       | 変数が持っているもの           |
+| ---------------- | ---------------------------------------- | ------------------------------ |
+| **プリミティブ** | `int`, `long`, `boolean`, `double` など  | 値そのもの                     |
+| **参照型**       | クラス、配列、`String`、コレクションなど | オブジェクトへの参照（行き先） |
 
 ### プリミティブはコピーすると値が分かれる
 
@@ -109,15 +109,17 @@ System.out.println(boxA == boxB); // true（同じ行き先）
 `boxA` という箱にオブジェクト全体が入っている、と考えない方があとが楽です。
 
 <QuizChoice
-  title="参照のコピー"
-  options={[
-    {id: 'a', label: 'boxB.count は 0 のまま'},
-    {id: 'b', label: 'boxB.count は 1'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="boxB = boxA でコピーされるのは行き先です。同じ Box を共有するので、boxA.count への代入は boxB からも見えます。"
+title="参照のコピー"
+options={[
+{id: 'a', label: 'boxB.count は 0 のまま'},
+{id: 'b', label: 'boxB.count は 1'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="boxB = boxA でコピーされるのは行き先です。同じ Box を共有するので、boxA.count への代入は boxB からも見えます。"
+
 >
+
   <div>次のコードのあと、<code>boxB.count</code> はどうなりますか。</div>
   <pre className="language-java"><code>{`class Box {
     int count;
@@ -166,11 +168,11 @@ Box box = new Box();
 2. コンストラクタで初期化する
 3. その実体への参照を変数 `box` に入れる
 
-| 部分 | 意味 |
-| ---- | ---- |
-| `Box box` | `Box` を指す変数を用意する |
-| `new` | 新しいインスタンスを生成する |
-| `Box()` | コンストラクタ呼び出し。生成した直後の初期化 |
+| 部分      | 意味                                         |
+| --------- | -------------------------------------------- |
+| `Box box` | `Box` を指す変数を用意する                   |
+| `new`     | 新しいインスタンスを生成する                 |
+| `Box()`   | コンストラクタ呼び出し。生成した直後の初期化 |
 
 変数の中にオブジェクト全部が入るわけではありません。
 
@@ -187,15 +189,17 @@ Java は次の分担を取ります。
 「渡したのに反映されすぎる」のは、この設計の裏返しです。
 
 <QuizChoice
-  title="new の置き場"
-  options={[
-    {id: 'a', label: 'Box の実体はスタックに置かれ、参照はヒープに入る'},
-    {id: 'b', label: 'Box の実体はヒープに置かれ、変数 box は参照（行き先）を持つ'},
-    {id: 'c', label: '実体も参照も、すべてスタックにだけ置かれる'},
-  ]}
-  answer="b"
-  explanation="new で作る実体はヒープ側です。ローカル変数 box が持つのはその行き先です。"
+title="new の置き場"
+options={[
+{id: 'a', label: 'Box の実体はスタックに置かれ、参照はヒープに入る'},
+{id: 'b', label: 'Box の実体はヒープに置かれ、変数 box は参照（行き先）を持つ'},
+{id: 'c', label: '実体も参照も、すべてスタックにだけ置かれる'},
+]}
+answer="b"
+explanation="new で作る実体はヒープ側です。ローカル変数 box が持つのはその行き先です。"
+
 >
+
   <div>次の 1 行について、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`Box box = new Box();`}</code></pre>
 </QuizChoice>
@@ -335,15 +339,17 @@ static void replace(Order target) {
 :::
 
 <QuizChoice
-  title="引数に渡したあとの値"
-  options={[
-    {id: 'a', label: 'x は 99 になる'},
-    {id: 'b', label: 'x は 1 のまま'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="int の引数は値のコピーが渡されます。bump 内の n を書き換えても、呼び出し元の x は変わりません。"
+title="引数に渡したあとの値"
+options={[
+{id: 'a', label: 'x は 99 になる'},
+{id: 'b', label: 'x は 1 のまま'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="int の引数は値のコピーが渡されます。bump 内の n を書き換えても、呼び出し元の x は変わりません。"
+
 >
+
   <div>次のコードを実行したあと、<code>x</code> はどうなりますか。</div>
   <pre className="language-java"><code>{`void bump(int n) {
     n = 99;
@@ -354,15 +360,17 @@ bump(x);`}</code></pre>
 </QuizChoice>
 
 <QuizChoice
-  title="参照の渡し方"
-  options={[
-    {id: 'a', label: 'status は CLOSED、id は other'},
-    {id: 'b', label: 'status は CLOSED、id は ORD-1'},
-    {id: 'c', label: 'status は OPEN、id は ORD-1'},
-  ]}
-  answer="b"
-  explanation="参照のコピーが渡るので status の変更は共有されます。一方 order = new Order() はメソッド内の変数の付け替えだけで、呼び出し元の order が指す先は変わりません。"
+title="参照の渡し方"
+options={[
+{id: 'a', label: 'status は CLOSED、id は other'},
+{id: 'b', label: 'status は CLOSED、id は ORD-1'},
+{id: 'c', label: 'status は OPEN、id は ORD-1'},
+]}
+answer="b"
+explanation="参照のコピーが渡るので status の変更は共有されます。一方 order = new Order() はメソッド内の変数の付け替えだけで、呼び出し元の order が指す先は変わりません。"
+
 >
+
   <div>次のコードのあと、呼び出し元の <code>order</code> はどうなりますか。</div>
   <pre className="language-java"><code>{`class Order {
     String id;
@@ -370,9 +378,9 @@ bump(x);`}</code></pre>
 }
 
 void touch(Order order) {
-    order.status = "CLOSED";
-    order = new Order();
-    order.id = "other";
+order.status = "CLOSED";
+order = new Order();
+order.id = "other";
 }
 
 Order order = new Order();
@@ -535,15 +543,17 @@ static List<byte[]> cache = new ArrayList<>();
 「GC があるから消える」は、参照が切れたあとの話です。
 
 <QuizChoice
-  title="static の共有"
-  options={[
-    {id: 'a', label: 'a.issued は 1、b.issued は 0'},
-    {id: 'b', label: 'a.issued も b.issued も 1'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="static フィールドはクラス側の共有です。インスタンスが別でも同じ場所を見ます。"
+title="static の共有"
+options={[
+{id: 'a', label: 'a.issued は 1、b.issued は 0'},
+{id: 'b', label: 'a.issued も b.issued も 1'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="static フィールドはクラス側の共有です。インスタンスが別でも同じ場所を見ます。"
+
 >
+
   <div>次のコードのあと、<code>b.issued</code> はどうなりますか。</div>
   <pre className="language-java"><code>{`class TicketCounter {
     static int issued;
@@ -579,15 +589,17 @@ NPE は「Java が壊れた」のではなく、**存在しない行き先にア
 </details>
 
 <QuizChoice
-  title="null 参照"
-  options={[
-    {id: 'a', label: 'id に ORD-1 が入る'},
-    {id: 'b', label: 'NullPointerException になる'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="order は null（行き先がない）なので、フィールドへのアクセスは実行時に NullPointerException になります。"
+title="null 参照"
+options={[
+{id: 'a', label: 'id に ORD-1 が入る'},
+{id: 'b', label: 'NullPointerException になる'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="order は null（行き先がない）なので、フィールドへのアクセスは実行時に NullPointerException になります。"
+
 >
+
   <div>次のコードはどうなりますか。</div>
   <pre className="language-java"><code>{`class Order {
     String id;

@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
@@ -20,7 +20,8 @@ function HomepageHeader() {
           技術を、体系的に。
         </Heading>
         <p className={styles.lead}>
-          言語・クラウド・インフラから AI まで、IT 学習教材を一箇所にまとめるサイトです。
+          言語・クラウド・インフラから AI まで、IT
+          学習教材を一箇所にまとめるサイトです。
         </p>
         <div className={styles.actions}>
           <Link className={styles.primaryCta} to="/docs/intro">
@@ -39,7 +40,8 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title="Training"
-      description="IT技術に関する学習教材を包括的にまとめたサイト">
+      description="IT技術に関する学習教材を包括的にまとめたサイト"
+    >
       <HomepageHeader />
       <main>
         <HomepageFeatures />

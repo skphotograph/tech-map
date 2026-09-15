@@ -5,7 +5,7 @@ sidebar_position: 14
 # 設計としてのコレクション
 
 メソッドが返した一覧を呼び出し側で変更したら、元のオブジェクトの状態まで変わってしまうことがあります。  
-コレクションはデータを入れる箱であると同時に、API が許す操作を表す設計要素です。  
+コレクションはデータを入れる箱であると同時に、API が許す操作を表す設計要素です。
 
 ## このページで分かること
 
@@ -16,7 +16,7 @@ sidebar_position: 14
 ## API 境界では必要な能力だけを示す
 
 メソッドが順番に要素を読むだけなら、引数を `ArrayList` に限定する理由はありません。  
-`List` や、さらに要件が小さければ `Collection`、`Iterable` を受け取ると、呼び出し側が実装を選べます。  
+`List` や、さらに要件が小さければ `Collection`、`Iterable` を受け取ると、呼び出し側が実装を選べます。
 
 ```java
 static int totalAmount(Collection<Order> orders) {
@@ -28,7 +28,7 @@ static int totalAmount(Collection<Order> orders) {
 record Order(long id, int amount) {}
 ```
 
-実装クラスは、生成する場所で選びます。  
+実装クラスは、生成する場所で選びます。
 
 ```java
 List<Order> orders = new ArrayList<>();
@@ -37,20 +37,22 @@ orders.add(new Order(1001L, 3000));
 
 :::tip[型を狭くする基準]
 
-「現在使っている実装」ではなく、「そのメソッドが必要とする操作」で引数の型を決めます。  
+「現在使っている実装」ではなく、「そのメソッドが必要とする操作」で引数の型を決めます。
 
 :::
 
 <QuizChoice
-  title="引数の型"
-  options={[
-    {id: 'a', label: '必ず ArrayList に限定する'},
-    {id: 'b', label: '必要な操作に合わせて Collection や List などへ広げる'},
-    {id: 'c', label: '常に Object にして呼び出し側に任せる'},
-  ]}
-  answer="b"
-  explanation="読むだけなら Collection などで十分です。実装クラスに縛ると呼び出し側の選択肢が狭まります。"
+title="引数の型"
+options={[
+{id: 'a', label: '必ず ArrayList に限定する'},
+{id: 'b', label: '必要な操作に合わせて Collection や List などへ広げる'},
+{id: 'c', label: '常に Object にして呼び出し側に任せる'},
+]}
+answer="b"
+explanation="読むだけなら Collection などで十分です。実装クラスに縛ると呼び出し側の選択肢が狭まります。"
+
 >
+
   <div>次のメソッドの引数型として、近い方針はどれですか。</div>
   <pre className="language-java"><code>{`static int totalAmount(Collection<Order> orders) {
     return orders.stream()
@@ -61,7 +63,7 @@ orders.add(new Order(1001L, 3000));
 
 ## 内部のコレクションをそのまま返さない
 
-次のクラスは、登録済みの注文を `List.copyOf` でコピーして返します。  
+次のクラスは、登録済みの注文を `List.copyOf` でコピーして返します。
 
 ```java
 final class OrderBook {
@@ -78,28 +80,30 @@ final class OrderBook {
 ```
 
 呼び出し側は返されたリストへ追加・削除できません。  
-また、返したあとに `OrderBook` 内部のリストが変化しても、すでに返したコピーの内容は変わりません。  
+また、返したあとに `OrderBook` 内部のリストが変化しても、すでに返したコピーの内容は変わりません。
 
 `Collections.unmodifiableList(orders)` は、変更操作を拒否するビューを返します。  
-元の `orders` が変化するとビューにも反映されるため、スナップショットが必要なら `List.copyOf` が適しています。  
+元の `orders` が変化するとビューにも反映されるため、スナップショットが必要なら `List.copyOf` が適しています。
 
 <details>
 <summary>浅い不変性に注意する</summary>
 
 不変リストにしても、要素そのものが変更可能なら、その要素の状態は変えられます。  
-境界全体を不変にしたい場合は、要素を `record` などの不変な値にするか、要素もコピーする必要があります。  
+境界全体を不変にしたい場合は、要素を `record` などの不変な値にするか、要素もコピーする必要があります。
 </details>
 
 <QuizChoice
-  title="内部リストの返し方"
-  options={[
-    {id: 'a', label: '内部の可変 ArrayList をそのまま返すのがいちばん安全'},
-    {id: 'b', label: 'List.copyOf などで、呼び出し側の変更が内部に届かない形にする'},
-    {id: 'c', label: '常に null を返して変更を防ぐ'},
-  ]}
-  answer="b"
-  explanation="可変リストをそのまま返すと、呼び出し側の add が内部状態を壊します。コピーや読み取り専用の契約を先に決めます。"
+title="内部リストの返し方"
+options={[
+{id: 'a', label: '内部の可変 ArrayList をそのまま返すのがいちばん安全'},
+{id: 'b', label: 'List.copyOf などで、呼び出し側の変更が内部に届かない形にする'},
+{id: 'c', label: '常に null を返して変更を防ぐ'},
+]}
+answer="b"
+explanation="可変リストをそのまま返すと、呼び出し側の add が内部状態を壊します。コピーや読み取り専用の契約を先に決めます。"
+
 >
+
   <div>次の <code>orders()</code> について、適切な方針はどれですか。</div>
   <pre className="language-java"><code>{`final class OrderBook {
     private final List<Order> orders = new ArrayList<>();
@@ -107,12 +111,13 @@ final class OrderBook {
     List<Order> orders() {
         return List.copyOf(orders);
     }
+
 }`}</code></pre>
 </QuizChoice>
 
 ## 「結果なし」は空で返す
 
-複数件を返す検索では、結果がなければ空のコレクションを返すのが一般的です。  
+複数件を返す検索では、結果がなければ空のコレクションを返すのが一般的です。
 
 ```java
 static List<Order> findLargeOrders(List<Order> orders, int minimum) {
@@ -122,7 +127,7 @@ static List<Order> findLargeOrders(List<Order> orders, int minimum) {
 }
 ```
 
-呼び出し側は `null` チェックをせずに、そのままループできます。  
+呼び出し側は `null` チェックをせずに、そのままループできます。
 
 ```java
 for (Order order : findLargeOrders(orders, 5000)) {
@@ -131,7 +136,7 @@ for (Order order : findLargeOrders(orders, 5000)) {
 ```
 
 単一の値が見つからない可能性は `Optional<T>`、複数件の結果がない場合は空の `List<T>` という区別が、API の意図を伝えやすくします。  
-ただし、`null` に特別な意味を持たせた既存 API と接続するときは、その契約に従って境界で変換します。  
+ただし、`null` に特別な意味を持たせた既存 API と接続するときは、その契約に従って境界で変換します。
 
 ## コレクションを選ぶ観点
 
@@ -141,8 +146,7 @@ for (Order order : findLargeOrders(orders, 5000)) {
 - `Queue` / `Deque`: 処理待ちや先頭・末尾からの操作を表す
 
 順序が必要なのに `Set` を使う、キーの重複方針を決めずに `Map` へ変換する、といった選択は不具合につながります。  
-データ量が小さい段階から性能だけで選ぶのではなく、まず意味に合う型を選びます。  
-
+データ量が小さい段階から性能だけで選ぶのではなく、まず意味に合う型を選びます。
 
 ## よくあるつまずき
 
@@ -157,4 +161,4 @@ for (Order order : findLargeOrders(orders, 5000)) {
 - 内部状態を守るには、不変ビューとコピーの違いを理解して選ぶ
 - 複数件の結果がない場合は、原則として `null` ではなく空のコレクションを返す
 
-次は [Stream と Collector](./stream-and-collectors) で、コレクションの変換や集計を読みやすく表現します。  
+次は [Stream と Collector](./stream-and-collectors) で、コレクションの変換や集計を読みやすく表現します。

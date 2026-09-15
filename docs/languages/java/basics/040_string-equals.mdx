@@ -84,10 +84,10 @@ System.out.println(a.equals(c)); // true
 
 ## `==` と `equals`
 
-| 演算 / メソッド | 見ているもの | 文字列での使い方 |
-| --------------- | ------------ | ---------------- |
-| `==` | 参照が同じか（プリミティブなら値） | 原則使わない |
-| `equals` | オブジェクトが「等しい」と定義した内容 | 中身の比較に使う |
+| 演算 / メソッド | 見ているもの                           | 文字列での使い方 |
+| --------------- | -------------------------------------- | ---------------- |
+| `==`            | 参照が同じか（プリミティブなら値）     | 原則使わない     |
+| `equals`        | オブジェクトが「等しい」と定義した内容 | 中身の比較に使う |
 
 ```java
 String left = new String("task");
@@ -111,15 +111,17 @@ System.out.println(left.equals(right)); // true
 :::
 
 <QuizChoice
-  title="文字列の比較"
-  options={[
-    {id: 'a', label: 'A（==）'},
-    {id: 'b', label: 'B（equals）'},
-    {id: 'c', label: 'A と B は常に同じ結果'},
-  ]}
-  answer="b"
-  explanation="中身の同値比較は equals です。== は参照の同一性で、入力由来の文字列では false になりやすいです。null の可能性があるなら Objects.equals や &quot;OPEN&quot;.equals(a) も検討します。"
+title="文字列の比較"
+options={[
+{id: 'a', label: 'A（==）'},
+{id: 'b', label: 'B（equals）'},
+{id: 'c', label: 'A と B は常に同じ結果'},
+]}
+answer="b"
+explanation="中身の同値比較は equals です。== は参照の同一性で、入力由来の文字列では false になりやすいです。null の可能性があるなら Objects.equals や &quot;OPEN&quot;.equals(a) も検討します。"
+
 >
+
   <div>中身が同じかを知りたいとき、使うべきなのはどれですか。</div>
   <pre className="language-java"><code>{`String a = readFromRequest(); // 外部入力
 String b = "OPEN";
@@ -227,16 +229,18 @@ IDE や `Objects.hash(...)` で、比較に使うフィールドを同じ集合�
 :::
 
 <QuizChoice
-  title="HashSet で contains するために"
-  options={[
-    {id: 'a', label: 'equals だけオーバーライドする'},
-    {id: 'b', label: 'hashCode だけオーバーライドする'},
-    {id: 'c', label: 'equals と hashCode の両方を揃える'},
-    {id: 'd', label: 'toString をオーバーライドする'},
-  ]}
-  answer="c"
-  explanation="HashSet / HashMap は hashCode で桶を決め、equals で同値を確認します。equals だけだと別インスタンスが別桶を見にいき、contains が false になりえます。"
+title="HashSet で contains するために"
+options={[
+{id: 'a', label: 'equals だけオーバーライドする'},
+{id: 'b', label: 'hashCode だけオーバーライドする'},
+{id: 'c', label: 'equals と hashCode の両方を揃える'},
+{id: 'd', label: 'toString をオーバーライドする'},
+]}
+answer="c"
+explanation="HashSet / HashMap は hashCode で桶を決め、equals で同値を確認します。equals だけだと別インスタンスが別桶を見にいき、contains が false になりえます。"
+
 >
+
   <div>次が true になるために、<code>UserId</code> へ必要な実装はどれですか。</div>
   <pre className="language-java"><code>{`Set<UserId> ids = new HashSet<>();
 ids.add(new UserId("u-1"));
@@ -291,7 +295,6 @@ record UserId(String value) {
 - キーや Set の要素にする型は、不変＋`equals`/`hashCode` セット
 - 「入れたのに取れない」は、まず契約と可変キーを疑う
 - ログに出すときは、長さや引用符付きで空白差が見えるようにする
-
 
 ## よくあるつまずき
 

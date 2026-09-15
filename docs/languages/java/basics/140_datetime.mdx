@@ -5,7 +5,7 @@ sidebar_position: 16
 # 日時 API
 
 画面では同じ「2026-09-15 10:00」に見えても、東京の 10 時とロンドンの 10 時は別の瞬間です。  
-日時の不具合を防ぐには、日付、ローカル時刻、世界で一意な瞬間を区別して型を選びます。  
+日時の不具合を防ぐには、日付、ローカル時刻、世界で一意な瞬間を区別して型を選びます。
 
 ## このページで分かること
 
@@ -15,27 +15,29 @@ sidebar_position: 16
 
 ## 何を表すかで型を選ぶ
 
-| 型 | 表すもの | 例 |
-| --- | --- | --- |
-| `LocalDate` | タイムゾーンを持たない日付 | 誕生日、締め日 |
-| `LocalTime` | タイムゾーンを持たない時刻 | 毎日の開店時刻 |
-| `LocalDateTime` | タイムゾーンを持たない日付と時刻 | 利用者が入力した現地日時 |
-| `Instant` | UTC の時間軸上の一瞬 | イベント発生時刻、監査時刻 |
-| `ZonedDateTime` | タイムゾーン付きの日時 | 地域の規則を含む予定 |
-| `OffsetDateTime` | UTC との差を持つ日時 | オフセット付き API 入出力 |
+| 型               | 表すもの                         | 例                         |
+| ---------------- | -------------------------------- | -------------------------- |
+| `LocalDate`      | タイムゾーンを持たない日付       | 誕生日、締め日             |
+| `LocalTime`      | タイムゾーンを持たない時刻       | 毎日の開店時刻             |
+| `LocalDateTime`  | タイムゾーンを持たない日付と時刻 | 利用者が入力した現地日時   |
+| `Instant`        | UTC の時間軸上の一瞬             | イベント発生時刻、監査時刻 |
+| `ZonedDateTime`  | タイムゾーン付きの日時           | 地域の規則を含む予定       |
+| `OffsetDateTime` | UTC との差を持つ日時             | オフセット付き API 入出力  |
 
-「日時だから `LocalDateTime`」と決めるのではなく、その値が一意な瞬間を表すのかを確認します。  
+「日時だから `LocalDateTime`」と決めるのではなく、その値が一意な瞬間を表すのかを確認します。
 
 <QuizChoice
-  title="日時の型選び"
-  options={[
-    {id: 'a', label: '誕生日も監査時刻も LocalDateTime で統一する'},
-    {id: 'b', label: '誕生日は LocalDate、世界で一意な瞬間は Instant など、意味で分ける'},
-    {id: 'c', label: '常に Date を使い、表示だけ ZoneId で整える'},
-  ]}
-  answer="b"
-  explanation="日付・現地日時・UTC 上の一瞬は別の意味です。型を分けるとタイムゾーン事故を減らせます。"
+title="日時の型選び"
+options={[
+{id: 'a', label: '誕生日も監査時刻も LocalDateTime で統一する'},
+{id: 'b', label: '誕生日は LocalDate、世界で一意な瞬間は Instant など、意味で分ける'},
+{id: 'c', label: '常に Date を使い、表示だけ ZoneId で整える'},
+]}
+answer="b"
+explanation="日付・現地日時・UTC 上の一瞬は別の意味です。型を分けるとタイムゾーン事故を減らせます。"
+
 >
+
   <div>次の用途に合う選び方はどれですか。</div>
   <pre className="language-java"><code>{`// 利用者の誕生日
 // サーバが記録するイベント発生時刻（UTC の一瞬）`}</code></pre>
@@ -60,11 +62,11 @@ System.out.println(days);
 ```
 
 `java.time` の主要な型は不変です。  
-`plusDays` は元の値を変更せず、新しい値を返すため、戻り値を受け取ります。  
+`plusDays` は元の値を変更せず、新しい値を返すため、戻り値を受け取ります。
 
 ## Instant と ZoneId を変換する
 
-保存やシステム間連携では `Instant` を使い、表示時に利用者のタイムゾーンへ変換する方法があります。  
+保存やシステム間連携では `Instant` を使い、表示時に利用者のタイムゾーンへ変換する方法があります。
 
 ```java
 Instant occurredAt = Instant.parse("2026-09-15T01:00:00Z");
@@ -81,25 +83,27 @@ System.out.println(localTime);
 ```
 
 `Z` は UTC を示します。  
-`Asia/Tokyo` の規則を適用すると、同じ瞬間が日本時間の 10 時として表示されます。  
+`Asia/Tokyo` の規則を適用すると、同じ瞬間が日本時間の 10 時として表示されます。
 
 :::tip[タイムゾーンを明示する]
 
 サーバのデフォルトタイムゾーンに依存すると、実行環境の変更で結果が変わります。  
-業務上必要な地域は `ZoneId` として明示します。  
+業務上必要な地域は `ZoneId` として明示します。
 
 :::
 
 <QuizChoice
-  title="Instant と ZoneId"
-  options={[
-    {id: 'a', label: 'Instant を atZone すると、同じ瞬間をその地域の時計表示へ写せる'},
-    {id: 'b', label: 'ZoneId を付けると Instant の中身（UTC の瞬間）自体が変わる'},
-    {id: 'c', label: 'サーバのデフォルトタイムゾーンに任せるのが安全'},
-  ]}
-  answer="a"
-  explanation="Instant は瞬間そのもの、atZone は表示・地域規則への投影です。デフォルト TZ 依存は環境差の温床です。"
+title="Instant と ZoneId"
+options={[
+{id: 'a', label: 'Instant を atZone すると、同じ瞬間をその地域の時計表示へ写せる'},
+{id: 'b', label: 'ZoneId を付けると Instant の中身（UTC の瞬間）自体が変わる'},
+{id: 'c', label: 'サーバのデフォルトタイムゾーンに任せるのが安全'},
+]}
+answer="a"
+explanation="Instant は瞬間そのもの、atZone は表示・地域規則への投影です。デフォルト TZ 依存は環境差の温床です。"
+
 >
+
   <div>次のコードについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`Instant occurredAt = Instant.parse("2026-09-15T01:00:00Z");
 ZonedDateTime localTime =
@@ -109,14 +113,14 @@ ZonedDateTime localTime =
 
 ## 文字列を解析・整形する
 
-ISO 8601 形式なら、標準の解析機能を優先できます。  
+ISO 8601 形式なら、標準の解析機能を優先できます。
 
 ```java
 LocalDate date = LocalDate.parse("2026-09-15");
 Instant instant = Instant.parse("2026-09-15T01:00:00Z");
 ```
 
-独自形式には `DateTimeFormatter` を使います。  
+独自形式には `DateTimeFormatter` を使います。
 
 ```java
 DateTimeFormatter formatter =
@@ -127,25 +131,25 @@ String text = date.format(formatter);
 ```
 
 フォーマッターは不変かつスレッドセーフです。  
-形式をアプリケーション内で共有すると、解析と表示のずれを減らせます。  
+形式をアプリケーション内で共有すると、解析と表示のずれを減らせます。
 
 ## Date と Calendar は新規コードで避ける
 
 古い API やライブラリとの接続では `java.util.Date` や `Calendar` に出会います。  
-これらは変更可能で、月の扱いやタイムゾーンの操作も分かりにくいため、新規コードでは原則として `java.time` を使います。  
+これらは変更可能で、月の扱いやタイムゾーンの操作も分かりにくいため、新規コードでは原則として `java.time` を使います。
 
 ```java
 Date legacyDate = Date.from(instant);
 Instant converted = legacyDate.toInstant();
 ```
 
-既存 API との境界だけで変換し、内部では `java.time` の型にそろえると影響を限定できます。  
+既存 API との境界だけで変換し、内部では `java.time` の型にそろえると影響を限定できます。
 
 <details>
 <summary>夏時間で存在しない・重複する時刻</summary>
 
 夏時間の切り替えがある地域では、時計が進んで存在しないローカル時刻や、時計が戻って 2 回現れるローカル時刻があります。  
-厳密な予約処理では `LocalDateTime` だけで確定せず、対象の `ZoneId` と業務上の選択ルールを確認します。  
+厳密な予約処理では `LocalDateTime` だけで確定せず、対象の `ZoneId` と業務上の選択ルールを確認します。
 </details>
 
 ## よくあるつまずき
@@ -161,4 +165,4 @@ Instant converted = legacyDate.toInstant();
 - 地域の時刻へ変換するときは `ZoneId` を明示する
 - 新規コードでは `Date` や `Calendar` より `java.time` を優先する
 
-次は [ファイルとリソース管理](./files-and-resources) で、入出力と確実なクローズを学びます。  
+次は [ファイルとリソース管理](./files-and-resources) で、入出力と確実なクローズを学びます。

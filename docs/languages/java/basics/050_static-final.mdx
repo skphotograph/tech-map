@@ -36,15 +36,17 @@ System.out.println(b.openCount); // 同じ場所を見ている
 「本当に全体で一つでよいか」を疑う癖が大事です。
 
 <QuizChoice
-  title="static フィールド"
-  options={[
-    {id: 'a', label: 'コンパイルエラーになる'},
-    {id: 'b', label: '2 と出る（クラス名経由でも同じ共有場所）'},
-    {id: 'c', label: '0 と出る（インスタンスからは見えない）'},
-  ]}
-  answer="b"
-  explanation="static フィールドはクラス側の共有です。TicketCounter.issued への代入も、インスタンス経由の参照も同じ場所を見ます。"
+title="static フィールド"
+options={[
+{id: 'a', label: 'コンパイルエラーになる'},
+{id: 'b', label: '2 と出る（クラス名経由でも同じ共有場所）'},
+{id: 'c', label: '0 と出る（インスタンスからは見えない）'},
+]}
+answer="b"
+explanation="static フィールドはクラス側の共有です。TicketCounter.issued への代入も、インスタンス経由の参照も同じ場所を見ます。"
+
 >
+
   <div>次のコードのあと、出力はどうなりますか。</div>
   <pre className="language-java"><code>{`class TicketCounter {
     static int issued;
@@ -112,22 +114,24 @@ user.name = "b"; // 中身の変更は可能（参照の付け替えだけ不可
 不変にしたいなら、フィールドを `final` にし、セッターを置かない、コレクションを変更不可にする、などが別途必要です。
 
 <QuizChoice
-  title="final の意味"
-  options={[
-    {id: 'a', label: 'name への代入もコンパイルエラーになる'},
-    {id: 'b', label: 'name への代入はでき、user = new User() だけがコンパイルエラー'},
-    {id: 'c', label: 'どちらも実行時例外になる'},
-  ]}
-  answer="b"
-  explanation="参照型の final は付け替え禁止です。オブジェクトのフィールド変更は別問題です。"
+title="final の意味"
+options={[
+{id: 'a', label: 'name への代入もコンパイルエラーになる'},
+{id: 'b', label: 'name への代入はでき、user = new User() だけがコンパイルエラー'},
+{id: 'c', label: 'どちらも実行時例外になる'},
+]}
+answer="b"
+explanation="参照型の final は付け替え禁止です。オブジェクトのフィールド変更は別問題です。"
+
 >
+
   <div>次のうち、正しい説明はどれですか。</div>
   <pre className="language-java"><code>{`class User {
     String name;
 }
 
 final User user = new User();
-user.name = "b";     // ?
+user.name = "b"; // ?
 // user = new User(); // ?`}</code></pre>
 </QuizChoice>
 
@@ -159,7 +163,6 @@ public final class OrderStatus {
 ここでは「定数の形」として `static final` を先に覚え、列挙型は設計の入口で深掘りします。
 
 </details>
-
 
 ## よくあるつまずき
 

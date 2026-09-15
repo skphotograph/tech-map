@@ -58,10 +58,10 @@ Shipment shipment = new Shipment();
 loading -> linking -> initialization
 ```
 
-| 段階 | 概要 |
-| ---- | ---- |
-| loading | バイトコードを探して読み込む |
-| linking | 検証、準備、他クラスへの参照の解決 |
+| 段階           | 概要                                            |
+| -------------- | ----------------------------------------------- |
+| loading        | バイトコードを探して読み込む                    |
+| linking        | 検証、準備、他クラスへの参照の解決              |
 | initialization | `static` 初期化子や `static` フィールドの初期化 |
 
 ```java
@@ -79,15 +79,17 @@ class PricingRules {
 初期化のタイミングは、このロード過程にぶら下がっています。
 
 <QuizChoice
-  title="いつ初期化されるか"
-  options={[
-    {id: 'a', label: 'ソースに書いた時点で、起動直後に必ず static ブロックが走る'},
-    {id: 'b', label: 'クラスが初めて必要になり、初期化されるタイミングで走る'},
-    {id: 'c', label: 'javac の時点で static ブロックは実行される'},
-  ]}
-  answer="b"
-  explanation="クラスは必要になったときにロード・初期化されます。static 初期化子は起動直後に必ず走るわけではありません。"
+title="いつ初期化されるか"
+options={[
+{id: 'a', label: 'ソースに書いた時点で、起動直後に必ず static ブロックが走る'},
+{id: 'b', label: 'クラスが初めて必要になり、初期化されるタイミングで走る'},
+{id: 'c', label: 'javac の時点で static ブロックは実行される'},
+]}
+answer="b"
+explanation="クラスは必要になったときにロード・初期化されます。static 初期化子は起動直後に必ず走るわけではありません。"
+
 >
+
   <div>次のブロックについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`class PricingRules {
     static {
@@ -154,15 +156,17 @@ java.lang.ClassCastException: com.example.Shipment cannot be cast to com.example
 テストランナー、ホットリロード、プラグイン、アプリケーションサーバで、この形を見たら名前のタイポより先にローダーを疑います。
 
 <QuizChoice
-  title="クラスの同一性"
-  options={[
-    {id: 'a', label: '完全修飾名が同じなら、どのクラスローダーでも同じ型'},
-    {id: 'b', label: '完全修飾名に加え、読み込んだクラスローダーも同一性に関わる'},
-    {id: 'c', label: 'クラスローダーは起動時に一度だけ使われ、あとは関係ない'},
-  ]}
-  answer="b"
-  explanation="同じ名前でもローダーが違えば別型として扱われ、見た目が同じ ClassCastException の原因になります。"
+title="クラスの同一性"
+options={[
+{id: 'a', label: '完全修飾名が同じなら、どのクラスローダーでも同じ型'},
+{id: 'b', label: '完全修飾名に加え、読み込んだクラスローダーも同一性に関わる'},
+{id: 'c', label: 'クラスローダーは起動時に一度だけ使われ、あとは関係ない'},
+]}
+answer="b"
+explanation="同じ名前でもローダーが違えば別型として扱われ、見た目が同じ ClassCastException の原因になります。"
+
 >
+
   <div>次のような例外を見るとき、正しい理解はどれですか。</div>
   <pre className="language-text"><code>{`java.lang.ClassCastException: com.example.Shipment
  cannot be cast to com.example.Shipment`}</code></pre>
@@ -279,7 +283,6 @@ GC が多いときの二分法（作りすぎ／持ちすぎ）は、メモリ�
 変更前の基準値とボトルネックを確認し、1 つずつ変えて同じ条件で測ります。
 
 :::
-
 
 ## よくあるつまずき
 

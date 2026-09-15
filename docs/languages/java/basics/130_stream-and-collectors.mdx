@@ -94,15 +94,17 @@ Order order = findOrder(orderId)
 入口ページと同じく、「無かったとき」を先に決める書き方に寄せます。
 
 <QuizChoice
-  title="max の戻り"
-  options={[
-    {id: 'a', label: '空の一覧なら null が返る'},
-    {id: 'b', label: '空かもしれないので Optional で受け取る'},
-    {id: 'c', label: '空なら必ず例外になる'},
-  ]}
-  answer="b"
-  explanation="findFirst や max は 0 件もあり得るので Optional を返します。無いときの方針を orElse / ifPresent などで決めます。"
+title="max の戻り"
+options={[
+{id: 'a', label: '空の一覧なら null が返る'},
+{id: 'b', label: '空かもしれないので Optional で受け取る'},
+{id: 'c', label: '空なら必ず例外になる'},
+]}
+answer="b"
+explanation="findFirst や max は 0 件もあり得るので Optional を返します。無いときの方針を orElse / ifPresent などで決めます。"
+
 >
+
   <div>次の結果の型について、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`Optional<Order> largestOrder = orders.stream()
     .max(Comparator.comparingInt(Order::amount));`}</code></pre>
@@ -146,15 +148,17 @@ Map<String, Long> countByStatus = orders.stream()
 「グループ化したあと、さらにどう集計するか」を二段で書いている、と捉えると追いやすいです。
 
 <QuizChoice
-  title="groupingBy"
-  options={[
-    {id: 'a', label: 'ステータスごとの List に振り分ける'},
-    {id: 'b', label: '注文を 1 件の Map に潰す'},
-    {id: 'c', label: '終端が無いので何も起きない'},
-  ]}
-  answer="a"
-  explanation="groupingBy はキー（ここでは status）ごとに要素をリストへ振り分けます。collect が終端です。"
+title="groupingBy"
+options={[
+{id: 'a', label: 'ステータスごとの List に振り分ける'},
+{id: 'b', label: '注文を 1 件の Map に潰す'},
+{id: 'c', label: '終端が無いので何も起きない'},
+]}
+answer="a"
+explanation="groupingBy はキー（ここでは status）ごとに要素をリストへ振り分けます。collect が終端です。"
+
 >
+
   <div>次のコードがすることに近いものはどれですか。</div>
   <pre className="language-java"><code>{`Map<String, List<Order>> ordersByStatus = orders.stream()
     .collect(Collectors.groupingBy(Order::status));`}</code></pre>
@@ -221,29 +225,30 @@ IntSummaryStatistics statistics = orders.stream()
 
 迷ったら、for に戻して自問します。
 
-| 欲しい結果 | 向く終端の例 |
-| ---------- | ------------ |
-| リスト | `toList` |
-| 件数 | `count` / `Collectors.counting` |
-| キーごとのリスト | `groupingBy` |
-| 真偽の 2 群 | `partitioningBy` |
-| キーから 1 件 | `toMap`（重複方針も決める） |
-| 1 本の文字列 | `joining` |
-| 合計や平均など | `summarizingInt` や数値 Stream |
+| 欲しい結果       | 向く終端の例                    |
+| ---------------- | ------------------------------- |
+| リスト           | `toList`                        |
+| 件数             | `count` / `Collectors.counting` |
+| キーごとのリスト | `groupingBy`                    |
+| 真偽の 2 群      | `partitioningBy`                |
+| キーから 1 件    | `toMap`（重複方針も決める）     |
+| 1 本の文字列     | `joining`                       |
+| 合計や平均など   | `summarizingInt` や数値 Stream  |
 
 「モダンだから Collector」ではなく、**いま欲しいデータの形は何か** が先です。
 
-
 <QuizChoice
-  title="Collector の選び方"
-  options={[
-    {id: 'a', label: 'とにかく groupingBy を使えばよい'},
-    {id: 'b', label: '欲しい結果の形（リスト、Map、件数など）から終端を選ぶ'},
-    {id: 'c', label: 'Collector は parallelStream のときだけ使う'},
-  ]}
-  answer="b"
-  explanation="for で一時変数に集めていた「最後に欲しい形」を、toList / groupingBy / toMap などの終端に置き換える、と考えると選びやすいです。"
+title="Collector の選び方"
+options={[
+{id: 'a', label: 'とにかく groupingBy を使えばよい'},
+{id: 'b', label: '欲しい結果の形（リスト、Map、件数など）から終端を選ぶ'},
+{id: 'c', label: 'Collector は parallelStream のときだけ使う'},
+]}
+answer="b"
+explanation="for で一時変数に集めていた「最後に欲しい形」を、toList / groupingBy / toMap などの終端に置き換える、と考えると選びやすいです。"
+
 >
+
   <div>次のように状態ごとの一覧が欲しいとき、先に決めるべきなのはどれですか。</div>
   <pre className="language-java"><code>{`// 欲しい形: Map<String, List<Order>>（status → 注文一覧）
 orders.stream().collect(/* どれを選ぶ？ */);`}</code></pre>

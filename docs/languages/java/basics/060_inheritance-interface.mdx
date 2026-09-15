@@ -36,15 +36,17 @@ class UrgentTask extends Task {
 `@Override` は必須ではありませんが、付けておくとシグネチャの食い違いをコンパイル時に検知できます。
 
 <QuizChoice
-  title="オーバーライド"
-  options={[
-    {id: 'a', label: '"task done" と出る'},
-    {id: 'b', label: '"urgent task done" と出る'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="UrgentTask が complete をオーバーライドしているので、実体が UrgentTask なら子の実装が動きます。"
+title="オーバーライド"
+options={[
+{id: 'a', label: '"task done" と出る'},
+{id: 'b', label: '"urgent task done" と出る'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="UrgentTask が complete をオーバーライドしているので、実体が UrgentTask なら子の実装が動きます。"
+
 >
+
   <div>次の出力はどうなりますか。</div>
   <pre className="language-java"><code>{`class Task {
     void complete() {
@@ -53,10 +55,10 @@ class UrgentTask extends Task {
 }
 
 class UrgentTask extends Task {
-    @Override
-    void complete() {
-        System.out.println("urgent task done");
-    }
+@Override
+void complete() {
+System.out.println("urgent task done");
+}
 }
 
 UrgentTask task = new UrgentTask();
@@ -107,15 +109,17 @@ task.complete(); // "urgent task done"
 :::
 
 <QuizChoice
-  title="参照型と実行時の型"
-  options={[
-    {id: 'a', label: '必ず "shape" と出る'},
-    {id: 'b', label: '"circle" と出る（実行時の実体のメソッドが選ばれる）'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="変数の型はコンパイル時に呼べるメンバを決め、オーバーライドされたインスタンスメソッドは実行時のオブジェクトの型で選ばれるのが基本です。"
+title="参照型と実行時の型"
+options={[
+{id: 'a', label: '必ず "shape" と出る'},
+{id: 'b', label: '"circle" と出る（実行時の実体のメソッドが選ばれる）'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="変数の型はコンパイル時に呼べるメンバを決め、オーバーライドされたインスタンスメソッドは実行時のオブジェクトの型で選ばれるのが基本です。"
+
 >
+
   <div>次の出力はどうなりますか。</div>
   <pre className="language-java"><code>{`class Shape {
     String name() { return "shape"; }
@@ -159,7 +163,6 @@ if (task instanceof UrgentTask urgent) {
 似た単語なので、レビューコメントではどちらを指すか明示すると誤解が減ります。
 
 </details>
-
 
 ## よくあるつまずき
 

@@ -57,11 +57,11 @@ names.forEach(name -> System.out.println(name));
 
 `name -> System.out.println(name)` がラムダ式です。
 
-| 部分 | 意味 |
-| ---- | ---- |
-| `name` | 受け取る値（引数） |
-| `->` | 「左を使って右を行う」という区切り |
-| `System.out.println(name)` | 実行する処理 |
+| 部分                       | 意味                               |
+| -------------------------- | ---------------------------------- |
+| `name`                     | 受け取る値（引数）                 |
+| `->`                       | 「左を使って右を行う」という区切り |
+| `System.out.println(name)` | 実行する処理                       |
 
 「名前を表示する」「長さで並べ替える」など、今回限りの短い処理のために、毎回クラスを用意しなくて済むのがうれしい点です。
 
@@ -101,15 +101,17 @@ names.sort((left, right) -> left.length() - right.length());
 :::
 
 <QuizChoice
-  title="ラムダの読み方"
-  options={[
-    {id: 'a', label: '左が処理、右が引数'},
-    {id: 'b', label: '左が引数、右が処理（または戻り値になる式）'},
-    {id: 'c', label: 'Stream の中だけでしか書けない'},
-  ]}
-  answer="b"
-  explanation="name -&gt; ... は「左を受け取り、右を実行する」形です。Stream 専用ではありません。"
+title="ラムダの読み方"
+options={[
+{id: 'a', label: '左が処理、右が引数'},
+{id: 'b', label: '左が引数、右が処理（または戻り値になる式）'},
+{id: 'c', label: 'Stream の中だけでしか書けない'},
+]}
+answer="b"
+explanation="name -&gt; ... は「左を受け取り、右を実行する」形です。Stream 専用ではありません。"
+
 >
+
   <div>次のラムダについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`names.forEach(name -> System.out.println(name));`}</code></pre>
 </QuizChoice>
@@ -127,12 +129,12 @@ List<String> openTitles = tasks.stream()
 
 ステップ1の for と対応させると、こうです。
 
-| for でやっていたこと | Stream |
-| -------------------- | ------ |
-| 一覧を順に見る | `tasks.stream()` |
-| 条件で残す | `filter(...)` |
-| 別の値に変換する | `map(...)` |
-| 結果をリストとして受け取る | `toList()` |
+| for でやっていたこと       | Stream           |
+| -------------------------- | ---------------- |
+| 一覧を順に見る             | `tasks.stream()` |
+| 条件で残す                 | `filter(...)`    |
+| 別の値に変換する           | `map(...)`       |
+| 結果をリストとして受け取る | `toList()`       |
 
 読むときは上から、「何を流し、何を残し、何に変え、最後にどう受け取るか」と声に出すと追いやすいです。
 
@@ -182,15 +184,17 @@ Stream は「流して変換・集計する」道具。
 必要なら、元のコレクションから再度 `stream()` します。
 
 <QuizChoice
-  title="Stream が動かないとき"
-  options={[
-    {id: 'a', label: 'この時点で titles に結果が入っている'},
-    {id: 'b', label: '終端操作が無いので、一覧としてはまだ確定していない'},
-    {id: 'c', label: 'stream() しただけで変換は完了している'},
-  ]}
-  answer="b"
-  explanation="filter / map は中間操作で、toList や count などの終端操作まで書かないと結果が確定しないことが多いです。"
+title="Stream が動かないとき"
+options={[
+{id: 'a', label: 'この時点で titles に結果が入っている'},
+{id: 'b', label: '終端操作が無いので、一覧としてはまだ確定していない'},
+{id: 'c', label: 'stream() しただけで変換は完了している'},
+]}
+answer="b"
+explanation="filter / map は中間操作で、toList や count などの終端操作まで書かないと結果が確定しないことが多いです。"
+
 >
+
   <div>次のコードについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`var titles = List.of("a", "bb").stream()
     .filter(s -> s.length() > 1)
@@ -235,15 +239,17 @@ Stream の `findFirst` や `max` が `Optional` を返すのも、同じ発想�
 詳しいつなぎ方は [Stream と Collector](./stream-and-collectors) へ続きます。
 
 <QuizChoice
-  title="Optional の受け取り方"
-  options={[
-    {id: 'a', label: 'get() を呼べば、空でも必ず値が取れる'},
-    {id: 'b', label: 'orElse などで「無かったとき」を先に決める方が安全'},
-    {id: 'c', label: 'Optional 変数自体を null にして「無し」を表す'},
-  ]}
-  answer="b"
-  explanation="get() は空のときに例外になります。orElse / orElseThrow などで無い場合を先に決める書き方が安全です。Optional 自体を null にはしません。"
+title="Optional の受け取り方"
+options={[
+{id: 'a', label: 'get() を呼べば、空でも必ず値が取れる'},
+{id: 'b', label: 'orElse などで「無かったとき」を先に決める方が安全'},
+{id: 'c', label: 'Optional 変数自体を null にして「無し」を表す'},
+]}
+answer="b"
+explanation="get() は空のときに例外になります。orElse / orElseThrow などで無い場合を先に決める書き方が安全です。Optional 自体を null にはしません。"
+
 >
+
   <div>次のコードについて、正しいものはどれですか。</div>
   <pre className="language-java"><code>{`Optional<User> maybe = findUser(userId);
 String label = maybe
@@ -269,7 +275,6 @@ for (Task task : tasks) {
 
 「モダンだから Stream」ではなく、**読み手が追いやすいか** で選びます。  
 副作用（通知、保存、ログ）が本体のときは、パイプラインより文の並びの方が意図が伝わることがあります。
-
 
 ## よくあるつまずき
 

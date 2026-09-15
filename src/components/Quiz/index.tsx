@@ -1,5 +1,5 @@
-import type {ReactNode} from 'react';
-import {useId, useMemo, useState} from 'react';
+import type { ReactNode } from 'react';
+import { useId, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import styles from './styles.module.css';
 
@@ -15,7 +15,12 @@ type QuizShellProps = {
   defaultOpen?: boolean;
 };
 
-function QuizShell({title, children, result, defaultOpen = false}: QuizShellProps) {
+function QuizShell({
+  title,
+  children,
+  result,
+  defaultOpen = false,
+}: QuizShellProps) {
   return (
     <section className={styles.quiz} aria-label={`理解チェック: ${title}`}>
       <details className={styles.questionFold} open={defaultOpen || undefined}>
@@ -56,8 +61,12 @@ function ResultPanel({
 }: ResultPanelProps) {
   return (
     <div
-      className={clsx(styles.result, correct ? styles.resultCorrect : styles.resultWrong)}
-      role="status">
+      className={clsx(
+        styles.result,
+        correct ? styles.resultCorrect : styles.resultWrong,
+      )}
+      role="status"
+    >
       <p className={styles.resultHeadline}>
         {correct ? '正解です' : '不正解です'}
       </p>
@@ -75,7 +84,11 @@ function ResultPanel({
         <p className={styles.explanationLabel}>解説</p>
         <div className={styles.explanationBody}>{explanation}</div>
       </div>
-      <button type="button" className={styles.secondaryButton} onClick={onRetry}>
+      <button
+        type="button"
+        className={styles.secondaryButton}
+        onClick={onRetry}
+      >
         やり直す
       </button>
     </div>
@@ -139,7 +152,8 @@ export function QuizChoice({
             onRetry={handleRetry}
           />
         ) : null
-      }>
+      }
+    >
       <div className={styles.prompt}>{children}</div>
       <fieldset className={styles.options} disabled={submitted}>
         <legend className={styles.srOnly}>選択肢</legend>
@@ -165,7 +179,8 @@ export function QuizChoice({
           type="button"
           className={styles.primaryButton}
           onClick={handleSubmit}
-          disabled={selected == null || submitted}>
+          disabled={selected == null || submitted}
+        >
           回答する
         </button>
       </div>
@@ -246,7 +261,8 @@ export function QuizFill({
             onRetry={handleRetry}
           />
         ) : null
-      }>
+      }
+    >
       <div className={styles.prompt}>{children}</div>
       <div className={styles.fillRow}>
         <label className={styles.fillLabel} htmlFor={inputId}>
@@ -275,7 +291,8 @@ export function QuizFill({
           type="button"
           className={styles.primaryButton}
           onClick={handleSubmit}
-          disabled={value.trim() === '' || submitted}>
+          disabled={value.trim() === '' || submitted}
+        >
           回答する
         </button>
       </div>

@@ -152,15 +152,17 @@ Integer first = ints.get(0); // ints 側から見ると破綻
 その答えがワイルドカードです。
 
 <QuizChoice
-  title="List の親子"
-  options={[
-    {id: 'a', label: 'コンパイルできる'},
-    {id: 'b', label: 'コンパイルエラーになる'},
-    {id: 'c', label: 'コンパイルは通るが、実行時に必ず例外になる'},
-  ]}
-  answer="b"
-  explanation="整数のリストを数のリスト型へ代入できると、数のリスト経由で Double を add でき「整数だけ」の約束が壊れます。そのためコンパイルエラーになります。関連型をまとめて読むときは ? extends などを使います。"
+title="List の親子"
+options={[
+{id: 'a', label: 'コンパイルできる'},
+{id: 'b', label: 'コンパイルエラーになる'},
+{id: 'c', label: 'コンパイルは通るが、実行時に必ず例外になる'},
+]}
+answer="b"
+explanation="整数のリストを数のリスト型へ代入できると、数のリスト経由で Double を add でき「整数だけ」の約束が壊れます。そのためコンパイルエラーになります。関連型をまとめて読むときは ? extends などを使います。"
+
 >
+
   <div>次の代入はどうなりますか。</div>
   <pre className="language-java"><code>{`List<Integer> ints = new ArrayList<>();
 List<Number> numbers = ints;`}</code></pre>
@@ -220,11 +222,11 @@ Object any = destination.get(0);
 
 迷ったら、先に目的を言葉にします。
 
-| やりたいこと | 書くもの | 覚え方 |
-| ------------ | -------- | ------ |
-| 中身を取り出して使う | `? extends T` | Producer Extends（出す側は extends） |
-| 中身を入れて使う | `? super T` | Consumer Super（入れる側は super） |
-| 同じリストを読み書きする | `List<T>` | ワイルドカードを急がない |
+| やりたいこと             | 書くもの      | 覚え方                               |
+| ------------------------ | ------------- | ------------------------------------ |
+| 中身を取り出して使う     | `? extends T` | Producer Extends（出す側は extends） |
+| 中身を入れて使う         | `? super T`   | Consumer Super（入れる側は super）   |
+| 同じリストを読み書きする | `List<T>`     | ワイルドカードを急がない             |
 
 :::tip[PECS の使いどころ]
 
@@ -234,15 +236,17 @@ PECS は暗記カードより、「今の引数は読む役か、書く役か」
 :::
 
 <QuizChoice
-  title="合計メソッドの引数型"
-  options={[
-    {id: 'a', label: 'A'},
-    {id: 'b', label: 'B'},
-    {id: 'c', label: 'C'},
-  ]}
-  answer="b"
-  explanation="中身を読んで合計するだけなら ? extends Number です。整数のリストを List の要素 Number 固定には渡せません。super は入れる側向けです。"
+title="合計メソッドの引数型"
+options={[
+{id: 'a', label: 'A'},
+{id: 'b', label: 'B'},
+{id: 'c', label: 'C'},
+]}
+answer="b"
+explanation="中身を読んで合計するだけなら ? extends Number です。整数のリストを List の要素 Number 固定には渡せません。super は入れる側向けです。"
+
 >
+
   <div>
     <code>List&lt;Integer&gt;</code> も <code>List&lt;Double&gt;</code> も渡して合計したいとき、引数型として適切なのはどれですか。
   </div>
@@ -308,12 +312,12 @@ static <T> T readJson(String body, Class<T> type) {
 <details>
 <summary>よく見るコンパイルメッセージの読み方</summary>
 
-| メッセージのイメージ | いまのステップで考えること |
-| -------------------- | -------------------------- |
-| List\<Integer\> cannot be converted to List\<Number\> | ステップ3。リスト全体は親子にならない |
-| capture of ? | ステップ4。`?` の中身を名前付き `T` のように扱えない |
-| cannot instantiate the type T | ステップ5。`T` は実行時に具体型として残っていない |
-| unchecked cast | ロー型や無理なキャストで、コンパイル時の保証を外している |
+| メッセージのイメージ                                  | いまのステップで考えること                               |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| List\<Integer\> cannot be converted to List\<Number\> | ステップ3。リスト全体は親子にならない                    |
+| capture of ?                                          | ステップ4。`?` の中身を名前付き `T` のように扱えない     |
+| cannot instantiate the type T                         | ステップ5。`T` は実行時に具体型として残っていない        |
+| unchecked cast                                        | ロー型や無理なキャストで、コンパイル時の保証を外している |
 
 </details>
 
@@ -363,7 +367,6 @@ record Rejected(String reason) implements OrderResult {}
 
 成功／失敗のような閉じた形に向きます。  
 第三者が自由に実装を足す拡張点には向きません。
-
 
 ## よくあるつまずき
 

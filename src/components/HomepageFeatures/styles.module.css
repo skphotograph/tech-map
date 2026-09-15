@@ -1,7 +1,6 @@
 .paths {
   padding: 4.5rem 0 5.5rem;
-  background:
-    linear-gradient(180deg, #eef3f8 0%, #f4f7fb 40%, #ffffff 100%);
+  background: linear-gradient(180deg, #eef3f8 0%, #f4f7fb 40%, #ffffff 100%);
   border-top: 1px solid rgba(15, 118, 110, 0.12);
 }
 
@@ -52,7 +51,9 @@
   padding: 1.35rem 1.1rem 1.35rem 0;
   text-decoration: none;
   color: inherit;
-  transition: color 0.2s ease, padding-left 0.2s ease;
+  transition:
+    color 0.2s ease,
+    padding-left 0.2s ease;
 }
 
 .link:hover {

@@ -11,16 +11,16 @@
 
 ## 教材カテゴリ
 
-| ディレクトリ         | カテゴリ                                                       |
-| -------------------- | -------------------------------------------------------------- |
+| ディレクトリ         | カテゴリ                                                             |
+| -------------------- | -------------------------------------------------------------------- |
 | `docs/foundations/`  | 共通基盤（Linux / Shell、Git、リモートアクセス、ネットワーク、HTTP） |
-| `docs/languages/`    | 言語（Java、JavaScript / TypeScript、Rust）                    |
-| `docs/data/`         | データ（SQL / RDB、NoSQL、メッセージング）                     |
-| `docs/cloud/`        | クラウド（GCP、AWS、Azure）                                    |
-| `docs/platform/`     | DevOps / コンテナ（Docker、Kubernetes、OpenShift、CI/CD、IaC） |
-| `docs/security/`     | セキュリティ（認証・認可、クラウドセキュリティ、OWASP）        |
-| `docs/ai/`           | AI（LLM、Prompt / RAG、エージェント、MLOps）                   |
-| `docs/architecture/` | 設計 / アーキテクチャ（API 設計、マイクロサービス、テスト）    |
+| `docs/languages/`    | 言語（Java、JavaScript / TypeScript、Rust）                          |
+| `docs/data/`         | データ（SQL / RDB、NoSQL、メッセージング）                           |
+| `docs/cloud/`        | クラウド（GCP、AWS、Azure）                                          |
+| `docs/platform/`     | DevOps / コンテナ（Docker、Kubernetes、OpenShift、CI/CD、IaC）       |
+| `docs/security/`     | セキュリティ（認証・認可、クラウドセキュリティ、OWASP）              |
+| `docs/ai/`           | AI（LLM、Prompt / RAG、エージェント、MLOps）                         |
+| `docs/architecture/` | 設計 / アーキテクチャ（API 設計、マイクロサービス、テスト）          |
 
 新規トピックは既存カテゴリに配置する。  
 どのカテゴリにも当てはまらない場合のみ、ユーザーに確認してから新カテゴリを提案する。  
@@ -105,9 +105,9 @@
 
 ```html
 <details>
-<summary>タイトル</summary>
+  <summary>タイトル</summary>
 
-コンテンツ
+  コンテンツ
 </details>
 ```
 
@@ -134,8 +134,8 @@
 <QuizChoice
   title="短い題名"
   options={[
-    {id: 'a', label: '選択肢 A'},
-    {id: 'b', label: '選択肢 B'},
+    { id: 'a', label: '選択肢 A' },
+    { id: 'b', label: '選択肢 B' },
   ]}
   answer="b"
   explanation="なぜそうなるかの一文。"

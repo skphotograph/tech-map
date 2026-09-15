@@ -5,7 +5,7 @@ sidebar_position: 3
 # レイヤーと DI
 
 機能追加のたびに Controller へ処理を書き足すと、HTTP、業務ルール、SQL が一つのクラスに集まりがちです。  
-変更理由の異なる処理をレイヤーに分け、DI でつなぐと、役割と依存関係を追いやすくなります。  
+変更理由の異なる処理をレイヤーに分け、DI でつなぐと、役割と依存関係を追いやすくなります。
 
 ## このページで分かること
 
@@ -15,14 +15,14 @@ sidebar_position: 3
 
 ## 代表的な三つのレイヤー
 
-Web アプリケーションでは、次のような分け方がよく見られます。  
+Web アプリケーションでは、次のような分け方がよく見られます。
 
 - Controller: HTTP の入力を受け取り、応答へ変換する
 - Service: ユースケースや業務ルールを実行する
 - Repository / DAO: データの保存や取得を隠蔽する
 
 Repository はドメインの言葉でデータの集合を扱うことが多く、DAO はテーブルや SQL に近い操作を表すことが多い名前です。  
-ただし、用語の使い分けはプロジェクトによって異なるため、名前より実際の責務を確認します。  
+ただし、用語の使い分けはプロジェクトによって異なるため、名前より実際の責務を確認します。
 
 ```java
 public final class OrderService {
@@ -40,12 +40,12 @@ public final class OrderService {
 ```
 
 `OrderService` は、保存方法を知るのではなく、`OrderRepository` が提供する操作へ依存しています。  
-この境界があると、データベース実装の詳細を Service から切り離せます。  
+この境界があると、データベース実装の詳細を Service から切り離せます。
 
 ## DI は依存する部品を外から渡す仕組み
 
 DI は Dependency Injection、つまり依存性の注入です。  
-クラス自身が必要な実装を生成する代わりに、外部の組み立て役から受け取ります。  
+クラス自身が必要な実装を生成する代わりに、外部の組み立て役から受け取ります。
 
 ```java
 OrderRepository repository = new JdbcOrderRepository(dataSource);
@@ -53,10 +53,10 @@ OrderService service = new OrderService(repository);
 ```
 
 この例では、コンストラクターを通して依存する部品を渡しています。  
-DI コンテナを使わなくても、これ自体が DI です。  
+DI コンテナを使わなくても、これ自体が DI です。
 
 DI コンテナは、登録された部品の生成、依存関係の解決、ライフサイクル管理を支援します。  
-Jakarta Contexts and Dependency Injection（CDI）では `@Inject`、Spring では `@Autowired` が注入を示す例です。  
+Jakarta Contexts and Dependency Injection（CDI）では `@Inject`、Spring では `@Autowired` が注入を示す例です。
 
 ```java
 @Inject
@@ -73,21 +73,21 @@ public OrderService(OrderRepository orderRepository) {
 ```
 
 どちらも「必要な `OrderRepository` を実行基盤に渡してもらう」という考え方は共通です。  
-Spring では、コンストラクターが一つなら `@Autowired` を省略できる場合があります。  
+Spring では、コンストラクターが一つなら `@Autowired` を省略できる場合があります。
 
 :::tip[コンストラクターで依存を明示する]
 
-必須の依存をコンストラクター引数にすると、生成時点で不足に気付きやすく、単体テストでも差し替えやすくなります。  
+必須の依存をコンストラクター引数にすると、生成時点で不足に気付きやすく、単体テストでも差し替えやすくなります。
 
 :::
 
 ## レイヤーを分ける判断
 
 レイヤーは、クラス数を増やすこと自体が目的ではありません。  
-HTTP の都合、業務ルール、保存方式という異なる変更理由を分離するために使います。  
+HTTP の都合、業務ルール、保存方式という異なる変更理由を分離するために使います。
 
 小さな参照処理で Service が単なる中継になる場合もあります。  
-将来を想像して層を増やしすぎず、プロジェクトの規約と変更の見込みに合わせます。  
+将来を想像して層を増やしすぎず、プロジェクトの規約と変更の見込みに合わせます。
 
 ## よくあるつまずき
 
@@ -104,4 +104,4 @@ HTTP の都合、業務ルール、保存方式という異なる変更理由を
 - `@Inject` と `@Autowired` は異なる仕組みの API だが、依存を注入する目的は共通する
 - レイヤー数ではなく、責務と依存の向きが明確かを確認する
 
-次は [REST API と DTO](./rest-and-dto) で、HTTP 境界のデータ設計を扱います。  
+次は [REST API と DTO](./rest-and-dto) で、HTTP 境界のデータ設計を扱います。
