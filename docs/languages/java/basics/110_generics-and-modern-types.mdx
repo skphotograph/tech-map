@@ -218,7 +218,30 @@ PECS は暗記カードより、「今の引数は読む役か、書く役か」
 
 :::
 
-戻り値にまで `List<? extends T>` を付けると、受け取った側が追加できず使いにくいことがあります。  
+<QuizChoice
+  title="合計メソッドの引数型"
+  options={[
+    {id: 'a', label: 'A'},
+    {id: 'b', label: 'B'},
+    {id: 'c', label: 'C'},
+  ]}
+  answer="b"
+  explanation="中身を読んで合計するだけなら ? extends Number です。整数のリストを List の要素 Number 固定には渡せません。super は入れる側向けです。"
+>
+  <div>
+    <code>List&lt;Integer&gt;</code> も <code>List&lt;Double&gt;</code> も渡して合計したいとき、引数型として適切なのはどれですか。
+  </div>
+  <pre className="language-java"><code>{`// A
+static double total(List<Number> values) { ... }
+
+// B
+static double total(List<? extends Number> values) { ... }
+
+// C
+static double total(List<? super Number> values) { ... }`}</code></pre>
+</QuizChoice>
+
+戻り値にまで `List<? extends T>` を付けると、受け取った側が追加できず使いにくいことがあります。
 柔軟さが必要なのは多くの場合 **引数** で、戻りは具体的な `List<T>` や不変リストの方が扱いやすいです。
 
 <details>
@@ -325,6 +348,22 @@ record Rejected(String reason) implements OrderResult {}
 
 成功／失敗のような閉じた形に向きます。  
 第三者が自由に実装を足す拡張点には向きません。
+
+
+<QuizChoice
+  title="List の親子"
+  options={[
+    {id: 'a', label: 'コンパイルできる'},
+    {id: 'b', label: 'コンパイルエラーになる'},
+    {id: 'c', label: 'コンパイルは通るが、実行時に必ず例外になる'},
+  ]}
+  answer="b"
+  explanation="整数のリストを数のリスト型へ代入できると、数のリスト経由で Double を add でき「整数だけ」の約束が壊れます。そのためコンパイルエラーになります。関連型をまとめて読むときは ? extends などを使います。"
+>
+  <div>次の代入はどうなりますか。</div>
+  <pre className="language-java"><code>{`List<Integer> ints = new ArrayList<>();
+List<Number> numbers = ints;`}</code></pre>
+</QuizChoice>
 
 ## よくあるつまずき
 

@@ -119,6 +119,20 @@ for (Method method : type.getDeclaredMethods()) {
 用途に応じて、実行時の柔軟性とコンパイル時の検査を選びます。  
 </details>
 
+
+<QuizChoice
+  title="実行時にアノテーションを読む"
+  options={[
+    {id: 'a', label: 'アノテーションを付ければ、保持方針に関係なく実行時に読める'},
+    {id: 'b', label: '実行時に読むなら RetentionPolicy.RUNTIME などが必要'},
+    {id: 'c', label: 'リフレクションを使えば、アノテーション定義は不要'},
+  ]}
+  answer="b"
+  explanation="実行時リフレクションで読むには、アノテーション側の保持方針が RUNTIME である必要があります。付けただけではフレームワークが動くわけでもありません。"
+>
+  <div>フレームワークが実行時にアノテーションを読む前提として、近いものはどれですか。</div>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - `RetentionPolicy.RUNTIME` がないアノテーションを実行時に探す

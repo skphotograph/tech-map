@@ -116,6 +116,29 @@ public final class OrderStatus {
 
 </details>
 
+
+<QuizChoice
+  title="static フィールド"
+  options={[
+    {id: 'a', label: 'a.issued は 1、b.issued は 0'},
+    {id: 'b', label: 'a.issued も b.issued も 1'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="static フィールドはクラス側の共有です。インスタンスが別でも同じ場所を見ます。final とは別の話なので、static でも可変なら書き換えられます。"
+>
+  <div>次のコードのあと、出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`class TicketCounter {
+    static int issued;
+    int number;
+}
+
+TicketCounter a = new TicketCounter();
+TicketCounter b = new TicketCounter();
+a.issued++;
+System.out.println(b.issued);`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - `final` なリストの要素を `add` して「不変じゃなかった」と驚く（参照が final なだけ）

@@ -106,6 +106,27 @@ List<Order> findOrders(String userId) {
 「無い」を null で表す慣習が残っている API もあります。  
 自分で返す側を設計するときは、**空コレクションを返す** 方が扱いやすい場面が多いです。
 
+
+<QuizChoice
+  title="空と null"
+  options={[
+    {id: 'a', label: 'A（null）の方が、呼び出し側で isEmpty しやすい'},
+    {id: 'b', label: 'B（空リスト）の方が、呼び出し側で isEmpty しやすい'},
+    {id: 'c', label: 'どちらでも呼び出し側の書き方は同じ'},
+  ]}
+  answer="b"
+  explanation="空リストなら isEmpty で分岐できます。null を返すと、その前に null チェックが必要で、忘れれば NPE になります。"
+>
+  <div>呼び出し側が次のように書くとき、API の戻りとして扱いやすいのはどれですか。</div>
+  <pre className="language-java"><code>{`List<Order> orders = findOrders(userId);
+if (orders.isEmpty()) {
+    // 0 件のとき
+}
+
+// A: return null;
+// B: return List.of();`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - `Map` のキーに可変オブジェクトを使い、後からフィールドを変えて探せなくなる

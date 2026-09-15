@@ -109,6 +109,30 @@ if (task instanceof UrgentTask urgent) {
 
 </details>
 
+
+<QuizChoice
+  title="参照型と実行時の型"
+  options={[
+    {id: 'a', label: '必ず "shape" と出る'},
+    {id: 'b', label: '"circle" と出る（実行時の実体のメソッドが選ばれる）'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="変数の型はコンパイル時に呼べるメンバを決め、オーバーライドされたインスタンスメソッドは実行時のオブジェクトの型で選ばれるのが基本です。"
+>
+  <div>次の出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`class Shape {
+    String name() { return "shape"; }
+}
+class Circle extends Shape {
+    @Override
+    String name() { return "circle"; }
+}
+
+Shape s = new Circle();
+System.out.println(s.name());`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - 親の参照で子専用メソッドを呼ぼうとしてコンパイルエラーになる

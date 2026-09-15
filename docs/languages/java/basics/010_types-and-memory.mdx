@@ -286,6 +286,25 @@ static void replace(Order target) {
 
 :::
 
+<QuizChoice
+  title="引数に渡したあとの値"
+  options={[
+    {id: 'a', label: 'x は 99 になる'},
+    {id: 'b', label: 'x は 1 のまま'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="int の引数は値のコピーが渡されます。bump 内の n を書き換えても、呼び出し元の x は変わりません。参照型なら「行き先」のコピーなので、フィールド変更は共有されますが、付け替えは呼び出し元に影響しません。"
+>
+  <div>次のコードを実行したあと、<code>x</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`void bump(int n) {
+    n = 99;
+}
+
+int x = 1;
+bump(x);`}</code></pre>
+</QuizChoice>
+
 ### 戻り値はフレームが消える前に渡す
 
 メソッド終了と同時にフレームは消えます。  
@@ -490,6 +509,30 @@ Java にはガベージコレクションがあります。
 使わなくなったものが勝手に消える、ではありません。  
 **どこかから到達できるオブジェクトは回収されません。**  
 その仕組みは次の [ヒープとガベージコレクション](./heap-and-gc) で、回収の単位まで落とします。
+
+
+<QuizChoice
+  title="メソッドに渡したあと"
+  options={[
+    {id: 'a', label: 'n は 99、status は CLOSED、ID は other'},
+    {id: 'b', label: 'n は 1、status は CLOSED、ID は ORD-1'},
+    {id: 'c', label: 'n は 1、status は OPEN、ID は ORD-1'},
+  ]}
+  answer="b"
+  explanation="プリミティブの n は値のコピーだけが書き換わります。参照型は同じ Order を共有するので setStatus は呼び出し元にも見えますが、引数変数の付け替え（new Order）は呼び出し元の変数には影響しません。"
+>
+  <div>次のコードのあと、呼び出し元の <code>n</code> と <code>order</code> の状態として正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`void touch(int n, Order order) {
+    n = 99;
+    order.setStatus("CLOSED");
+    order = new Order("other");
+}
+
+int n = 1;
+Order order = new Order("ORD-1");
+order.setStatus("OPEN");
+touch(n, order);`}</code></pre>
+</QuizChoice>
 
 ## よくあるつまずき
 

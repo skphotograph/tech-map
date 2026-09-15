@@ -336,6 +336,24 @@ CompletableFuture<String> page =
 - 停止時は `shutdown` → 待機 → 必要なら `shutdownNow`、タスクは割り込みに協力する
 - 「たまにしか壊れない」はレースの典型。ログのスレッド名とダンプを味方にする
 
+
+<QuizChoice
+  title="並行コレクションの限界"
+  options={[
+    {id: 'a', label: 'この二段処理は、ConcurrentHashMap なら常に安全'},
+    {id: 'b', label: 'get と put のあいだに他スレッドが割り込めるので、別途原子的な API や設計が必要'},
+    {id: 'c', label: 'HashMap に置き換えても同じ安全性になる'},
+  ]}
+  answer="b"
+  explanation="並行コレクションは単一の API 呼び出しの範囲で効きます。複合操作は merge / compute などを使うか、ロックや設計で守ります。"
+>
+  <div>次の更新について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
+
+Long current = counts.get("PAID");
+counts.put("PAID", current == null ? 1L : current + 1L);`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - タスクごとに無制限に `new Thread` する

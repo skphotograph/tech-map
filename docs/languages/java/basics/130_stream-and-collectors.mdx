@@ -203,6 +203,22 @@ IntSummaryStatistics statistics = orders.stream()
 
 「モダンだから Collector」ではなく、**いま欲しいデータの形は何か** が先です。
 
+
+<QuizChoice
+  title="Collector の選び方"
+  options={[
+    {id: 'a', label: 'とにかく groupingBy を使えばよい'},
+    {id: 'b', label: '欲しい結果の形（リスト、Map、件数など）から終端を選ぶ'},
+    {id: 'c', label: 'Collector は parallelStream のときだけ使う'},
+  ]}
+  answer="b"
+  explanation="for で一時変数に集めていた「最後に欲しい形」を、toList / groupingBy / toMap などの終端に置き換える、と考えると選びやすいです。"
+>
+  <div>
+    Stream の終端で Collector を使うとき、先に決めるべきなのはどれですか。
+  </div>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - パイプラインを記号のまま追って、声に出す言葉を持たない

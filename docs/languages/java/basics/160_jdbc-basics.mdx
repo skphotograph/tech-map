@@ -127,6 +127,20 @@ MyBatis のような SQL マッパーは、SQL を明示しながら結果との
 これらの仕組みも下層では JDBC やデータベース接続を利用します。  
 JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザクション境界の調査に役立ちます。  
 
+
+<QuizChoice
+  title="JDBC とリソース"
+  options={[
+    {id: 'a', label: 'ResultSet や Statement は GC に任せればよい'},
+    {id: 'b', label: 'Connection / Statement / ResultSet も閉じる（try-with-resources など）'},
+    {id: 'c', label: 'コミットさえすれば close は不要'},
+  ]}
+  answer="b"
+  explanation="JDBC の資源も外部リソースです。例外パスも含め、try-with-resources などで確実に閉じます。トランザクションの commit/rollback とは別の話です。"
+>
+  <div>JDBC で SQL を実行するとき、リソースについて正しいものはどれですか。</div>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - 外部入力を SQL 文字列へ連結する

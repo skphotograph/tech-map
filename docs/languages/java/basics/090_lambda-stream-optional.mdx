@@ -222,6 +222,24 @@ for (Task task : tasks) {
 「モダンだから Stream」ではなく、**読み手が追いやすいか** で選びます。  
 副作用（通知、保存、ログ）が本体のときは、パイプラインより文の並びの方が意図が伝わることがあります。
 
+
+<QuizChoice
+  title="Stream が動かないとき"
+  options={[
+    {id: 'a', label: 'この時点で openTitles に結果が入っている'},
+    {id: 'b', label: '終端操作が無いので、一覧としてはまだ確定していない'},
+    {id: 'c', label: 'stream() しただけで変換は完了している'},
+  ]}
+  answer="b"
+  explanation="filter / map は中間操作で、toList や count などの終端操作まで書かないと結果が確定しないことが多いです。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`var openTitles = tasks.stream()
+    .filter(Task::isOpen)
+    .map(Task::getTitle);
+// ここで終わり`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - ラムダと Stream を同じものだと思い、どちらの話か分からなくなる
@@ -239,5 +257,4 @@ for (Task task : tasks) {
 4. Optional は、無いかもしれない戻り値の箱
 5. 読みやすさで for に戻してよい
 
-次は [確認クイズ](./practice) で、ここまでの理解を短く点検します。  
-Stream の集計や `groupingBy` は、あとから [Stream と Collector](./stream-and-collectors) で積み上げます。
+次は [ジェネリクスと現代的な型](./generics-and-modern-types) や [Stream と Collector](./stream-and-collectors) で、型と一覧処理をさらに積み上げます。

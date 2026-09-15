@@ -257,6 +257,42 @@ record UserId(String value) {
 - 「入れたのに取れない」は、まず契約と可変キーを疑う
 - ログに出すときは、長さや引用符付きで空白差が見えるようにする
 
+
+<QuizChoice
+  title="文字列の比較"
+  options={[
+    {id: 'a', label: 'A（==）'},
+    {id: 'b', label: 'B（equals）'},
+    {id: 'c', label: 'A と B は常に同じ結果'},
+  ]}
+  answer="b"
+  explanation="中身の同値比較は equals です。== は参照の同一性で、入力由来の文字列では false になりやすいです。null の可能性があるなら Objects.equals や &quot;OPEN&quot;.equals(a) も検討します。"
+>
+  <div>中身が同じかを知りたいとき、使うべきなのはどれですか。</div>
+  <pre className="language-java"><code>{`String a = readFromRequest(); // 外部入力
+String b = "OPEN";
+
+// A: a == b
+// B: a.equals(b)`}</code></pre>
+</QuizChoice>
+
+<QuizChoice
+  title="HashSet で contains するために"
+  options={[
+    {id: 'a', label: 'equals だけオーバーライドする'},
+    {id: 'b', label: 'hashCode だけオーバーライドする'},
+    {id: 'c', label: 'equals と hashCode の両方を揃える'},
+    {id: 'd', label: 'toString をオーバーライドする'},
+  ]}
+  answer="c"
+  explanation="HashSet / HashMap は hashCode で桶を決め、equals で同値を確認します。equals だけだと別インスタンスが別桶を見にいき、contains が false になりえます。"
+>
+  <div>次が true になるために、<code>UserId</code> へ必要な実装はどれですか。</div>
+  <pre className="language-java"><code>{`Set<UserId> ids = new HashSet<>();
+ids.add(new UserId("u-1"));
+ids.contains(new UserId("u-1")); // true にしたい`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - テストが全部リテラルで、`==` でも通ってしまう

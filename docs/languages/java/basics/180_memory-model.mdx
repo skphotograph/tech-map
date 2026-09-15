@@ -305,6 +305,33 @@ record Label(String text) {}
 
 コンストラクタで `this` を他スレッドへ渡す（リスナー登録など）は、初期化途中の公開になりやすく、避けます。
 
+
+<QuizChoice
+  title="可視性"
+  options={[
+    {id: 'a', label: 'stop() を呼べば、run 側のループは必ずすぐ終わる'},
+    {id: 'b', label: '同期が無いので、run 側から stopped の更新が見えないことがある'},
+    {id: 'c', label: 'stopped を volatile にしなくても count++ と同様に安全'},
+  ]}
+  answer="b"
+  explanation="同期や volatile などの橋が無いと、書き込みが他スレッドから見えないことがあります。フラグ用途なら volatile などが候補です（count++ の原子性とは別問題です）。"
+>
+  <div>別スレッドから stop() を呼ぶとき、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`class Worker {
+    private boolean stopped = false;
+
+    void run() {
+        while (!stopped) {
+            // work
+        }
+    }
+
+    void stop() {
+        stopped = true;
+    }
+}`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - 実時間で先に代入したから、他スレッドも見えていると思う

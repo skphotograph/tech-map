@@ -122,6 +122,20 @@ final class TemporaryResource implements AutoCloseable {
 `Throwable#getSuppressed()` で確認でき、ログ基盤があれば通常はスタックトレースにも表示されます。  
 </details>
 
+
+<QuizChoice
+  title="大きなファイル"
+  options={[
+    {id: 'a', label: '常に readAllLines で一度に読む'},
+    {id: 'b', label: 'サイズが大きい／不明なら、逐次処理（lines や BufferedReader）を検討する'},
+    {id: 'c', label: 'Files を使えばメモリは自動で足りる'},
+  ]}
+  answer="b"
+  explanation="readAllLines は全内容をメモリに載せます。大きいファイルや上限が分からない入力は、ストリームで逐次処理し、try-with-resources で閉じます。"
+>
+  <div>ファイル読み込みの方針として、適切なものはどれですか。</div>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - OS 固有の区切り文字を文字列として埋め込む

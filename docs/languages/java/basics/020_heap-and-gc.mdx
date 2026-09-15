@@ -345,6 +345,31 @@ GC が多いときは次の二系統に分けます。
 
 :::
 
+
+<QuizChoice
+  title="到達できないとは"
+  options={[
+    {id: 'a', label: 'A の pdf の方が回収候補になりやすい'},
+    {id: 'b', label: 'B の pdf の方が回収候補になりやすい'},
+    {id: 'c', label: 'どちらも同じタイミングで必ず回収される'},
+  ]}
+  answer="b"
+  explanation="GC が見るのは到達可能かどうかです。A は static な Map が照らし続けるので残りやすいです。B はメソッドを抜けて他から届かなければ回収候補になります。"
+>
+  <div>回収候補になりやすいのはどちらですか。</div>
+  <pre className="language-java"><code>{`// A
+static final Map<String, byte[]> hold = new HashMap<>();
+void cache(String id, byte[] pdf) {
+    hold.put(id, pdf);
+}
+
+// B
+void once() {
+    byte[] pdf = loadPdf();
+    send(pdf);
+}`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - `null` 代入やローカル変数の終了だけで、共有キャッシュ上のオブジェクトが消えると思う
