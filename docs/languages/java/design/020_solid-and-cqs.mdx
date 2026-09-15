@@ -53,7 +53,8 @@ final class FreeShippingCampaign implements ShippingPolicy {
 
 ## L: リスコフの置換原則
 
-リスコフの置換原則（Liskov Substitution Principle、LSP）は、子型を親型として使っても、親型の契約を壊さないことを求めます。
+リスコフの置換原則（Liskov Substitution Principle、LSP）は、子型を親型として使っても、親型の契約を壊さないことを求めます。  
+契約とは、「呼べる操作」「前提条件」「保証する結果」の約束です。
 
 たとえば `TaskQueue` が「追加したタスクを受け付ける」と約束しているのに、読み取り専用の子クラスだけが `add` で例外を投げるなら、置換可能とは言いにくい設計です。  
 継承関係を作る前に、次を確認します。
@@ -66,7 +67,8 @@ final class FreeShippingCampaign implements ShippingPolicy {
 
 ## I: インタフェース分離の原則
 
-インタフェース分離の原則（Interface Segregation Principle、ISP）は、利用側が使わない操作へ依存しないようにします。
+インタフェース分離の原則（Interface Segregation Principle、ISP）は、利用側が使わない操作へ依存しないようにします。  
+巨大な契約書の隅までサインさせるより、相手が本当に使う条項だけを渡すイメージです。
 
 ```java
 interface TaskReader {
@@ -157,6 +159,7 @@ CQS に沿うと、副作用がある場所を名前と戻り値から推測し�
 CQS は主にメソッド単位で更新と問い合わせを分ける原則です。  
 CQRS はシステムやモデルの単位で書き込み側と読み取り側を分けるアーキテクチャパターンです。  
 名前は似ていますが、導入規模と運用上の影響が大きく異なります。
+
 </details>
 
 ## よくあるつまずき

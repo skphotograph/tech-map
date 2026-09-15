@@ -17,9 +17,9 @@ sidebar_position: 3
 
 Web アプリケーションでは、次のような分け方がよく見られます。
 
-- Controller: HTTP の入力を受け取り、応答へ変換する
-- Service: ユースケースや業務ルールを実行する
-- Repository / DAO: データの保存や取得を隠蔽する
+- Controller: HTTP の入力を受け取り、応答へ変換する（受付）
+- Service: ユースケースや業務ルールを実行する（厨房）
+- Repository / DAO: データの保存や取得を隠蔽する（倉庫）
 
 設計の入口で見た [レイヤードアーキテクチャと MVC](../design/layered-and-mvc) の四層は、業務の地図です。  
 ここでいう三層は Web 実装での通称で、だいたい次のように対応します。
@@ -49,16 +49,39 @@ public final class OrderService {
 `OrderService` は、保存方法を知るのではなく、`OrderRepository` が提供する操作へ依存しています。  
 この境界があると、データベース実装の詳細を Service から切り離せます。
 
+:::tip[受付は伝票、厨房は判断、倉庫は出し入れ]
+
+Controller は HTTP の都合、Service は業務の判断、Repository は保存の詳細——変更の理由が違うものを同じ机に置かない、がレイヤー分けの核です。
+
+:::
+
+<QuizChoice
+title="レイヤーの責務"
+options={[
+{ id: 'a', label: 'Controller に SQL を書き、HTTP と保存を一箇所で扱う' },
+{ id: 'b', label: 'Service が業務ルールを実行し、保存の詳細は Repository に任せる' },
+{ id: 'c', label: 'Repository が HTTP ステータスコードを決める' },
+]}
+answer="b"
+explanation="Service はユースケースと業務ルール、Repository はデータの出し入れです。HTTP の都合は Controller 側に寄せます。"
+
+>
+
+  <div>三つのレイヤーについて、適切な説明はどれですか。</div>
+</QuizChoice>
+
 ## DI は依存する部品を外から渡す仕組み
 
 DI は Dependency Injection、つまり依存性の注入です。  
 クラス自身が必要な実装を生成する代わりに、外部の組み立て役から受け取ります。  
-コンストラクタで依存を渡す考え方は [リファクタリングの道具箱](../design/refactoring-toolkit) でも触れました。ここではコンテナのアノテーションまで含めて見ます。
+コンストラクタで依存を渡す考え方は [リファクタリングの道具箱](../design/refactoring-toolkit) でも触れました。  
+ここではコンテナのアノテーションまで含めて見ます。
 
 :::tip[アノテーションは宣言]
 
 `@Inject` や `@Autowired` は「ここに注入して」という宣言です。  
-実際に読む・組み立てる主体はコンテナ側です。仕組みの入口は [アノテーションとリフレクション](../basics/annotations-reflection) を参照してください。
+実際に読む・組み立てる主体はコンテナ側です。  
+仕組みの入口は [アノテーションとリフレクション](../basics/annotations-reflection) を参照してください。
 
 :::
 
@@ -95,6 +118,21 @@ Spring では、コンストラクターが一つなら `@Autowired` を省略�
 必須の依存をコンストラクター引数にすると、生成時点で不足に気付きやすく、単体テストでも差し替えやすくなります。
 
 :::
+
+<QuizChoice
+title="DI の本質"
+options={[
+{ id: 'a', label: 'DI は @Autowired を付けたときだけ成立する' },
+{ id: 'b', label: 'コンストラクターで依存を渡すだけでも DI である' },
+{ id: 'c', label: 'DI コンテナが管理する部品は、アプリ側で new しても同じである' },
+]}
+answer="b"
+explanation="外から依存を渡すことが DI です。アノテーションはコンテナへの宣言で、コンテナ管理オブジェクトを自分で new すると注入や共通処理を迂回します。"
+
+>
+
+  <div>DI についての説明として、適切なものはどれですか。</div>
+</QuizChoice>
 
 ## レイヤーを分ける判断
 

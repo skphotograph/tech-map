@@ -22,7 +22,8 @@ JDBC では、SQL の実行だけでなく接続、パラメーター、トラ�
 
 ## JDBC の登場人物
 
-JDBC は、Java からリレーショナルデータベースを操作する標準 API です。
+JDBC は、Java からリレーショナルデータベースを操作する標準 API です。  
+会話の窓口が分かれている、と覚えると役割が追いやすいです。
 
 - JDBC Driver: JDBC の呼び出しを各データベース固有の通信へ変換する
 - `Connection`: データベースとの接続とトランザクション境界を表す
@@ -138,7 +139,8 @@ try (Connection connection = dataSource.getConnection();
 
 ## commit と rollback
 
-複数の更新をまとめて成功または失敗させるには、トランザクションを使います。
+複数の更新をまとめて成功または失敗させるには、トランザクションを使います。  
+チケットを二枚まとめて切る——片方だけ通って片方だけ残る、を防ぐための境界です。
 
 ```java
 try (Connection connection = dataSource.getConnection()) {

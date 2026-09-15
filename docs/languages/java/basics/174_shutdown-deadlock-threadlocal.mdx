@@ -56,7 +56,8 @@ Integer amount = future.get(5, TimeUnit.SECONDS);
 
 ## デッドロック
 
-複数スレッドが、互いに相手の持つロックを待ち続ける状態がデッドロックです。
+複数スレッドが、互いに相手の持つロックを待ち続ける状態がデッドロックです。  
+「あなたが鍵を返すまで待つ」「相手も同じ」——二人とも動けなくなります。
 
 ```text
 スレッド A: lock1 取得 → lock2 待ち
@@ -83,7 +84,8 @@ Integer amount = future.get(5, TimeUnit.SECONDS);
 ## ThreadLocal の入口
 
 `ThreadLocal` は、**スレッドごとに別々の値** を持てる入れ物です。  
-同じ `ThreadLocal` 変数でも、スレッド A が `set` した値はスレッド B からは見えません。
+同じ `ThreadLocal` 変数でも、スレッド A が `set` した値はスレッド B からは見えません。  
+机の引き出しに貼る付箋——自分の席では見えるが、席を再利用した次の人にも残る、というのがプール上の落とし穴です。
 
 ```java
 private static final ThreadLocal<RequestContext> CONTEXT = new ThreadLocal<>();

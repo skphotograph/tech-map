@@ -42,7 +42,8 @@ String second = (String) values.get(1); // 実行時に ClassCastException
 - 取り出すたびにキャストが要る
 - 間違いに気づくのが実行時になる
 
-型を付けると、同じ失敗がコンパイルで止まります。
+型を付けると、同じ失敗がコンパイルで止まります。  
+トレイに「文字列だけ」とラベルを貼った状態です。
 
 ```java
 List<String> values = new ArrayList<>();
@@ -54,7 +55,7 @@ String first = values.get(0); // キャスト不要
 `Integer` は `Number` の一種です（`Number` ← `Integer` / `Long` / `Double` など）。  
 「数のリスト」へ「整数のリスト」を渡せない話は、この親子関係が効いてきます。
 
-ここまでの感覚は、「箱にラベルを貼る」で十分です。
+ここまでの感覚は、「箱にラベルを貼る」で十分です。  
 次のステップは、そのラベルを **自分で穴として開ける** 側に回ることです。
 
 ## ステップ2: `T` は「あとで決める型」の名前
@@ -263,7 +264,7 @@ static double total(List<? extends Number> values) { ... }
 static double total(List<? super Number> values) { ... }`}</code></pre>
 </QuizChoice>
 
-戻り値にまで `List<? extends T>` を付けると、受け取った側が追加できず使いにくいことがあります。
+戻り値にまで `List<? extends T>` を付けると、受け取った側が追加できず使いにくいことがあります。  
 柔軟さが必要なのは多くの場合 **引数** で、戻りは具体的な `List<T>` や不変リストの方が扱いやすいです。
 
 <details>

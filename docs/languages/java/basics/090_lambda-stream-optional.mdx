@@ -12,7 +12,6 @@ sidebar_position: 12
 3. Optional … 「無いかもしれない戻り値」を型で表す箱
 
 Stream の中でラムダをよく使うので同一視されがちですが、**別の道具** です。  
-Collector や少し長いパイプラインは、あとの [Stream と Collector](./stream-and-collectors) で扱います。  
 このページは、入口で思考が止まらないことを目指します。
 
 ## このページで分かること
@@ -145,16 +144,37 @@ explanation="name -&gt; ... は「左を受け取り、右を実行する」形�
 
 ## ステップ3: Stream は「残す・変換する・受け取る」の並べ方
 
-同じ処理を Stream で書くと、次のようになります。
+同じ処理を Stream で書くと、次のようになります。  
+`Task` の定義も同じスニペットに入れてあります。
 
 ```java
+class Task {
+    private final String title;
+    private final boolean open;
+
+    Task(String title, boolean open) {
+        this.title = title;
+        this.open = open;
+    }
+
+    boolean isOpen() {
+        return open;
+    }
+
+    String getTitle() {
+        return title;
+    }
+}
+
+List<Task> tasks = List.of(
+        new Task("review", true),
+        new Task("done", false));
+
 List<String> openTitles = tasks.stream()
         .filter(task -> task.isOpen())
         .map(task -> task.getTitle())
         .toList();
 ```
-
-（`tasks` と `Task` はステップ1と同じ前提です。）
 
 ステップ1の for と対応させると、こうです。
 
@@ -177,6 +197,28 @@ tasks を流す
 件数だけ欲しいなら、受け取り方が変わります。
 
 ```java
+class Task {
+    private final String title;
+    private final boolean open;
+
+    Task(String title, boolean open) {
+        this.title = title;
+        this.open = open;
+    }
+
+    boolean isOpen() {
+        return open;
+    }
+
+    String getTitle() {
+        return title;
+    }
+}
+
+List<Task> tasks = List.of(
+        new Task("review", true),
+        new Task("done", false));
+
 long openCount = tasks.stream()
         .filter(task -> task.isOpen())
         .count();
@@ -204,6 +246,28 @@ Stream の操作は、大きく二つに分かれます。
 - **終端操作**（`toList`, `count`, `forEach` など）… ここで結果が必要になり、処理が進む
 
 ```java
+class Task {
+    private final String title;
+    private final boolean open;
+
+    Task(String title, boolean open) {
+        this.title = title;
+        this.open = open;
+    }
+
+    boolean isOpen() {
+        return open;
+    }
+
+    String getTitle() {
+        return title;
+    }
+}
+
+List<Task> tasks = List.of(
+        new Task("review", true),
+        new Task("done", false));
+
 tasks.stream()
         .filter(task -> task.isOpen())
         .map(task -> task.getTitle());
@@ -211,7 +275,7 @@ tasks.stream()
 ```
 
 「Stream を書いたのに何も起きない」と感じたら、まず終端操作があるかを見ます。  
-中間操作はレシピの行、終端操作は「実際に作り始める合図」に近いイメージです。
+中間操作はレシピの下ごしらえの行、終端操作は「火を入れて作り始める合図」に近いイメージです。
 
 :::tip[覚えておくこと]
 
@@ -276,8 +340,7 @@ Optional は主に **戻り値** 向きの型、という考え方が一般的�
 </details>
 
 Stream の `findFirst` や `max` が `Optional` を返すのも、同じ発想です。  
-「0 件かもしれない結果」を、null ではなく型で受け取ります。  
-詳しいつなぎ方は [Stream と Collector](./stream-and-collectors) へ続きます。
+「0 件かもしれない結果」を、null ではなく型で受け取ります。
 
 <QuizChoice
 title="Optional の受け取り方"
@@ -307,6 +370,30 @@ String label = maybe
 - 処理が短く、Stream にすると逆に層が増える
 
 ```java
+class Task {
+    private final String title;
+    private final boolean open;
+    private final String ownerId;
+
+    Task(String title, boolean open, String ownerId) {
+        this.title = title;
+        this.open = open;
+        this.ownerId = ownerId;
+    }
+
+    boolean isOpen() {
+        return open;
+    }
+
+    String getOwnerId() {
+        return ownerId;
+    }
+}
+
+List<Task> tasks = List.of(
+        new Task("review", true, "user-a"),
+        new Task("done", false, "user-b"));
+
 for (Task task : tasks) {
     if (task.isOpen()) {
         notifier.notifyUser(task.getOwnerId());
@@ -336,4 +423,5 @@ for (Task task : tasks) {
 
 次は [ヒープとガベージコレクション](./heap-and-gc) で、オブジェクトがいつ不要と判定されるかを見ます。  
 文法の一段落から、実行時の寿命の話へ切り替わります。  
-型パラメータの続きは、そのあと [ジェネリクスと現代的な型](./generics-and-modern-types) へ進みます。
+長いパイプラインや集計の形は、あとで [Stream と Collector](./stream-and-collectors) へ続きます。  
+型パラメータの続きは [ジェネリクスと現代的な型](./generics-and-modern-types) です。
