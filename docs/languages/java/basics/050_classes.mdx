@@ -1,0 +1,171 @@
+---
+sidebar_position: 7
+---
+
+# クラスと new
+
+現場のコードは、数値や文字列だけではありません。  
+注文番号と状態のように、**まとめて扱いたいデータ** を型にします。  
+それが **クラス** です。
+
+[メソッド](./methods) で「手順に名前を付ける」を見ました。  
+ここでは「データと、それに対する操作」をひとまとめにします。
+
+## このページで分かること
+
+- クラス、フィールド、インスタンスメソッド
+- `new` で実体を作る
+- コンストラクタの入口
+- フィールドを外から隠す（`private`）の入口
+
+## クラスは「伝票のひな型」
+
+たとえで言うと、クラスは「伝票のひな型」、`new` は「実際に一枚切る」です。
+
+```java
+public class OrderDemo {
+    static class Order {
+        String id;
+        String status;
+
+        void close() {
+            status = "CLOSED";
+        }
+    }
+
+    public static void main(String[] args) {
+        Order order = new Order();
+        order.id = "ORD-1";
+        order.status = "OPEN";
+        order.close();
+        System.out.println(order.status); // CLOSED
+    }
+}
+```
+
+| 言葉                         | いまの読み方                                                               |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| フィールド（`id`, `status`） | 伝票に書く欄                                                               |
+| メソッド（`close`）          | その伝票に対する操作。`order.close()` のように「どの伝票か」を先に指定する |
+| `new Order()`                | 伝票を一枚切る（実体を作る）                                               |
+| `Order order`                | 作った伝票を扱うための名前                                                 |
+
+前のページの `static` な手順は、「どの伝票か」が無くても呼べました。  
+ここでの `close` は、**切った伝票に対して** 呼びます。
+
+:::tip[覚えておくこと]
+
+`new` で実体を作り、フィールドで状態を持ち、メソッドで操作する。
+
+:::
+
+複数枚切れます。  
+別々の伝票は、別々の状態を持てます。
+
+```java
+Order first = new Order();
+Order second = new Order();
+first.id = "ORD-1";
+second.id = "ORD-2";
+```
+
+<QuizChoice
+title="クラスと new"
+options={[
+{id: 'a', label: 'status は OPEN のまま'},
+{id: 'b', label: 'status は CLOSED'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="new で作った Order の close が status を書き換えるので、呼び出し後は CLOSED です。"
+
+>
+
+  <div>次のコードのあと、<code>order.status</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`class Order {
+    String id;
+    String status;
+
+    void close() {
+        status = "CLOSED";
+    }
+
+}
+
+Order order = new Order();
+order.id = "ORD-1";
+order.status = "OPEN";
+order.close();`}</code></pre>
+</QuizChoice>
+
+## コンストラクタ: 切る瞬間に欄をそろえる
+
+生成直後に欄をそろえたいときは、コンストラクタを使います。  
+「伝票を切る瞬間に、番号と状態も書いておく」イメージです。
+
+```java
+class Order {
+    String id;
+    String status;
+
+    Order(String id, String status) {
+        this.id = id;
+        this.status = status;
+    }
+}
+
+Order order = new Order("ORD-1", "OPEN");
+```
+
+- コンストラクタの名前はクラス名と同じ
+- 戻り値の型は書かない
+- `this.id` は「この伝票の欄 `id`」
+
+引数名と欄の名前が同じときに、どちら向きの代入かをはっきりさせます。
+
+## フィールドを外から隠す（`private`）
+
+これまで例では、伝票の欄を外から直接書いていました。  
+外から直接触れないよう `private` にし、メソッド経由で触る書き方もあります。
+
+```java
+class Order {
+    private String status;
+
+    void close() {
+        status = "CLOSED";
+    }
+
+    String currentStatus() {
+        return status;
+    }
+}
+```
+
+今は「見える範囲を狭められる」と知っておけば十分です。  
+細かい規則は、必要になったタイミングで足していきます。
+
+<details>
+<summary>main を持つクラスと、データのクラス</summary>
+
+小さな例では、`OrderDemo` の中に `Order` を書くことがあります。  
+慣れてきたら、`Order.java` のようにファイルを分けることも多いです。  
+入口の `main` と、データの型を分けて考えると整理しやすいです。
+
+</details>
+
+## よくあるつまずき
+
+- `new` せずにフィールドへ触ろうとしてエラーになる
+- コンストラクタ名をクラス名と食い違わせる
+- `static` な手順と、インスタンスのメソッド（`order.close()`）を混同する
+- 複数の `new` なのに、同じ伝票だと思い込む
+
+## まとめ / 次に学ぶとよいこと
+
+- クラスはフィールドとメソッドを持つひな型
+- `new` で実体を作り、名前を付けて扱う
+- コンストラクタで生成直後の欄をそろえられる
+- `private` で欄を隠し、メソッド経由にできる
+
+次は [配列と List](./arrays-and-lists) で、同じ型の値を並べて扱います。

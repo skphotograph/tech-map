@@ -50,46 +50,50 @@ sidebar_position: 1
 **書き方の最低限**
 
 1. [最初のプログラム](./first-program) … クラス、`main`、コンパイルと実行の最短ルート
-2. [変数と制御構文](./variables-and-control) … 変数、`if`、`for`
-3. [メソッドとクラス](./methods-and-classes) … メソッド、フィールド、`new`、配列、拡張 for、`List`
+2. [変数と計算](./variables-and-calculation) … 変数、型、四則演算、比較
+3. [条件分岐](./branching) … `if` / `else` / `else if`、条件の組み合わせ
+4. [繰り返し](./loops) … `for` / `while`、`break` / `continue`
+5. [メソッド](./methods) … 定義と呼び出し、`void`、早期 `return`
+6. [クラスと new](./classes) … フィールド、`new`、コンストラクタ
+7. [配列と List](./arrays-and-lists) … 添字、拡張 for、可変長の一覧
 
 **実行と参照の地図**
 
-4. [実行の仕組み](./execution-model) … コンパイル、JVM、`main`、ソース実行
-5. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
+8. [実行の仕組み](./execution-model) … コンパイル、JVM、クラスパス
+9. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
 
 **言語の骨格**
 
-6. [String と equals](./string-equals) … `==` / `equals` / `hashCode`、文字列プール、Map のキー
-7. [static と final](./static-final) … 共有と不変、定数
-8. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
-9. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
-10. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
-11. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
+10. [String と equals](./string-equals) … `==` / `equals` / `hashCode`、文字列プール、Map のキー
+11. [static と final](./static-final) … 共有と不変、定数
+12. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
+13. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
+14. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
+15. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
 
 各ページでは、概念の区切りごとに **理解チェック**（選択式／穴埋め）を挟みます。  
 「一つ読んで → 短く確認 → 次へ」のリズムです。これらの問題はテストではなく、その場で理解が正しいかを確認するためのものです。
 
 **ヒープの回収**
 
-12. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
-13. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、ヒープ以外、サイズとログ
+16. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
+17. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、ヒープ以外、サイズとログ
 
 **標準 API と実行時**
 
-14. [ジェネリクスと現代的な型](./generics-and-modern-types) … 型パラメータ → 不変性 → PECS → 型消去
-15. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
-16. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と欲しい形の選び方
-17. [日時 API](./datetime) … 日付、時刻、タイムゾーン
-18. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
-19. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
-20. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期の範囲
-21. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
-22. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環、スレッドごとの値
-23. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
-24. [Java メモリモデル](./memory-model) … 可視性、happens-before、安全な公開
-25. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
-26. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
+18. [ジェネリクスと現代的な型](./generics-and-modern-types) … 型パラメータ → 不変性 → PECS → 型消去
+19. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
+20. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と欲しい形の選び方
+21. [日時 API](./datetime) … 日付、時刻、タイムゾーン
+22. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
+23. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
+24. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期の範囲
+25. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
+26. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環、スレッドごとの値
+27. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
+28. [Java メモリモデル](./memory-model) … 可視性、happens-before、安全な公開
+29. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
+30. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
 
 各ページのコード例は、Java 17 以降を基準にしています。  
 利用する Java のバージョンが異なる場合は、API や構文が使えるか公式ドキュメントで確認してください。

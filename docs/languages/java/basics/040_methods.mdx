@@ -1,0 +1,158 @@
+---
+sidebar_position: 6
+---
+
+# メソッド
+
+同じ計算をコピペで増やすと、直す場所がバラバラになります。  
+「よく使う手順に名前を付ける」——それが **メソッド** です。
+
+Java では、メソッドは **クラスの中** に書きます。  
+[最初のプログラム](./first-program) の `main` と同じ入れ物です。  
+データのまとめ方（クラスのフィールドや `new`）は次のページです。
+
+## このページで分かること
+
+- メソッドの定義と呼び出し
+- 引数と戻り値、`void`
+- `main` から同じクラスの手順を呼ぶ
+- 早期 `return` でネストを浅くする書き方
+
+## メソッドは「名前の付いた手順書」
+
+キッチンで「2 と 3 を足す」を毎回口で説明するより、`add` と書いた手順書を渡した方が早いです。
+
+```java
+public class Calculator {
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    public static void main(String[] args) {
+        int total = add(2, 3);
+        System.out.println(total); // 5
+    }
+}
+```
+
+| 書き方           | たとえ                                 |
+| ---------------- | -------------------------------------- |
+| `int add(...)`   | 手順書の名前が `add`。答えは整数で返す |
+| `(int a, int b)` | 材料として渡すふたつの数               |
+| `return a + b`   | 計算結果を呼び出し元へ返す             |
+| `add(2, 3)`      | 手順書を実際に使う（呼び出す）         |
+
+呼び出し側では、返ってきた値を変数に入れたり、そのまま使ったりできます。
+
+```java
+System.out.println(add(10, 20)); // 30
+```
+
+:::tip[覚えておくこと]
+
+メソッドは「受け取るもの」「返すもの」「名前」がそろった手順。  
+使うときは名前で呼び出す。
+
+:::
+
+<QuizChoice
+title="メソッドの戻り値"
+options={[
+{id: 'a', label: 'total は 2'},
+{id: 'b', label: 'total は 5'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="add(2, 3) は 2 + 3 を return するので、total には 5 が入ります。"
+
+>
+
+  <div>次のコードのあと、<code>total</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`public class Calculator {
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    public static void main(String[] args) {
+        int total = add(2, 3);
+    }
+
+}`}</code></pre>
+</QuizChoice>
+
+## 戻り値が無い処理: `void`
+
+画面に出すだけのように、返事が要らない手順は、戻り値の型に `void` を書きます。
+
+```java
+public class Reporter {
+    static void printTotal(int total) {
+        System.out.println(total);
+    }
+
+    public static void main(String[] args) {
+        printTotal(5);
+    }
+}
+```
+
+`void` のメソッドでは、値を `return` しません。  
+途中で抜けたいときは、値なしの `return;` も使えます（次の早期 return でも出ます）。
+
+## `main` から同じクラスの手順を呼ぶ
+
+起動の入口 `main` も、クラスの中の手順書のひとつです。  
+上の例では、`main` から同じクラスの `add` / `printTotal` を呼んでいます。
+
+いまは次だけ押さえておけば足ります。
+
+- 手順はクラスの中に書く
+- `main` から、同じクラスの `static` な手順を呼べる
+
+`static` の設計の話は、あとのページで積み上げます。  
+入門では「`main` と並べて書く定番の形」として使います。
+
+## 早期 return: 入口で弾いて、中をすっきり
+
+[条件分岐](./branching) の枝が深くなると、読みにくくなります。  
+映画館の入り口で、まずチケットを確認する——合わなければその場でお帰り、合えば中の案内だけに集中する、という流れです。
+
+```java
+public class OrderService {
+    static String label(int amount) {
+        if (amount < 0) {
+            return "invalid";
+        }
+        if (amount >= 1000) {
+            return "bulk";
+        }
+        return "normal";
+    }
+
+    public static void main(String[] args) {
+        System.out.println(label(1200)); // bulk
+        System.out.println(label(-1));   // invalid
+    }
+}
+```
+
+- 最初の `if` で不正ならすぐ返す → その下は「通った人だけ」を扱える
+- `else` を何段も積み上げなくてよい
+
+すべてを早期 return にする必要はありません。  
+枝が深くなって読みにくくなったときに、この形を思い出してください。
+
+## よくあるつまずき
+
+- メソッドをクラスの外に書いてしまう
+- 戻り値の型と `return` の値が合わない
+- `void` なのに値を返そうとする／返すメソッドで `return` を忘れる
+- 引数の個数や型を呼び出しと定義で食い違わせる
+
+## まとめ / 次に学ぶとよいこと
+
+- メソッドはクラスの中に書き、引数を受け取り `return` で返す（または `void`）
+- `main` から同じクラスの手順を呼んで組み立てられる
+- 早期 `return` で入口で弾くと、中の枝が浅くなる
+
+次は [クラスと new](./classes) で、データと操作をひとつの型にまとめます。
