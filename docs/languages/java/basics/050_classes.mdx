@@ -21,17 +21,20 @@ sidebar_position: 7
 
 たとえで言うと、クラスは「伝票のひな型」、`new` は「実際に一枚切る」です。
 
+説明用に、データの型と起動の入口を同じソースに並べています。  
+慣れてきたら、`Order.java` のようにファイルを分けることも多いです。
+
 ```java
-public class OrderDemo {
-    static class Order {
-        String id;
-        String status;
+class Order {
+    String id;
+    String status;
 
-        void close() {
-            status = "CLOSED";
-        }
+    void close() {
+        status = "CLOSED";
     }
+}
 
+public class OrderDemo {
     public static void main(String[] args) {
         Order order = new Order();
         order.id = "ORD-1";
@@ -49,8 +52,13 @@ public class OrderDemo {
 | `new Order()`                | 伝票を一枚切る（実体を作る）                                               |
 | `Order order`                | 作った伝票を扱うための名前                                                 |
 
-前のページの `static` な手順は、「どの伝票か」が無くても呼べました。  
+前のページの `static` な手順は、伝票を切らずに呼べました。  
 ここでの `close` は、**切った伝票に対して** 呼びます。
+
+| 呼び方          | たとえ                           |
+| --------------- | -------------------------------- |
+| `add(2, 3)`     | 伝票なしで使える手順（`static`） |
+| `order.close()` | 「この伝票」を指定して呼ぶ手順   |
 
 :::tip[覚えておくこと]
 
@@ -120,16 +128,8 @@ Order order = new Order("ORD-1", "OPEN");
 - 戻り値の型は書かない
 - `this.id` は「この伝票の欄 `id`」
 
-引数名と欄の名前が同じときに、どちら向きの代入かをはっきりさせます。
-
-<details>
-<summary>main を持つクラスと、データのクラス</summary>
-
-小さな例では、`OrderDemo` の中に `Order` を書くことがあります。  
-慣れてきたら、`Order.java` のようにファイルを分けることも多いです。  
-入口の `main` と、データの型を分けて考えると整理しやすいです。
-
-</details>
+引数名と欄の名前が同じとき、`id = id` だとどちら向きか分かりません。  
+`this.id = id` と書くと、「欄へ、引数の値を入れる」がはっきりします。
 
 ## よくあるつまずき
 

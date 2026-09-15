@@ -101,9 +101,19 @@ System.out.println(order.status);`}</code></pre>
 
 `public` も `private` も書かないとき、Java では **同じパッケージのクラスから見える** 扱いになります（パッケージプライベート／デフォルト）。
 
+パッケージは、クラスをまとめる **同じ引き出しグループ** です。  
+ソースの先頭に次のように書きます。
+
+```java
+package com.example.order;
+```
+
+同じ `package` に属するクラスどうしが、「修飾子なし」で見える範囲です。  
+入門の単一ファイルでは `package` を省略して構いません（省略時は、そのディレクトリ内が同じグループとして扱われます）。
+
 ```java
 class Order {
-    String status; // 修飾子なし
+    String status; // 修飾子なし → 同じパッケージから見える
 
     void close() {
         status = "CLOSED";
@@ -113,21 +123,6 @@ class Order {
 
 小さなサンプルでは、修飾子なしのまま進むことも多いです。  
 チームの本番コードでは、意図が無い限りフィールドを開けっぱなしにしない、が定番です。
-
-<details>
-<summary>package 宣言との関係</summary>
-
-ソースの先頭に次のように書くことがあります。
-
-```java
-package com.example.order;
-```
-
-同じ `package` に属するクラスどうしが、「修飾子なし」で見える範囲です。  
-ディレクトリ構成と `package` を揃える話は [実行の仕組み](./execution-model) でも触れます。  
-入門の単一ファイルでは `package` を省略して構いません。
-
-</details>
 
 ## メソッドにも付ける
 

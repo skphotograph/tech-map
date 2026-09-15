@@ -39,6 +39,30 @@ class UrgentTask extends Task {
 
 `@Override` は必須ではありませんが、付けておくと **シグネチャ**（メソッド名と引数の型の並び）の食い違いをコンパイル時に検知できます。
 
+## 親のコンストラクタを呼ぶ（`super`）
+
+子を `new` するとき、親側の初期化も必要になることがあります。  
+子のコンストラクタから、親のコンストラクタを呼ぶのが `super(...)` です。
+
+```java
+class Task {
+    String label;
+
+    Task(String label) {
+        this.label = label;
+    }
+}
+
+class UrgentTask extends Task {
+    UrgentTask(String label) {
+        super(label); // 親の Task(String) を先に実行する
+    }
+}
+```
+
+- `super(label)` は、親クラスのコンストラクタを呼び出す
+- 親に「引数付きコンストラクタだけ」があるとき、子側で `super(...)` が要ることが多い
+
 ## `protected`: 子からも触れる見える範囲
 
 [アクセス修飾子](./access-modifiers) では `public` / `private` / 修飾子なしを見ました。  

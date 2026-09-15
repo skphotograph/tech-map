@@ -8,16 +8,12 @@ sidebar_position: 12
 ログに出すと、どちらも `"ORD-1001"` に見える。  
 名札の文字は同じなのに、「同一人物か」と「同姓同名か」を取り違えている、という感覚です。
 
-このページでは、`String` の扱いと、`==` / `equals` の違いを先に固めます。  
-`hashCode` と Map / Set の契約は、同値比較のあとに「次の段」として触れます。
+このページでは、`String` の扱いと、`==` / `equals` の切り分けを固めます。
 
 ## このページで分かること
 
 - `String` が参照型であることと、不変であることの意味
 - `==`（同一性）と `equals`（同値）の違い
-- 文字列プールに頼った比較が危険な理由
-- `equals` と `hashCode` の契約、`HashMap` / `HashSet` での壊れ方
-- 可変オブジェクトをキーにしない理由
 
 ## 文字列比較でつまずきやすい理由
 
@@ -58,32 +54,6 @@ System.out.println(upper);  // PAID
 業務の ID 比較では、まず「同じ正規化規則か」（前後空白、大文字小文字）を揃える方が先です。
 
 </details>
-
-## 文字列プールと `==`
-
-```java
-String a = "order";
-String b = "order";
-String c = new String("order");
-String d = readFromRequest(); // 外部入力
-```
-
-JVM は同じ内容の文字列リテラルを、**文字列プール**上の同じインスタンスへまとめることがあります。  
-クロークで「同じ内容のコート」を同じハンガーにまとめる、くらいのイメージです。  
-そのため `a == b` が `true` になることはあります。  
-一方 `c` は明示的に別オブジェクトを作りやすく、`d` は入力経路次第で別物です。
-
-```java
-System.out.println(a == b);      // true になりやすい（プール）
-System.out.println(a == c);      // false になりやすい
-System.out.println(a.equals(c)); // true
-```
-
-プールの挙動に頼った比較は危険です。  
-コンパイラの最適化や実行経路で結果が変わり、**テストだけ通る** 典型になります。
-
-`String.intern()` はプールへ載せる操作ですが、寿命と競合の副作用があるため、同値比較の代わりには使いません。  
-中身の比較は常に `equals`（または `Objects.equals`）です。
 
 ## `==` と `equals`
 
@@ -153,10 +123,47 @@ Objects.equals(left, right); // 両方 null なら true、片方だけなら fal
 入力境界では、trim やポリシーに沿った正規化を **比較の前に一度** 行うか、比較専用のメソッド（`equalsIgnoreCase` など）を明示します。  
 「画面では同じに見える」を、ログにコードポイントや長さを出して疑う習慣があると早いです。
 
+:::info[ここまでの核]
+
+中身の比較は `equals`。`==` は同一性だけ。  
+ここまで押さえれば、日常の文字列比較では足ります。
+
+:::
+
+## 文字列プールと `==`
+
+```java
+String a = "order";
+String b = "order";
+String c = new String("order");
+String d = readFromRequest(); // 外部入力
+```
+
+JVM は同じ内容の文字列リテラルを、**文字列プール**上の同じインスタンスへまとめることがあります。  
+クロークで「同じ内容のコート」を同じハンガーにまとめる、くらいのイメージです。  
+そのため `a == b` が `true` になることはあります。  
+一方 `c` は明示的に別オブジェクトを作りやすく、`d` は入力経路次第で別物です。
+
+```java
+System.out.println(a == b);      // true になりやすい（プール）
+System.out.println(a == c);      // false になりやすい
+System.out.println(a.equals(c)); // true
+```
+
+プールの挙動に頼った比較は危険です。  
+コンパイラの最適化や実行経路で結果が変わり、**テストだけ通る** 典型になります。
+
+<details>
+<summary>String.intern()</summary>
+
+`String.intern()` はプールへ載せる操作ですが、寿命と競合の副作用があるため、同値比較の代わりには使いません。  
+中身の比較は常に `equals`（または `Objects.equals`）です。
+
+</details>
+
 ## 次の段: equals と hashCode（Map / Set）
 
-[コレクションとジェネリクス](./collections-generics) のあとでも読み返せます。  
-自作クラスを `HashMap` のキーや `HashSet` の要素にするときだけ、ここが必須になります。
+自作クラスを `HashMap` のキーや `HashSet` の要素にするとき、ここが必須になります。
 
 ### equals の契約
 
@@ -201,8 +208,7 @@ public final class UserId {
 ## hashCode とのセット（続き）
 
 `Set` や `Map`（実装の例: `HashSet` / `HashMap`）のキーでは、次の流れで探します。  
-倉庫のロッカー番号で区画を決め、区画の中で名札を突き合わせる、に近いです。  
-コレクション API の使い分けは [コレクションとジェネリクス](./collections-generics) で扱います。ここでは **桶 → equals** の契約だけ見てください。
+倉庫のロッカー番号で区画を決め、区画の中で名札を突き合わせる、に近いです。
 
 1. `hashCode` で桶（バケット）を決める
 2. その桶の中で `equals` により同値を探す
@@ -284,7 +290,7 @@ key.code = "B"; // もう map から見つけにくい
 ## record と生成コード
 
 `record` は成分に基づく `equals` / `hashCode` / `toString` を生成します。  
-書き方の詳細や現代的な型としての位置づけは、後の [ジェネリクスと現代的な型](./generics-and-modern-types) でも扱います。今は「手書きの契約を生成に任せられる」と分かれば足ります。
+手書きの契約を、言語に任せられる、と分かれば足ります。
 
 ```java
 record UserId(String value) {
