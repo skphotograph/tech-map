@@ -1,0 +1,8 @@
+{
+  "label": "リモートアクセス",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "foundations/remote-access/index"
+  }
+}

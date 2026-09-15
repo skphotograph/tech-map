@@ -1,0 +1,232 @@
+---
+sidebar_position: 7
+---
+
+# 中身を見る・探す
+
+障害調査でも設定確認でも、「該当しそうなファイルを開き、怪しい行を見つける」作業が頻出します。  
+巨大なログを上から全部読むのは現実的ではないので、**表示を絞る・検索する** 技術が効きます。  
+[シンボリックリンク](./symlinks) までの操作ができる前提です。
+
+## このページで分かること
+
+- `cat` / `less` / `head` / `tail` の使い分け
+- `grep` で行を探す
+- `find` でファイルを探す
+
+## なぜ「全部読む」では足りないか
+
+本番のログは何千行、何万行と増えます。  
+「昨日の夕方から ERROR が出ている」と分かっているのに、先頭から目視していると時間だけが溶けます。  
+目的はファイルを開くことではなく、**仮説を検証できる断片を素早く取り出すこと** です。
+
+## 短いファイルを見る：`cat`
+
+```bash
+cd ~/training-linux
+echo "hello linux" > notes/hello.txt
+cat notes/hello.txt
+```
+
+例:
+
+```text
+hello linux
+```
+
+`cat` は中身をまとめて標準出力へ出します。  
+短いファイル向きです。長いファイルに使うと、端末が流れて追いきれなくなります。
+
+## 長くても読める：`less`
+
+```bash
+less notes/hello.txt
+```
+
+`less` はページャ（ページ送りビューア）です。  
+開いたあと:
+
+- 下へ進む … Space や `j`
+- 上へ戻る … `b` や `k`
+- 終了 … `q`
+
+:::tip[長いログの定番]
+
+長いファイルはまず `less`。  
+流して終わりにしたいときだけ `cat`、という使い分けが安全です。
+
+:::
+
+## 先頭と末尾：`head` / `tail`
+
+`head` はファイルの先頭、`tail` は末尾を表示するコマンドです。  
+ここでは先に、見本用のファイルを `printf` で作ります（改行付きの文字列を出力するコマンドです）。
+
+```bash
+printf "line1\nline2\nline3\nline4\nline5\n" > notes/lines.txt
+head -n 2 notes/lines.txt
+```
+
+例:
+
+```text
+line1
+line2
+```
+
+```bash
+tail -n 2 notes/lines.txt
+```
+
+例:
+
+```text
+line4
+line5
+```
+
+ログ調査では、末尾（最新）を見る `tail` が特によく出ます。  
+追記を追い続けたいときは次です。
+
+```bash
+tail -f notes/lines.txt
+```
+
+別の端末で追記すると、表示が更新されます。  
+止めるときは Ctrl+C です。
+
+<details>
+<summary>`wc` で行数やサイズ感をつかむ</summary>
+
+`wc` は、行数・単語数・バイト数などを数えるコマンドです。
+
+```bash
+wc -l notes/lines.txt
+```
+
+例:
+
+```text
+5 notes/lines.txt
+```
+
+`-l` は行数です。  
+「どれくらい大きいか」を先に知ると、`less` にするか `tail` にするかの判断がしやすいです。
+
+</details>
+
+## 行を探す：`grep`
+
+```bash
+printf "INFO start\nERROR disk full\nINFO ok\nERROR timeout\n" > notes/app.log
+grep ERROR notes/app.log
+```
+
+例:
+
+```text
+ERROR disk full
+ERROR timeout
+```
+
+`grep` は、条件に合う行だけを抜き出します。
+
+よく使うオプション:
+
+```bash
+grep -n ERROR notes/app.log
+```
+
+例:
+
+```text
+2:ERROR disk full
+4:ERROR timeout
+```
+
+- `-n` … 行番号付き
+- `-i` … 大文字小文字を無視
+- `-R` … ディレクトリを再帰的に検索
+
+```bash
+grep -R "ERROR" notes/
+```
+
+:::tip[調査の型]
+
+「キーワードで絞る → 行番号や前後を見る → 必要ならファイル全体を `less`」  
+この順が、ログ調査の基本形です。
+
+:::
+
+<details>
+<summary>前後の行も見たいとき</summary>
+
+```bash
+grep -n -C 1 ERROR notes/app.log
+```
+
+`-C 1` は、マッチ行の前後 1 行ずつを付けます。  
+`-A`（後だけ）や `-B`（前だけ）もあります。
+
+</details>
+
+## ファイルを探す：`find`
+
+`find` は、名前や条件でファイルやディレクトリを探すコマンドです。
+
+```bash
+find ~/training-linux -name "*.log"
+```
+
+例:
+
+```text
+/home/alex/training-linux/notes/a.log
+/home/alex/training-linux/notes/b.log
+/home/alex/training-linux/notes/app.log
+```
+
+- 第 1 引数 … 探し始めるディレクトリ
+- `-name` … ファイル名のパターン（ワイルドカードはクォート推奨）
+
+<details>
+<summary>更新日やタイプで絞る例</summary>
+
+```bash
+# 通常ファイルだけ
+find ~/training-linux -type f -name "*.txt"
+
+# 直近 1 日以内に更新されたもの（環境により差があります）
+find ~/training-linux -type f -mtime -1
+```
+
+最初は `-name` と `-type f` だけでも十分役立ちます。
+
+</details>
+
+<details>
+<summary>`find` と `grep -R` の使い分け</summary>
+
+- ファイル名や場所が分からない … まず `find`
+- 中身の文言で探したい … `grep -R`
+- 両方必要なとき … `find` で候補を絞ってから `grep`、または後述のパイプ
+
+</details>
+
+## よくあるつまずき
+
+| 症状 | よくある原因 | 方向性 |
+| --- | --- | --- |
+| `grep` が何も出ない | 大文字小文字 / 別ファイルを見ている | `-i`、パス、`ls` を確認 |
+| `less` から抜けられない | 終了キーが分からない | `q` で終了 |
+| `find` が多すぎる | 開始ディレクトリが広すぎる | `~/training-linux` など狭い場所から |
+
+## まとめ
+
+- 短いファイルは `cat`、長いファイルは `less`
+- 最新や件数感は `tail` / `head`（と `wc`）
+- 行の検索は `grep`、ファイル探しは `find`
+
+次は、これらのコマンドを組み合わせて一気に強くします。  
+[パイプとリダイレクト](./pipes-and-redirect) へ進みましょう。

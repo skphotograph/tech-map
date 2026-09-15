@@ -1,0 +1,8 @@
+{
+  "label": "Linux / Shell",
+  "position": 3,
+  "link": {
+    "type": "doc",
+    "id": "foundations/linux/index"
+  }
+}

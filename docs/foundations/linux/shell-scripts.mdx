@@ -1,0 +1,313 @@
+---
+sidebar_position: 13
+---
+
+# シェルスクリプト入門
+
+同じ 3〜5 個のコマンドを、毎朝手で打っていないでしょうか。  
+打ち間違いも説明コストも、ファイルに残した方が下がります。  
+ここでは「短いスクリプトを書いて実行する」ところまでを扱います。
+
+## このページで分かること
+
+- スクリプトファイルの作り方と実行方法
+- 変数、引数、分岐・繰り返し、関数の入口
+- 安全に書くための最低限の習慣
+
+## なぜスクリプトにするか
+
+手打ちの手順は、本人の記憶に閉じます。  
+スクリプトにすると次が得られます。
+
+- 同じ手順を再現できる
+- レビューや共有ができる
+- 失敗した行をあとから追いやすい
+
+大きなフレームワークを学ぶ前に、まず「自分の作業手順をファイル化する」感覚が大切です。
+
+## 最初のスクリプト
+
+```bash
+cd ~/training-linux
+mkdir -p scripts
+cat > scripts/hello.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "hello from shell script"
+EOF
+```
+
+`<< 'EOF'` は、複数行をファイルへ書き込む手法のひとつです（ヒアドキュメント）。
+
+```bash
+chmod u+x scripts/hello.sh
+./scripts/hello.sh
+```
+
+例:
+
+```text
+hello from shell script
+```
+
+読み方のポイント:
+
+- 1 行目の `#!/usr/bin/env bash` … **シバン**（shebang）。スクリプトの先頭に書く「このファイルはどのプログラムで実行するか」の指定です。`#!` に続けて、解釈するコマンド（ここでは bash）への道筋を書きます
+- `chmod u+x` … 実行権限を付与（[権限](./permissions)）
+- `./scripts/hello.sh` … カレントから相対パスで実行。シバンがあるので、OS が bash 経由で中身を動かします
+
+:::tip[`set -euo pipefail`]
+
+導入時点で付けることが多い安全寄りの設定です。
+
+- `-e` … エラーで止める
+- `-u` … 未定義変数をエラーにする
+- `-o pipefail` … パイプの途中失敗も失敗として扱う
+
+「動いたように見えて壊れている」を減らす助けになります。
+
+:::
+
+<details>
+<summary>`bash scripts/hello.sh` と `./scripts/hello.sh`</summary>
+
+`bash scripts/hello.sh` は、実行権限がなくても bash に渡して動かせます。  
+チームに渡す・パスに置く予定なら、シバン + 実行権限の形に慣れておくとよいです。
+
+</details>
+
+## 変数と引数
+
+```bash
+cat > scripts/greet.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+name="${1:-world}"
+echo "hello, ${name}"
+EOF
+
+chmod u+x scripts/greet.sh
+./scripts/greet.sh alex
+```
+
+例:
+
+```text
+hello, alex
+```
+
+- `$1` … 第 1 引数
+- `${1:-world}` … 引数がなければ `world` を使う
+
+引数なし:
+
+```bash
+./scripts/greet.sh
+```
+
+例:
+
+```text
+hello, world
+```
+
+## 分岐の入口
+
+```bash
+cat > scripts/check-file.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-}"
+if [[ -z "${target}" ]]; then
+  echo "usage: $0 <file>" >&2
+  exit 1
+fi
+
+if [[ -f "${target}" ]]; then
+  echo "file exists: ${target}"
+else
+  echo "file not found: ${target}"
+  exit 1
+fi
+EOF
+
+chmod u+x scripts/check-file.sh
+./scripts/check-file.sh notes/hello.txt
+```
+
+例:
+
+```text
+file exists: notes/hello.txt
+```
+
+- `[[ -f ... ]]` … 通常ファイルかどうか
+- `>&2` … メッセージを標準エラーへ（[リダイレクト](./pipes-and-redirect)）
+- `exit 1` … 失敗終了（成功は普通 `0`）
+
+## 繰り返しの入口
+
+```bash
+cat > scripts/list-logs.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+for path in notes/*.log; do
+  echo "=== ${path} ==="
+  wc -l "${path}"
+done
+EOF
+
+chmod u+x scripts/list-logs.sh
+./scripts/list-logs.sh
+```
+
+マッチするファイルごとに、行数を出します。  
+ワイルドカードと `for` の組み合わせは、日々の点検スクリプトでありがちです。
+
+## 関数の定義と呼び出し
+
+同じ処理を何度も書くなら、**関数** にまとめます。  
+定義しておき、名前で呼び出します。
+
+```bash
+cat > scripts/greet-fn.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+greet() {
+  local name="${1:-world}"
+  echo "hello, ${name}"
+}
+
+greet
+greet alex
+EOF
+
+chmod u+x scripts/greet-fn.sh
+./scripts/greet-fn.sh
+```
+
+例:
+
+```text
+hello, world
+hello, alex
+```
+
+読み方のポイント:
+
+- `greet() { ... }` … 関数 `greet` を定義する
+- `greet` / `greet alex` … 定義した関数を呼び出す（引数はスクリプト本体と同様に渡せる）
+- 関数内の `$1` … **その呼び出しの** 第 1 引数
+- `local` … 関数の中だけの変数にする（外へ漏れにくくする）
+
+:::tip[定義は呼び出しより前]
+
+上から順に実行されるので、使う前に関数を書いておきます。  
+「共通処理を上に、実際の手順を下に」と分けると読みやすいです。
+
+:::
+
+もう少し実務に近い形です。
+
+```bash
+cat > scripts/check-logs.sh << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: $0 <logfile>" >&2
+}
+
+count_errors() {
+  local file="$1"
+  grep -c ERROR "${file}" || true
+}
+
+logfile="${1:-}"
+if [[ -z "${logfile}" ]]; then
+  usage
+  exit 1
+fi
+
+if [[ ! -f "${logfile}" ]]; then
+  echo "file not found: ${logfile}" >&2
+  exit 1
+fi
+
+echo "ERROR count: $(count_errors "${logfile}")"
+EOF
+
+chmod u+x scripts/check-logs.sh
+./scripts/check-logs.sh notes/app.log
+```
+
+例（件数はファイル内容で変わります）:
+
+```text
+ERROR count: 2
+```
+
+`usage` と `count_errors` のように役割で分けると、本体の流れが追いやすくなります。  
+`$(count_errors ...)` は、関数の標準出力を受け取って埋め込む書き方です。  
+`grep -c` は件数を出す指定ですが、0 件のとき終了コードが 1 になることがあるため、`set -e` 下では `|| true` を付けています。
+
+<details>
+<summary>`function greet {` という書き方もある</summary>
+
+```bash
+function greet {
+  echo "hello"
+}
+```
+
+bash では動きますが、この教材では移植性の高い `greet() { ... }` を使います。  
+どちらにしても、「定義してから名前で呼ぶ」という考え方は同じです。
+
+</details>
+
+:::warning[破壊的操作をスクリプトにしないうちに]
+
+`rm -rf` や本番設定の上書きを、慣れる前のスクリプトに入れないでください。  
+まずは表示・集計・チェック系からにすると安全です。
+
+:::
+
+## 実務向けの書き方メモ
+
+- 先頭に `set -euo pipefail`
+- 変数は `"${name}"` のようにクォートする（スペース対策）
+- 繰り返しや共通処理は関数にまとめる（関数内は `local` を検討）
+- 使い方を誤ったら `usage` を出して終了する
+- 秘密情報をベタ書きしない（環境変数や別管理を使う）
+
+<details>
+<summary>どこまでスクリプトにし、どこから他言語にするか</summary>
+
+数十行で済む手順、テキストとファイルの処理中心ならシェルが向きます。  
+複雑なデータ構造や大規模ロジックなら、Python などの方が読みやすくなることが多いです。  
+「まずシェルで手順を固定し、辛くなったら移す」でも十分です。
+
+</details>
+
+## よくあるつまずき
+
+| 症状 | よくある原因 | 方向性 |
+| --- | --- | --- |
+| `Permission denied` | 実行権限がない | `chmod u+x` |
+| `/bin/bash^M` など奇妙なエラー | Windows の改行コード | LF に直す |
+| 変数が空で壊れる | クォート不足 / 引数不足 | `"${var}"` とデフォルト値 |
+| `command not found`（自作関数名） | 定義より前に呼んでいる / 別スクリプト内 | 定義順を確認 |
+
+## まとめ
+
+- スクリプトは再現可能な手順書
+- シバン、実行権限、`set -euo pipefail` が入口の型
+- 変数・引数・`if` / `for`・関数で日々の作業を寄せていける
+
+最後に、調査の進め方と安全側の習慣をまとめます。  
+[実務での使い方](./daily-ops) へ進みましょう。

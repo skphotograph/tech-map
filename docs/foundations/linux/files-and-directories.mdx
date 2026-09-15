@@ -1,0 +1,213 @@
+---
+sidebar_position: 4
+---
+
+# ファイルとディレクトリ
+
+現在地が分かるようになったら、次は中身を増やしたり移したりします。  
+ここで事故りやすいのが「消す」「上書きする」操作なので、練習用ディレクトリで安全に慣れます。
+
+## このページで分かること
+
+- ディレクトリと空ファイルの作り方
+- コピー・移動・リネーム・削除
+- ワイルドカード（`*` など）の基本
+
+## 前提
+
+[端末とパス](./terminal-and-path) の練習用ディレクトリにいる想定です。
+
+```bash
+cd ~/training-linux
+pwd
+```
+
+## 作る：`mkdir` / `touch`
+
+```bash
+mkdir notes
+touch notes/todo.txt
+ls notes
+```
+
+例:
+
+```text
+todo.txt
+```
+
+- `mkdir` … ディレクトリを作る
+- `touch` … 空ファイルを作る（既存なら更新時刻だけ触る）
+
+ネストして作りたいとき:
+
+```bash
+mkdir -p app/logs
+```
+
+`-p` があると、途中の階層がなくても一括で作れます。
+
+## 中身を書いて確認する（入口）
+
+まだエディタの話は深追いしません。  
+短い内容なら次でも足ります。
+
+```bash
+echo "first task" > notes/todo.txt
+cat notes/todo.txt
+```
+
+例:
+
+```text
+first task
+```
+
+`echo` は、渡した文字列を出力するコマンドです。  
+`>` はリダイレクト（出力の行き先変更）です。  
+くわしくは [パイプとリダイレクト](./pipes-and-redirect) で扱います。  
+`cat` はファイルの中身表示で、詳細は [中身を見る・探す](./inspect-and-search) へ続きます。
+:::warning[`>` は上書き]
+
+`>` は既存ファイルを上書きします。  
+大事なファイルでは使わず、練習用の名前だけにしてください。
+
+:::
+
+## コピー：`cp`
+
+`cp` は、ファイルやディレクトリをコピーするコマンドです。
+
+```bash
+cp notes/todo.txt notes/todo.bak.txt
+ls notes
+```
+例:
+
+```text
+todo.bak.txt  todo.txt
+```
+
+ディレクトリごとコピーするときは `-r`（recursive）が必要です。
+
+```bash
+cp -r notes notes-backup
+```
+
+<details>
+<summary>`cp` で上書きされる？</summary>
+
+行き先に同名があると上書きされることがあります。  
+対話的に確認したいときは `cp -i` を使う方法もあります。  
+大事な場所では、先に `ls` で行き先を確認するのが安全です。
+
+</details>
+
+## 移動・リネーム：`mv`
+
+`mv` は移動とリネームの両方に使います。
+
+```bash
+mv notes/todo.bak.txt notes/todo.old.txt
+ls notes
+```
+
+例:
+
+```text
+todo.old.txt  todo.txt
+```
+
+別ディレクトリへ移す:
+
+```bash
+mkdir archive
+mv notes/todo.old.txt archive/
+ls archive
+```
+
+例:
+
+```text
+todo.old.txt
+```
+
+## 削除：`rm` / `rmdir`
+
+空のディレクトリは `rmdir` でも消せます。  
+ファイルや、中身のあるディレクトリは `rm` を使います。
+
+```bash
+rm archive/todo.old.txt
+```
+
+ディレクトリごと消す場合:
+
+```bash
+rm -r notes-backup
+```
+
+:::warning[`rm` にゴミ箱はない]
+
+多くの環境では、`rm` で消したファイルは簡単には戻りません。  
+特に `rm -rf`（確認なし・ディレクトリごと）は、パスを間違えると致命傷になります。  
+練習では `~/training-linux` の中だけ、消す前に `ls` で対象を見てから実行してください。
+
+:::
+
+<details>
+<summary>`rm -rf` を安易に使わない</summary>
+
+`-f` は確認を減らすオプションです。  
+便利な反面、打ち間違いの安全装置も外します。  
+本番や共有サーバでは、チームのルールと対象パスを二重に確認してください。
+
+</details>
+
+## ワイルドカード
+
+名前の一部が共通するファイルをまとめて扱うときに使います。
+
+```bash
+touch notes/a.log notes/b.log notes/readme.md
+ls notes/*.log
+```
+
+例:
+
+```text
+notes/a.log  notes/b.log
+```
+
+- `*` … 任意の長さの文字列
+- `?` … 任意の 1 文字（必要になったら）
+
+:::tip[実行前に展開結果を見る]
+
+いきなり `rm notes/*.log` と打たず、先に `ls notes/*.log` で対象を確認する癖をつけると事故が減ります。
+
+:::
+
+## よくあるつまずき
+
+| 症状 | よくある原因 | 方向性 |
+| --- | --- | --- |
+| `Is a directory` | ディレクトリに対してファイル用の操作をした | `-r` が要るか、対象がディレクトリかを確認 |
+| コピーしたつもりが無い | 行き先パスの取り違え | `ls` で元と先を両方見る |
+| 消しすぎた | ワイルドカードの範囲が広い | まず `ls` で展開結果を確認 |
+
+## ミニ演習
+
+1. `~/training-linux` に `work/src` を作る
+2. `work/src/app.txt` を作り、一行書き込む
+3. `app.txt` を `work/app.bak.txt` にコピーする
+4. `ls -R work` でツリーを眺める（`-R` は再帰表示）
+
+## まとめ
+
+- 作る `mkdir` / `touch`、写す `cp`、移す `mv`、消す `rm`
+- 消す・上書きは練習用パスで慣れる
+- ワイルドカードは、実行前に `ls` で対象確認
+
+次は、端末だけでファイルを編集する道具です。  
+[ターミナルのテキストエディタ](./terminal-editors) へ進みましょう。

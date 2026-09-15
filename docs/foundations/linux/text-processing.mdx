@@ -1,0 +1,299 @@
+---
+sidebar_position: 12
+---
+
+# テキスト加工
+
+調査もレポートも、「行の集まり」を相手にすることが多いです。  
+並べる・重複を除く・列を抜く・件数を出す・文字列を置換する。  
+小さな道具の組み合わせが、そのまま実務のスピードになります。
+
+## このページで分かること
+
+- `sort` / `uniq` / `cut` / `wc` の基本
+- `sed` での置換（必要なら `tr`）
+- `xargs` の入口
+- パイプと組み合わせた調査パターン
+
+## なぜテキスト加工が効くか
+
+ログも CSV も、コマンドの出力も、結局は文字の行です。  
+Excel に貼って集計してもよい場面はありますが、サーバ上ではそれすらできないことが多いです。  
+シェルで同じ集計ができると、現場で止まらずに済みます。
+
+## 事前準備
+
+```bash
+cd ~/training-linux
+printf "banana\napple\nbanana\napple\ncherry\n" > notes/fruits.txt
+printf "alex,42,dev\nbob,17,ops\ncarol,42,dev\n" > notes/users.csv
+printf "ERROR disk full\nINFO ok\nERROR timeout\n" > notes/app.log
+```
+
+## 並べ替え：`sort`
+
+`sort` は、行を並べ替えるコマンドです。
+
+```bash
+sort notes/fruits.txt
+```
+
+例:
+
+```text
+apple
+apple
+banana
+banana
+cherry
+```
+
+数値として並べたいときは `-n`、逆順は `-r` です。
+
+## 重複をまとめる：`uniq`
+
+`uniq` は、隣り合った重複行をまとめるコマンドです。  
+なので、先に `sort` するのが定石です。
+
+```bash
+sort notes/fruits.txt | uniq
+```
+
+例:
+
+```text
+apple
+banana
+cherry
+```
+
+件数付き:
+
+```bash
+sort notes/fruits.txt | uniq -c
+```
+
+例:
+
+```text
+      2 apple
+      2 banana
+      1 cherry
+```
+
+:::tip[頻出パターン]
+
+「種類を知りたい」「多い順を知りたい」は、  
+`sort | uniq -c | sort -nr` の形がよく出ます。
+
+:::
+
+```bash
+sort notes/fruits.txt | uniq -c | sort -nr
+```
+
+## 列を抜く：`cut`
+
+`cut` は、区切りテキストから指定した列だけを取り出すコマンドです。
+
+```bash
+cut -d ',' -f 1,3 notes/users.csv
+```
+
+例:
+
+```text
+alex,dev
+bob,ops
+carol,dev
+```
+
+- `-d ','` … 区切り文字
+- `-f 1,3` … 1 列目と 3 列目
+
+<details>
+<summary>空白区切りの出力から列を取るとき</summary>
+
+`ps` や `ls -l` のように空白が連続する出力は、`cut` だけではつらいことがあります。  
+そういうときは `awk`（テキストを行・列として処理するコマンド）が使われることが多いです。  
+強力なので、必要になったタイミングで少しずつで十分です。
+
+```bash
+awk -F ',' '{print $1}' notes/users.csv
+```
+
+</details>
+
+## 件数：`wc`
+
+`wc` は、行数・単語数・バイト数などを数えるコマンドです（[中身を見る・探す](./inspect-and-search) でも触れました）。
+
+```bash
+wc -l notes/fruits.txt
+```
+
+例:
+
+```text
+5 notes/fruits.txt
+```
+
+パイプと組み合わせると、「条件に合う行数」が取れます。
+
+```bash
+grep banana notes/fruits.txt | wc -l
+```
+
+## 置換する：`sed`
+
+`sed` は、テキストを流しながら編集するコマンドです。  
+実務では **文字列の置換** で特によく使います。
+
+```bash
+sed 's/ERROR/WARN/' notes/app.log
+```
+
+例:
+
+```text
+WARN disk full
+INFO ok
+WARN timeout
+```
+
+`s/検索/置換/` が基本形です（substitute）。  
+既定では、**各行で最初にマッチした 1 箇所だけ** 置き換わります。  
+行内のすべてを替えるときは末尾に `g` を付けます。
+
+```bash
+echo "dev-dev-prod" | sed 's/dev/stg/g'
+```
+
+例:
+
+```text
+stg-stg-prod
+```
+
+区切り文字は `/` 以外にもできます。  
+パスを含む置換で便利です。
+
+```bash
+echo "/var/log/app.log" | sed 's|/var/log|/var/tmp|'
+```
+
+例:
+
+```text
+/var/tmp/app.log
+```
+
+:::tip[まず画面で確認]
+
+最初はファイルを直接書き換えず、標準出力に出して結果を目視します。  
+問題なければリダイレクトで別名保存するか、運用を理解したうえで上書きします。
+
+:::
+
+```bash
+sed 's/ERROR/WARN/g' notes/app.log > notes/app.rewritten.log
+cat notes/app.rewritten.log
+```
+
+<details>
+<summary>ファイルを直接書き換える `-i`（注意）</summary>
+
+```bash
+# 控えを残す例（拡張子は環境で慣習が違います）
+sed -i.bak 's/ERROR/WARN/g' notes/app.log
+```
+
+`-i` はファイルを直接更新します。  
+本番や共有ファイルでは、控え（`.bak`）を残す・先にコピーする・Git 管理下か確認する、を徹底してください。  
+macOS の `sed` は `-i` の書き方が Linux と違うことがあるので、手順書の OS に合わせてください。
+
+</details>
+
+<details>
+<summary>文字単位の置換：`tr`</summary>
+
+`tr` は、文字を別の文字に置き換えたり削ったりするコマンドです。  
+大文字小文字の変換などに向きます。
+
+```bash
+echo "error" | tr 'a-z' 'A-Z'
+```
+
+例:
+
+```text
+ERROR
+```
+
+「単語やパスを置換」は `sed`、「文字種を変換」は `tr`、と覚えると選びやすいです。
+
+</details>
+
+## 見つかった名前を次の命令へ：`xargs`（入口）
+
+`xargs` は、標準入力で受け取った値を、別コマンドの引数へ渡すコマンドです。
+
+```bash
+find notes -name "*.txt" | xargs wc -l
+```
+
+`find` が出したパスを、`wc -l` の引数として渡すイメージです。  
+ファイル名にスペースが含まれると壊れることがあるので、実務ではより安全な書き方もあります。
+
+<details>
+<summary>スペースに強い書き方（参考）</summary>
+
+```bash
+find notes -name "*.txt" -print0 | xargs -0 wc -l
+```
+
+`-print0` と `-0` で、ヌル区切りにして渡します。  
+まずは概念（一覧 → 別コマンドの引数）だけ押さえておけば十分です。
+
+</details>
+
+## 実務でありがちな組み合わせ
+
+ログから ERROR の種類を集計するイメージ:
+
+```bash
+grep ERROR notes/app.log | sort | uniq -c | sort -nr
+```
+
+CSV から役割だけ抜いて重複排除:
+
+```bash
+cut -d ',' -f 3 notes/users.csv | sort | uniq
+```
+
+ログの ERROR を画面上だけ WARN に置き換えて見る:
+
+```bash
+grep ERROR notes/app.log | sed 's/ERROR/WARN/'
+```
+
+どれも、[パイプとリダイレクト](./pipes-and-redirect) の延長です。
+
+## よくあるつまずき
+
+| 症状 | よくある原因 | 方向性 |
+| --- | --- | --- |
+| `uniq` で重複が残る | `sort` していない | 先に `sort` |
+| `cut` の列がずれる | 区切り文字の指定ミス | `-d` と実データを確認 |
+| `sed` で一部しか変わらない | `g` を付けていない | 行内すべてなら `s///g` |
+| `xargs` が壊れる | スペース入りファイル名 | `-print0` / `-0` を検討 |
+
+## まとめ
+
+- `sort` で並べ、`uniq` でまとめ、`cut` で列を抜く
+- 置換はまず `sed`（文字種なら `tr`）。直接上書きは慎重に
+- 件数は `wc`、一覧から次コマンドへ渡す入口が `xargs`
+- 小さなコマンドをパイプでつなぐのが実務の基本形
+
+次は、繰り返しをファイルに残すシェルスクリプトです。  
+[シェルスクリプト入門](./shell-scripts) へ進みましょう。

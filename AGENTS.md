@@ -13,7 +13,7 @@
 
 | ディレクトリ         | カテゴリ                                                       |
 | -------------------- | -------------------------------------------------------------- |
-| `docs/foundations/`  | 共通基盤（Linux / Shell、Git、ネットワーク、HTTP）             |
+| `docs/foundations/`  | 共通基盤（Linux / Shell、Git、リモートアクセス、ネットワーク、HTTP） |
 | `docs/languages/`    | 言語（Java、JavaScript / TypeScript、Rust）                    |
 | `docs/data/`         | データ（SQL / RDB、NoSQL、メッセージング）                     |
 | `docs/cloud/`        | クラウド（GCP、AWS、Azure）                                    |
