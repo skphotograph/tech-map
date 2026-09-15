@@ -1,0 +1,164 @@
+---
+sidebar_position: 3
+---
+
+# 変数と制御構文
+
+このページでは、値を名前付きの箱に入れ、条件分岐と繰り返しで処理の流れを作る書き方を押さえます。  
+演算子の一覧や、すべての制御構文を覚える必要はありません。  
+このあと出てくるコードを、追い切れる粒度で十分です。
+
+## このページで分かること
+
+- 変数の宣言と代入
+- よく使う型の入口（`int` / `boolean` / `String`）
+- `if` による分岐
+- `for` による繰り返し
+
+## 変数は「名前の付いた箱」
+
+計算や判定の途中結果には、名前を付けておくと追いやすくなります。
+
+```java
+int quantity = 3;
+boolean open = true;
+String status = "OPEN";
+```
+
+- 左が **型**、右が入れる **値**
+- `=` は「等しい」ではなく **代入**（箱に入れる）
+
+型の入口だけ挙げます。
+
+| 型        | ざっくり持つもの | 例                |
+| --------- | ---------------- | ----------------- |
+| `int`     | 整数             | `3`, `0`, `-1`    |
+| `boolean` | 真偽             | `true`, `false`   |
+| `String`  | 文字列（参照型） | `"OPEN"`, `"u-1"` |
+
+`String` はあとで [型とメモリ](./types-and-memory) や [String と equals](./string-equals) で厚く扱います。  
+ここでは「ダブルクォートで囲んだ文字の並び」と分かれば足ります。
+
+```java
+int quantity = 3;
+quantity = quantity + 1; // 4 になる
+```
+
+同じ箱の中身を、あとから書き換えられます。
+
+<QuizChoice
+title="代入の意味"
+options={[
+{id: 'a', label: 'quantity は 3 のまま'},
+{id: 'b', label: 'quantity は 4'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="= は代入です。quantity + 1 の結果 4 が、もう一度 quantity に入ります。"
+
+>
+
+  <div>次のコードのあと、<code>quantity</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`int quantity = 3;
+quantity = quantity + 1;`}</code></pre>
+</QuizChoice>
+
+## 分岐: `if`
+
+条件が成り立つときだけ動かす処理は、`if` で書きます。
+
+```java
+int amount = 1200;
+
+if (amount >= 1000) {
+    System.out.println("bulk");
+} else {
+    System.out.println("normal");
+}
+```
+
+- 条件は `boolean` になる式（ここでは `amount >= 1000`）
+- `{ ... }` の中が、その枝で実行される文
+- `else` は「そうでなければ」
+
+現場のコードでは、`else if` で枝を増やしたり、早期 `return` でネストを浅くしたりもします。  
+まずは「条件を見て、どちらの塊に入るか」が追えれば十分です。
+
+## 繰り返し: `for`
+
+同じような処理を回数つきで回す定番が `for` です。
+
+```java
+for (int i = 0; i < 3; i++) {
+    System.out.println(i);
+}
+```
+
+出力例:
+
+```text
+0
+1
+2
+```
+
+読み方です。
+
+1. `int i = 0` … カウンタを 0 から始める
+2. `i < 3` … 続く条件
+3. `i++` … 一周ごとに 1 増やす
+4. 中の文を、条件が真のあいだ繰り返す
+
+「何件あるか分かっている一覧」を前から触るときにも、同じ型の `for` が出てきます。  
+コレクションを回す書き方は、あとで [コレクションとジェネリクス](./collections-generics) や [ラムダ・Stream・Optional](./lambda-stream-optional) へつながります。
+
+<details>
+<summary>while もある</summary>
+
+条件が続くあいだ回す `while` もあります。
+
+```java
+int n = 3;
+while (n > 0) {
+    System.out.println(n);
+    n = n - 1;
+}
+```
+
+回数より「終わる条件」が主役のときに使います。  
+まずは `for` が読めれば、この節の続きには十分ついていけます。
+
+</details>
+
+<QuizChoice
+title="for の回数"
+options={[
+{id: 'a', label: '0 回（何も出ない）'},
+{id: 'b', label: '2 回（0 と 1）'},
+{id: 'c', label: '3 回（0 と 1 と 2）'},
+]}
+answer="c"
+explanation="i が 0, 1, 2 のとき条件 i &lt; 3 が真なので、本体は 3 回実行されます。"
+
+>
+
+  <div>次のループ本体は、何回実行されますか。</div>
+  <pre className="language-java"><code>{`for (int i = 0; i < 3; i++) {
+    System.out.println(i);
+}`}</code></pre>
+</QuizChoice>
+
+:::tip[覚えておくこと]
+
+変数は型付きの箱。  
+`if` で枝を選び、`for` で回数付きの繰り返しを書く。
+
+:::
+
+## まとめ / 次に学ぶとよいこと
+
+- 変数には型があり、`=` で中身を入れ替える
+- `if` / `else` で条件分岐する
+- `for` でカウンタ付きの繰り返しを読む
+
+次は [メソッドとクラス](./methods-and-classes) で、処理とデータをまとめる書き方へ進みます。

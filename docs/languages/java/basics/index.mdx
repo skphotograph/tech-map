@@ -4,11 +4,20 @@ sidebar_position: 1
 
 # Java 言語をはじめよう
 
-この節では、文法の暗記で終わらず、**値がどこにあり、いつまで生き、どう実行されるか** まで含めて Java を扱います。  
+この節では、まず書き方の最低限をそろえ、そのうえで **値がどこにあり、いつまで生き、どう実行されるか** まで含めて Java を扱います。  
 基礎の構文と、実務で効く標準 API・並行処理・JVM は分けずに一本の道です。
+
+:::info[読み方]
+
+最初の数ページは、変数・制御構文・クラスなど **書き方の最低限** です。  
+すでに手が動く人は流し読みで構いません。不安なところだけ戻っても大丈夫です。  
+そのあとが本編で、参照・メモリ・例外・標準 API の「なぜそう使うか」へ進みます。
+
+:::
 
 ## この節で分かること
 
+- 小さなプログラムを書いて動かす書き方の入口
 - `.java` がどう `.class` になり、JVM 上で動くか
 - スタックとヒープ、GC、参照が切れないときの調べ方
 - `String` 比較、static / final、継承、例外、コレクション
@@ -37,37 +46,43 @@ sidebar_position: 1
 
 次の順で読むと、理解が積み上がりやすいです。
 
+**書き方の最低限**
+
+1. [最初のプログラム](./first-program) … クラス、`main`、コンパイルと実行の最短ルート
+2. [変数と制御構文](./variables-and-control) … 変数、`if`、`for`
+3. [メソッドとクラス](./methods-and-classes) … メソッド、フィールド、`new`、配列と `List`
+
 **メモリと実行（厚めに扱います）**
 
-1. [実行の仕組み](./execution-model) … コンパイル、JVM、`main`、ソース実行
-2. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
-3. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代、コレクタの地図
-4. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
+4. [実行の仕組み](./execution-model) … コンパイル、JVM、`main`、ソース実行
+5. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
+6. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代、コレクタの地図
+7. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
 
 **言語の骨格**
 
-5. [String と equals](./string-equals) … `==` / `equals` / `hashCode`、文字列プール、Map のキー
-6. [static と final](./static-final) … 共有と不変、定数
-7. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
-8. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
-9. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
-10. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
+8. [String と equals](./string-equals) … `==` / `equals` / `hashCode`、文字列プール、Map のキー
+9. [static と final](./static-final) … 共有と不変、定数
+10. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
+11. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
+12. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
+13. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
 
 各ページでは、概念の区切りごとに **理解チェック**（選択式／穴埋め）を挟みます。  
 「一つ読んで → 短く確認 → 次へ」のリズムです。これらの問題はテストではなく、その場で理解が正しいかを確認するためのものです。
 
 **標準 API と実行時**
 
-11. [ジェネリクスと現代的な型](./generics-and-modern-types) … 型パラメータ → 不変性 → PECS → 型消去
-12. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
-13. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と欲しい形の選び方
-14. [日時 API](./datetime) … 日付、時刻、タイムゾーン
-15. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
-16. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
-17. [並行処理](./concurrency) … プール、レース、CompletableFuture、デッドロック
-18. [Java メモリモデル](./memory-model) … 可視性、happens-before、安全な公開
-19. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
-20. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
+14. [ジェネリクスと現代的な型](./generics-and-modern-types) … 型パラメータ → 不変性 → PECS → 型消去
+15. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
+16. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と欲しい形の選び方
+17. [日時 API](./datetime) … 日付、時刻、タイムゾーン
+18. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
+19. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
+20. [並行処理](./concurrency) … プール、レース、CompletableFuture、デッドロック
+21. [Java メモリモデル](./memory-model) … 可視性、happens-before、安全な公開
+22. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
+23. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
 
 各ページのコード例は、Java 17 以降を基準にしています。  
 利用する Java のバージョンが異なる場合は、API や構文が使えるか公式ドキュメントで確認してください。

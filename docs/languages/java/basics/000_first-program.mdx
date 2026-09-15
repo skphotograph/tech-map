@@ -1,0 +1,104 @@
+---
+sidebar_position: 2
+---
+
+# 最初のプログラム
+
+このページでは、小さな Java プログラムを書いて動かすところまで進みます。  
+クラス、`main`、画面への出力——このあと読むページのコードが「何を指しているか」を追えるようにするのが目的です。
+
+## このページで分かること
+
+- ソースファイルとクラスの対応
+- プログラムの入口である `main`
+- 標準出力への一行出力
+- コンパイルして実行する最短ルート
+
+## なぜ最初に「動かす」か
+
+教材のコードを眺めても、手元で一度も動かしていないと、エラーの出方が想像しにくいです。  
+ここでは最短の一巡だけ押さえ、仕組みの細部は次の [実行の仕組み](./execution-model) に任せます。
+
+## Hello を書く
+
+次の内容を `Hello.java` として保存します。  
+ファイル名と、中の `public class` の名前を揃えるのが基本です。
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("hello");
+    }
+}
+```
+
+読み方のポイントです。
+
+- `public class Hello` … `Hello` というクラスを定義する
+- `main` … JVM が起動時に探す入口メソッド
+- `System.out.println(...)` … 標準出力に一行書いて改行する
+
+:::tip[覚えておくこと]
+
+入口は `public static void main(String[] args)`。  
+まずはこの形を「起動の定型」として覚えておけば足ります。
+
+:::
+
+## 動かしてみる
+
+JDK が入っている端末で、ソースがあるディレクトリへ移動してから次を実行します。
+
+```bash
+javac Hello.java
+java Hello
+```
+
+成功すると、次のような一行が出ます。
+
+```text
+hello
+```
+
+- `javac Hello.java` … ソースから `Hello.class`（バイトコード）を作る
+- `java Hello` … クラス名を指定して JVM 上で実行する（`.class` は付けない）
+
+IDE から実行する場合も、裏側では同じ入口（`main`）が呼ばれます。  
+コマンドの意味や JDK / JVM の関係は、[実行の仕組み](./execution-model) で厚く扱います。
+
+<details>
+<summary>うまく動かないとき</summary>
+
+- `javac` が見つからない … JDK が入っていないか、PATH が通っていないことが多いです
+- `Hello` というクラスが見つからない … カレントディレクトリやクラス名の指定を確認します
+- ファイル名とクラス名が食い違う … `public class` の名前と `.java` の名前を揃えます
+
+</details>
+
+<QuizChoice
+title="起動の入口"
+options={[
+{id: 'a', label: 'println のあるメソッドなら、名前は何でも起動できる'},
+{id: 'b', label: 'JVM は main を入口として探す'},
+{id: 'c', label: 'javac の時点でプログラムの実行まで終わる'},
+]}
+answer="b"
+explanation="起動時に探されるのは main です。javac はコンパイル、実行は java コマンド（や IDE の実行）側です。"
+
+>
+
+  <div>次のクラスを起動するとき、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`public class Hello {
+    public static void main(String[] args) {
+        System.out.println("hello");
+    }
+}`}</code></pre>
+</QuizChoice>
+
+## まとめ / 次に学ぶとよいこと
+
+- 小さなプログラムは「クラス + `main` + 出力」で始められる
+- ファイル名と `public class` の名前を揃える
+- `javac` でコンパイルし、`java` でクラス名を指定して実行する
+
+次は [変数と制御構文](./variables-and-control) で、値を置き・分岐し・繰り返す書き方へ進みます。

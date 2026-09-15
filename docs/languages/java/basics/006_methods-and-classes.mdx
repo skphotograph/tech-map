@@ -1,0 +1,204 @@
+---
+sidebar_position: 4
+---
+
+# メソッドとクラス
+
+このページでは、処理をメソッドに切り出し、データと振る舞いをクラスにまとめる書き方の入口を押さえます。  
+継承やインタフェースの設計は、あとで [継承とインタフェース](./inheritance-interface) に任せます。  
+ここでは「読んで追える」「小さな型を自分で書ける」までです。
+
+## このページで分かること
+
+- メソッドの定義と呼び出し、引数と戻り値
+- クラス、フィールド、`new`
+- 配列の入口
+- `List` を少し触る
+
+## メソッドは「名前の付いた処理」
+
+同じ計算を何度も書くと、直し漏れが増えます。  
+入力を受け取り、結果を返すまとまりが **メソッド** です。
+
+```java
+static int add(int a, int b) {
+    return a + b;
+}
+
+int total = add(2, 3); // 5
+```
+
+- `int add(...)` … 戻り値の型が `int`
+- `(int a, int b)` … 呼び出す側から渡す引数
+- `return` … 呼び出し元へ結果を返す
+- `static` … ここでは「インスタンスなしで呼べる」入口（詳細は [static と final](./static-final)）
+
+戻り値が無い処理は、戻り値の型に `void` を書きます。
+
+```java
+static void printTotal(int total) {
+    System.out.println(total);
+}
+```
+
+<QuizChoice
+title="メソッドの戻り値"
+options={[
+{id: 'a', label: 'total は 2'},
+{id: 'b', label: 'total は 5'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="add(2, 3) は 2 + 3 を return するので、total には 5 が入ります。"
+
+>
+
+  <div>次のコードのあと、<code>total</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`static int add(int a, int b) {
+    return a + b;
+}
+
+int total = add(2, 3);`}</code></pre>
+</QuizChoice>
+
+## クラスは「データと操作の型」
+
+現場のコードは、数値や文字列だけではありません。  
+注文番号と状態のように、**まとめて扱いたいデータ** を型にします。
+
+```java
+class Order {
+    String id;
+    String status;
+
+    void close() {
+        status = "CLOSED";
+    }
+}
+```
+
+- フィールド … インスタンスが持つデータ（`id`, `status`）
+- メソッド … そのデータに対する操作（`close`）
+
+実体を作るのが `new` です。
+
+```java
+Order order = new Order();
+order.id = "ORD-1";
+order.status = "OPEN";
+order.close();
+System.out.println(order.status); // CLOSED
+```
+
+`Order order` は「`Order` を指す変数」で、`new Order()` が実体を作ります。  
+変数の中にオブジェクト全部が入るわけではない、という話は次のメモリ本編で厚く扱います。
+
+:::tip[覚えておくこと]
+
+`new` で実体を作り、変数はその実体を指す。  
+フィールドで状態を持ち、メソッドで操作する。
+
+:::
+
+<details>
+<summary>コンストラクタ（入口だけ）</summary>
+
+生成直後にフィールドをそろえたいときは、コンストラクタを使います。
+
+```java
+class Order {
+    String id;
+    String status;
+
+    Order(String id, String status) {
+        this.id = id;
+        this.status = status;
+    }
+}
+
+Order order = new Order("ORD-1", "OPEN");
+```
+
+`this.id` は「このインスタンスのフィールド `id`」です。  
+引数名とフィールド名が同じときに、どちら向きの代入かをはっきりさせます。
+
+</details>
+
+## 配列: 同じ型を並べる
+
+同じ型の値を、添字（0 始まり）で並べるのが配列です。
+
+```java
+int[] quantities = new int[3];
+quantities[0] = 10;
+quantities[1] = 20;
+quantities[2] = 30;
+
+System.out.println(quantities.length); // 3
+System.out.println(quantities[1]);     // 20
+```
+
+- `new int[3]` … 長さ 3 の箱を用意する
+- `length` … 要素数（メソッド呼び出しではない）
+- 範囲外の添字は実行時エラーになる
+
+配列の実体がどこに置かれるかは、[型とメモリ](./types-and-memory) で扱います。
+
+## List を少し触る
+
+追加や件数が変わりやすい一覧は、配列より `List` の方が扱いやすいことが多いです。
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+List<String> statuses = new ArrayList<>();
+statuses.add("OPEN");
+statuses.add("CLOSED");
+System.out.println(statuses.size()); // 2
+System.out.println(statuses.get(0)); // OPEN
+```
+
+- `List<String>` … 要素が `String` のリスト（ジェネリクスの入口）
+- `add` で末尾に追加、`get` で取り出し、`size` で件数
+
+`List` / `Set` / `Map` の使い分けや、空と null の話は [コレクションとジェネリクス](./collections-generics) へ続きます。  
+ここでは「可変長の一覧がある」と分かれば十分です。
+
+<QuizChoice
+title="クラスと new"
+options={[
+{id: 'a', label: 'status は OPEN のまま'},
+{id: 'b', label: 'status は CLOSED'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="new で作った Order の close が status を書き換えるので、呼び出し後は CLOSED です。"
+
+>
+
+  <div>次のコードのあと、<code>order.status</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`class Order {
+    String id;
+    String status;
+
+    void close() {
+        status = "CLOSED";
+    }
+
+}
+
+Order order = new Order();
+order.id = "ORD-1";
+order.status = "OPEN";
+order.close();`}</code></pre>
+</QuizChoice>
+
+## まとめ / 次に学ぶとよいこと
+
+- メソッドは引数を受け取り、`return` で結果を返す（または `void`）
+- クラスはフィールドとメソッドを持ち、`new` で実体を作る
+- 配列は固定長、`List` は増えやすい一覧の入口
+
+ここまでで、本編のコードを追う最低限の書き方はそろいました。  
+次の [実行の仕組み](./execution-model) から、コンパイルと JVM、その先のメモリの話へ進みます。
