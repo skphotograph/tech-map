@@ -21,6 +21,20 @@ sidebar_position: 4
 
 実務の一日は、だいたい次のくり返しです。
 
+```mermaid
+flowchart LR
+  edit[編集する]
+  status[git status]
+  diff[git diff]
+  add[git add]
+  commit[git commit]
+  edit --> status
+  status --> diff
+  diff --> add
+  add --> commit
+  commit --> edit
+```
+
 1. コードや文書を直す
 2. `git status` で何が変わったか見る
 3. 必要なら `git diff` で中身の差分を見る
@@ -32,15 +46,30 @@ sidebar_position: 4
 
 ## いまの状態を見る：`git status`
 
+`git status` の基本的な読み方は [最初のコミットまで](./setup-and-first-commit) で触れました。  
+変更があるときの例も見ておきましょう。
+
 ```bash
 git status
 ```
 
-ここを見ると、おおむね次が分かります。
+例:
 
-- 変更されたファイル
-- まだ追跡していないファイル
-- すでにステージへ乗っているファイル
+```text
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+        modified:   README.md
+
+Untracked files:
+        notes.txt
+```
+
+読み方のポイント:
+
+- `Changes not staged for commit` … 追跡中だが、まだステージしていない変更
+- `modified:` … 既存ファイルが変わった
+- `Untracked files` … まだ追跡していない新規ファイル
 
 「いまコミットしていい状態か」を判断する健康診断だと思ってください。
 
@@ -51,11 +80,33 @@ git status
 ```bash
 # まだステージしていない変更
 git diff
+```
 
-# ステージ済みの変更
+例:
+
+```text
+diff --git a/README.md b/README.md
+index 1111111..2222222 100644
+--- a/README.md
++++ b/README.md
+@@ -1 +1,2 @@
+ # task-board notes
++今日のメモを追記
+```
+
+読み方のポイント:
+
+- `---` / `+++` … 比較している前後のファイル
+- 行頭の `-` … 削除された行
+- 行頭の `+` … 追加された行
+
+ステージ済みの差分を見るときは次です。
+
+```bash
 git diff --staged
 ```
 
+表示の見方は同じで、対象が「ステージに乗っている変更」になります。  
 うれしい点は、「つもり」と「実際の差分」を照合できることです。  
 デバッグ用の `console.log` や、消し忘れたテスト用コードが混ざっていないかを、コミット前に確認できます。
 
@@ -81,6 +132,9 @@ git add src/app.js
 git add .
 ```
 
+成功時は通常メッセージが出ません。  
+乗ったかどうかは `git status` で確認します（[最初のコミットまで](./setup-and-first-commit)）。
+
 `git add .` は便利ですが、**載せたくないものまで乗る** リスクがあります。  
 秘密情報や生成物を誤って入れる事故は珍しくありません。  
 次の `.gitignore` とセットで覚えてください。
@@ -96,6 +150,16 @@ git add .
 git commit -m "タスク一覧の空状態メッセージを分かりやすくする"
 ```
 
+例（2 回目以降のコミット）:
+
+```text
+[main 9f8e7d6] タスク一覧の空状態メッセージを分かりやすくする
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+```
+
+最初のコミットで見た `[ブランチ 短いID] メッセージ` と同じ読み方です。  
+`insertions` / `deletion` は、追加行と削除行の目安です。
+
 コミットの粒度の目安:
 
 - **よい**: レビューする人が「ひとつの意図」として読める
@@ -108,12 +172,34 @@ git commit -m "タスク一覧の空状態メッセージを分かりやすく�
 
 ```bash
 git log --oneline
+```
+
+例:
+
+```text
+9f8e7d6 タスク一覧の空状態メッセージを分かりやすくする
+a1b2c3d 最初の README を追加する
+```
+
+上が新しく、下が古い並びです。  
+ブランチの分かれを線で見たいときは、次も使います。
+
+```bash
 git log --oneline --graph --decorate -n 20
+```
+
+例:
+
+```text
+* 9f8e7d6 (HEAD -> main) タスク一覧の空状態メッセージを分かりやすくする
+* a1b2c3d 最初の README を追加する
 ```
 
 - `--oneline` … 1 行で見やすくする
 - `--graph` … ブランチの分岐が線で見える
+- `--decorate` … ブランチ名などの印が付く
 - `-n 20` … 新しい方から 20 件
+- `HEAD -> main` … いまの先端が `main` にある
 
 問題調査のときは、「いつから壊れているか」を `log` と `diff` で狭めていくことが多いです。
 

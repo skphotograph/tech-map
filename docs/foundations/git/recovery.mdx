@@ -40,14 +40,43 @@ git log --oneline -n 5
 git stash push -m "見出し作業の途中"
 ```
 
-変更が退避され、作業ツリーがきれいに近づきます。  
+例:
+
+```text
+Saved working directory and index state On feature/heading-copy: 見出し作業の途中
+```
+
+いまの変更を棚に上げて、作業ツリーをきれいにした、という意味です。
+
 戻すとき:
 
 ```bash
 git stash list
+```
+
+例:
+
+```text
+stash@{0}: On feature/heading-copy: 見出し作業の途中
+```
+
+`stash@{0}` が一番新しい退避です。  
+取り出すときは次です。
+
+```bash
 git stash pop
 ```
 
+例:
+
+```text
+On branch feature/heading-copy
+Changes not staged for commit:
+      modified:   README.md
+Dropped refs/stash@{0} (...)
+```
+
+変更が戻り、その stash がリストから外れた、という意味です。  
 うれしい点は、コミットしなくても作業を棚卸しできることです。  
 ただし stash を忘れやすいので、長く置くならブランチにコミットする方が安心なこともあります。
 
@@ -57,6 +86,9 @@ git stash pop
 # ファイルをステージから外す（ファイル自体は消えない）
 git restore --staged README.md
 ```
+
+成功時は通常メッセージが出ません。  
+`git status` で、そのファイルが `Changes to be committed` から外れていれば OK です。
 
 古い Git では `git reset HEAD README.md` も同趣旨で使われます。  
 「ステージを外す」だけで、編集内容まで消えるわけではない点を押さえてください。
@@ -68,6 +100,9 @@ git restore --staged README.md
 ```bash
 git restore README.md
 ```
+
+成功時は通常メッセージが出ません。  
+`git status` で変更が消えていれば、作業ツリー側は戻っています。
 
 **保存していない内容や、戻す対象を誤ると復元できません。**  
 捨ててよいと確信できるときだけ使います。  
@@ -135,6 +170,14 @@ git reset --hard HEAD~1
 git revert COMMIT_ID
 ```
 
+例:
+
+```text
+[main c0ffee1] Revert "壊れた変更を入れる"
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+```
+
+新しいコミットが 1 つ増え、指定した変更が打ち消された、という意味です。  
 `COMMIT_ID` は `git log --oneline` で見える短い ID に置き換えます。  
 `revert` は「あのコミットの変更を打ち消す新しいコミットを作る」操作です。  
 履歴を消さずに済むので、共有後はこちらが安全寄りです。

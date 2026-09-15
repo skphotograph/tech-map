@@ -29,14 +29,20 @@ sidebar_position: 5
 git branch
 ```
 
-現在のブランチの左に `*` が付きます。  
+例:
+
+```text
+* main
+```
+
+`*` が付いている行が、いまいるブランチです。  
 多くの新規リポジトリでは最初から `main`（または `master`）にいます。
 
 ```bash
 git status
 ```
 
-先頭付近に `On branch main` のように表示されることも多いです。
+先頭付近に `On branch main` のように表示されることも多いです（読み方は [最初のコミットまで](./setup-and-first-commit)）。
 
 ## 作業用ブランチを作って移る
 
@@ -45,6 +51,14 @@ git status
 ```bash
 git switch -c feature/heading-copy
 ```
+
+例:
+
+```text
+Switched to a new branch 'feature/heading-copy'
+```
+
+新しいブランチを作って、そのブランチへ移った、という意味です。
 
 - `switch` … ブランチを切り替える
 - `-c` … 新しいブランチを作って移る
@@ -88,6 +102,24 @@ git switch main
 git merge feature/heading-copy
 ```
 
+`git switch main` の例:
+
+```text
+Switched to branch 'main'
+```
+
+衝突がないときの `git merge` の例:
+
+```text
+Updating a1b2c3d..4e5f6a7
+Fast-forward
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+
+`Fast-forward` は、本線を前に進めるだけで取り込めた、という意味です。  
+履歴の分岐が複雑なときは別の表示になることもありますが、「取り込まれた」こと自体は同じです。
+
 `merge` は、「指定したブランチの変更を、いまいるブランチへ取り込む」操作です。  
 うまくいくと、`main` にも見出し修正のコミットが反映されます。
 
@@ -101,6 +133,21 @@ Git が「どちらを残すべきか」を判断できず、「人の判断が�
 機能の変更なのか、衝突をほどくための修正なのかが、履歴上で混ざって追いづらくなるからです。
 
 この教材では、次の流れを基本にします。
+
+```mermaid
+flowchart TD
+  conflict[コンフリクト発生]
+  abort[本線のマージを中止]
+  resolveBranch[解消用ブランチを作成]
+  fix[衝突を解消してコミット]
+  backToFeature[作業ブランチへマージ]
+  toMain[改めて本線へマージ]
+  conflict --> abort
+  abort --> resolveBranch
+  resolveBranch --> fix
+  fix --> backToFeature
+  backToFeature --> toMain
+```
 
 1. コンフリクト解消用のブランチを作る
 2. そこで衝突を解消してコミットする
@@ -116,6 +163,15 @@ Git が「どちらを残すべきか」を判断できず、「人の判断が�
 ```bash
 git merge --abort
 ```
+
+例:
+
+```text
+fatal: There is no merge to abort (MERGE_HEAD missing).
+```
+
+すでに中止済み・マージ中でないときは、このような表示になることがあります。  
+マージの途中であれば、作業ツリーがマージ開始前の状態に戻ります。
 
 作業ブランチから、解消専用のブランチを切ります。
 

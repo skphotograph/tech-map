@@ -23,6 +23,14 @@ Git 自体は GitHub 専用ではありませんが、実務の入口として�
 リモートリポジトリは、ネット上（や社内サーバ上）にある共有の控えです。  
 目的は **チームの単一の正** を置き、レビューや CI などの仕組みにつなげることです。
 
+```mermaid
+flowchart LR
+  localRepo[ローカル]
+  remoteRepo[リモート_origin]
+  localRepo -->|"git push"| remoteRepo
+  remoteRepo -->|"git pull"| localRepo
+```
+
 ## 用語の整理
 
 | 用語              | 意味                                                        |
@@ -44,11 +52,31 @@ git clone https://github.com/example/task-board.git
 cd task-board
 ```
 
+例:
+
+```text
+Cloning into 'task-board'...
+remote: Enumerating objects: 42, done.
+Receiving objects: 100% (42/42), done.
+```
+
+`Cloning into 'task-board'...` は、その名前のフォルダを作って複製している、という意味です。  
+途中のパーセント表示は取得の進捗です。  
 これでローカルに複製され、多くの場合リモート名 `origin` が最初から設定されています。
 
 ```bash
 git remote -v
 ```
+
+例:
+
+```text
+origin  https://github.com/example/task-board.git (fetch)
+origin  https://github.com/example/task-board.git (push)
+```
+
+`origin` が共有先のニックネーム、右が URL です。  
+`(fetch)` は取得用、`(push)` は送信用の設定行です。
 
 ### B. 手元のリポジトリを GitHub へ載せたい
 
@@ -56,8 +84,29 @@ git remote -v
 
 ```bash
 git remote add origin https://github.com/example/task-board-notes.git
+```
+
+成功時は通常メッセージが出ません。  
+`git remote -v` で `origin` が見えれば追加できています。
+
+```bash
 git push -u origin main
 ```
+
+例:
+
+```text
+Enumerating objects: 3, done.
+Writing objects: 100% (3/3), done.
+To https://github.com/example/task-board-notes.git
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+```
+
+読み方のポイント:
+
+- `main -> main` … ローカルの `main` をリモートの `main` として送った
+- `set up to track` … 以降、このブランチの送受信先を覚えた（`-u` の効果）
 
 - `remote add origin ...` … 共有先に `origin` という名前を付ける
 - `push -u origin main` … `main` を送り、以降の追跡関係も覚える
@@ -85,7 +134,16 @@ URL やデフォルトブランチ名は、GitHub の画面表示に合わせて
 git push -u origin feature/heading-copy
 ```
 
-初回に `-u` を付けておくと、以後そのブランチでは `git push` / `git pull` が楽になります。  
+例:
+
+```text
+* [new branch]      feature/heading-copy -> feature/heading-copy
+branch 'feature/heading-copy' set up to track 'origin/feature/heading-copy'.
+```
+
+新しいリモートブランチが作られ、追跡設定が付いた、という意味です。  
+初回に `-u` を付けておくと、以後そのブランチでは `git push` / `git pull` が楽になります。
+
 他の人の更新を取り込むとき（本線の例）:
 
 ```bash
@@ -93,7 +151,17 @@ git switch main
 git pull
 ```
 
+例:
+
+```text
+Updating a1b2c3d..8c7b6a5
+Fast-forward
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)
+```
+
 `pull` は、リモートの新しいコミットを取得して、いまのブランチへ取り込む操作です。  
+`Fast-forward` などは [ブランチ](./branch) のマージと同じ見方で大丈夫です。  
 作業開始前に `main` を最新にしておくと、あとでコンフリクトしにくいです。
 
 ## Pull Request でレビューしてもらう

@@ -24,7 +24,14 @@ sidebar_position: 3
 git --version
 ```
 
-`git version 2.x.x` のような表示が出れば OK です。  
+例:
+
+```text
+git version 2.45.1
+```
+
+`git version` のあとに数字が出ていれば、Git が使える状態です。  
+末尾の番号は環境によって違います。  
 入っていない場合は、公式の [Git ダウンロード](https://git-scm.com/downloads) から、使っている OS 向けを入れてください。
 
 <details>
@@ -46,6 +53,9 @@ git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 ```
 
+成功時は何も表示されないことが多いです。  
+エラーが出なければ設定できています。
+
 - `--global` … この PC のユーザー全体に効く設定
 - メールは GitHub などに登録しているものと揃えると、あとで作者表示がつながりやすいです
 
@@ -54,6 +64,16 @@ git config --global user.email "you@example.com"
 ```bash
 git config --global --list
 ```
+
+例:
+
+```text
+user.name=Your Name
+user.email=you@example.com
+```
+
+`user.name` と `user.email` に、いま入れた値が並んでいれば OK です。  
+ほかの行が出ることもありますが、まずはこの 2 つを確認します。
 
 <details>
 <summary>メールを公開したくないとき</summary>
@@ -73,6 +93,10 @@ mkdir task-board-notes
 cd task-board-notes
 ```
 
+`mkdir` はフォルダ作成、`cd` はその中へ移動するコマンドです。  
+成功時は通常メッセージが出ません。  
+プロンプトの場所が `task-board-notes` に変わっていれば移動できています。
+
 ここからは、架空のプロジェクト `task-board` のメモ置き場、という設定で進めます。
 
 ## リポジトリを初期化する
@@ -81,15 +105,39 @@ cd task-board-notes
 git init
 ```
 
-成功すると、いまのフォルダが Git リポジトリになります。  
-中に `.git` ができているはずです（[考え方](./concepts)）。  
+例:
+
+```text
+Initialized empty Git repository in /Users/you/task-board-notes/.git/
+```
+
+「空の Git リポジトリを初期化した」という意味です。  
+末尾の `.git/` が、履歴の置き場です（[考え方](./concepts)）。
+
 状態を見てみます。
 
 ```bash
 git status
 ```
 
-まだコミットがないので、「まだコミットがありません」といった趣旨の表示になります。  
+例:
+
+```text
+On branch main
+
+No commits yet
+
+nothing to commit (create/copy files and use "git add" to track)
+```
+
+読み方のポイント:
+
+- `On branch main` … いま `main` ブランチにいる
+- `No commits yet` … まだコミットがない
+- 下の一文 … 追跡するファイルがまだない、という案内
+
+表示の文言は Git の版で少し違います。  
+意味が同じなら問題ありません。  
 `git status` はこれから一番使う確認コマンドです。  
 迷ったらまずこれ、で大丈夫です。
 
@@ -108,15 +156,43 @@ echo "# task-board notes" > README.md
 git status
 ```
 
-`README.md` が **未追跡（untracked）** と出るはずです。  
-未追跡とは、「Git がまだ履歴管理の対象にしていない新しいファイル」という意味です。  
+例:
+
+```text
+On branch main
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        README.md
+
+nothing added to commit but untracked files present (use "git add" to track)
+```
+
+`Untracked files` の下に `README.md` が出ています。  
+**未追跡（untracked）** とは、「Git がまだ履歴管理の対象にしていない新しいファイル」という意味です。
+
 次のコミットに入れたいので、ステージへ乗せます。
 
 ```bash
 git add README.md
 ```
 
-再度 `git status` を実行すると、今度は「コミット予定の変更」側に乗ります。  
+成功時は通常メッセージが出ません。  
+確認のため、もう一度 `git status` を見ます。
+
+```text
+On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+        new file:   README.md
+```
+
+`Changes to be committed` 側に乗っていれば、ステージに入っています。  
 これが [ステージ](./concepts) です。
 
 <details>
@@ -136,17 +212,37 @@ git add README.md
 git commit -m "最初の README を追加する"
 ```
 
+例:
+
+```text
+[main (root-commit) a1b2c3d] 最初の README を追加する
+ 1 file changed, 1 insertion(+)
+ create mode 100644 README.md
+```
+
+読み方のポイント:
+
+- `[main ...]` … `main` ブランチに記録した
+- `a1b2c3d` … このコミットの短い ID（環境ごとに違う）
+- `1 file changed` … 何ファイル・何行変わったかの要約
+
 - `-m` … メッセージをその場で書くオプション
 - メッセージは「何をしたか」が後から分かる文言にします
 
-成功すると、コミットが 1 つ作られます。  
 履歴を見てみましょう。
 
 ```bash
 git log --oneline
 ```
 
-短い ID と、いま書いたメッセージが表示されれば成功です。
+例:
+
+```text
+a1b2c3d 最初の README を追加する
+```
+
+左が短い ID、右がコミットメッセージです。  
+1 行にまとまっていれば、最初のコミットは成功です。
 
 ## いま起きたことを振り返る
 
@@ -160,11 +256,11 @@ git log --oneline
 
 ## よくあるつまずき
 
-| 症状                         | よくある原因                | まず試すこと                                                         |
-| ---------------------------- | --------------------------- | -------------------------------------------------------------------- |
-| `Please tell me who you are` | 名前・メール未設定          | 上の `git config --global` を実行                                    |
-| `nothing to commit`          | 変更がない / add していない | `git status` で確認                                                  |
-| メッセージ入力画面が開いた   | `-m` を付けなかった         | エディタが開く。保存して閉じるとコミット完了（環境により操作が違う） |
+| 症状 | よくある原因 | まず試すこと |
+| --- | --- | --- |
+| `Please tell me who you are` | 名前・メール未設定 | 上の `git config --global` を実行 |
+| `nothing to commit` | 変更がない / add していない | `git status` で確認 |
+| メッセージ入力画面が開いた | `-m` を付けなかった | エディタが開く。保存して閉じるとコミット完了（環境により操作が違う） |
 
 <details>
 <summary>コミット画面（エディタ）が開いてしまったとき</summary>
