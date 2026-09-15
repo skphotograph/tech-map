@@ -1,5 +1,5 @@
 ---
-sidebar_position: 22
+sidebar_position: 25
 ---
 
 # Java メモリモデル
@@ -8,7 +8,7 @@ sidebar_position: 22
 このページでは、並行処理で使ったロックや `volatile` が、メモリの見え方として何を保証するかを整理します。
 
 毎日の業務コードで happens-before を組み立てる必要はありません。  
-先に [並行処理](./concurrency) の `ExecutorService` や並行コレクションを正しく使う方が重要です。  
+先に [並行処理（プールと同期）](./concurrency) の `ExecutorService` や、[並行コレクションと CompletableFuture](./concurrent-collections-futures) を正しく使う方が重要です。  
 切れない参照の調査は直前の [メモリリークとヒープダンプ](./memory-leaks-and-dumps) です。  
 そのうえで、「なぜ同期なしのフラグは止まらないことがあるのか」を説明できるようにします。
 

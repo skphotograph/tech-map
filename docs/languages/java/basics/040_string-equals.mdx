@@ -5,8 +5,8 @@ sidebar_position: 7
 # String と equals
 
 [型とメモリ](./types-and-memory) で見た「参照は行き先」が、文字列比較ではいちばん効いてきます。  
-このページでは、`String` の扱いと、`==` / `equals` / `hashCode` の関係を、コレクションで壊れないところまで落とします。  
-「ログでは同じ文字列なのに比較が合わない」「入れたはずのキーが Map から消える」は、ここが曖昧なときに起きます。
+このページでは、`String` の扱いと、`==` / `equals` の違いを先に固めます。  
+`hashCode` と Map / Set の契約は、同値比較のあとに「次の段」として触れます。
 
 ## このページで分かること
 
@@ -151,7 +151,12 @@ Objects.equals(left, right); // 両方 null なら true、片方だけなら fal
 入力境界では、trim やポリシーに沿った正規化を **比較の前に一度** 行うか、比較専用のメソッド（`equalsIgnoreCase` など）を明示します。  
 「画面では同じに見える」を、ログにコードポイントや長さを出して疑う習慣があると早いです。
 
-## equals の契約
+## 次の段: equals と hashCode（Map / Set）
+
+[コレクションとジェネリクス](./collections-generics) のあとでも読み返せます。  
+自作クラスを `HashMap` のキーや `HashSet` の要素にするときだけ、ここが必須になります。
+
+### equals の契約
 
 自作クラスで「同じ業務上の ID なら等しい」と決めたいとき、`equals` をオーバーライドします。  
 契約（`Object` のドキュメントが求める性質）の要点です。
@@ -191,7 +196,7 @@ public final class UserId {
 継承階層で `equals` を拡張すると、対称律を壊しやすいです。  
 値を表す型は `final` にする、または `record` にする方が安全です。
 
-## hashCode とのセット
+## hashCode とのセット（続き）
 
 `Set` や `Map`（実装の例: `HashSet` / `HashMap`）のキーでは、次の流れで探します。  
 コレクション API の使い分けは [コレクションとジェネリクス](./collections-generics) で扱います。ここでは **桶 → equals** の契約だけ見てください。

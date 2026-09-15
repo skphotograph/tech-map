@@ -1,0 +1,135 @@
+---
+sidebar_position: 23
+---
+
+# 終了・デッドロック・ThreadLocal
+
+プールと同期、並行コレクションまで見たあとに残るのが、**止め方** と **ロックの循環**、そしてスレッドごとの値の寿命です。  
+作りっぱなしのプールはテストやプロセス終了を固め、デッドロックは再現しにくいまま止まります。  
+`ThreadLocal` は便利ですが、プール上では `remove` しないと次の仕事に値が残ります。
+
+## このページで分かること
+
+- `shutdown` / `awaitTermination` / `shutdownNow` の役割
+- 割り込みをタスク側がどう扱うか
+- デッドロックの典型と、取得順・範囲での防ぎ方
+- `ThreadLocal` がスレッドごとの値を持つことと、`finally` での `remove`
+
+## 終了と割り込み
+
+プールを作りっぱなしにすると、JVM が終了できなかったり、テストがハングしたりします。
+
+```java
+executor.shutdown(); // 新規受付を止め、実行中と待ち行列は続ける
+if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+    executor.shutdownNow(); // 割り込みで打ち切りを試みる
+}
+```
+
+- `shutdown` … 優雅な停止の入口
+- `awaitTermination` … 終わりを待つ
+- `shutdownNow` … 待ちタスクを返し、実行中へ割り込みを試みる（必ずすぐ止まる保証ではない）
+
+タスク側は、割り込みを無視しないことが重要です。
+
+```java
+executor.submit(() -> {
+    try {
+        while (!Thread.currentThread().isInterrupted()) {
+            doWorkChunk();
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // 割り込み状態を戻す
+    }
+});
+```
+
+`InterruptedException` を握りつぶすと、停止要求が消えます。  
+再設定（`interrupt()`）するか、メソッドの `throws` で伝播するかを決めます。
+
+`Future#get` にはタイムアウト付きがあります。  
+無限待ちは、相手が死んだときに呼び出し元まで固めます。
+
+```java
+Integer amount = future.get(5, TimeUnit.SECONDS);
+```
+
+## デッドロック
+
+複数スレッドが、互いに相手の持つロックを待ち続ける状態がデッドロックです。
+
+```text
+スレッド A: lock1 取得 → lock2 待ち
+スレッド B: lock2 取得 → lock1 待ち
+```
+
+避け方の基本です。
+
+- 複数ロックが必要なら、**取得順を全体で統一**する
+- ロック保持中に、別ロックを取る長い処理や外部 I/O を置かない
+- 可能ならロックを一つにまとめる、またはメッセージ渡しで共有を減らす
+- `tryLock` とタイムアウトで、永遠に待たない設計も検討する
+
+:::warning[ロック範囲を広げすぎない]
+
+範囲が広いと待ち時間が増え、別ロックとの循環も起こりやすくなります。  
+守る状態と処理を明確にし、必要最小限にします。
+
+:::
+
+再現が難しいときは、スレッドダンプで「何待ちか」を見ます。  
+`jcmd <pid> Thread.print` や、実行環境のスレッド一覧で、同じモニターを奪い合っていないかを確認します。
+
+## ThreadLocal の入口
+
+`ThreadLocal` は、**スレッドごとに別々の値** を持てる入れ物です。  
+同じ `ThreadLocal` 変数でも、スレッド A が `set` した値はスレッド B からは見えません。
+
+```java
+private static final ThreadLocal<RequestContext> CONTEXT = new ThreadLocal<>();
+
+void begin(RequestContext ctx) {
+    CONTEXT.set(ctx);
+}
+```
+
+リクエストの文脈や、ログに載せる相関 ID をスレッドにくくりつけるときに使います。  
+ただしスレッドプールでは、スレッドがリクエストをまたいで再利用されます。  
+`remove()` しないと、次の仕事やアイドルスレッドに前の値が残ります。
+
+```java
+try {
+    CONTEXT.set(ctx);
+    handle();
+} finally {
+    CONTEXT.remove();
+}
+```
+
+大きなオブジェクトを載せたまま残すと、メモリが戻らない原因にもなります。  
+次の [メモリリークとヒープダンプ](./memory-leaks-and-dumps) では、この置きっぱなしを典型パターンとして追います。
+
+フレームワークが用意するリクエストスコープがあるなら、自前の `ThreadLocal` を増やさない方が安全です。
+
+## 実務での目安
+
+- 停止時は `shutdown` → 待機 → 必要なら `shutdownNow`、タスクは割り込みに協力する
+- 複数ロックは取得順を統一し、保持中の長い I/O を避ける
+- `ThreadLocal` は `set` したら `finally` で `remove` する
+- 再現が難しい停止は、スレッドダンプで待ち関係を見る
+
+## よくあるつまずき
+
+- Executor を終了せず、アプリやテストが止まらない
+- `InterruptedException` を空 catch する
+- 複数ロックの取得順を統一しない
+- `ThreadLocal` を `set` したきり `remove` しない
+
+## まとめ
+
+- プールの所有者は終了処理にも責任を持つ
+- デッドロックは順序と範囲で防ぐ
+- `ThreadLocal` はスレッドごとの値。プールでは必ず片付ける
+
+次は [メモリリークとヒープダンプ](./memory-leaks-and-dumps) で、切れない参照と調査手順を扱います。  
+そのあと [Java メモリモデル](./memory-model) で、同期が「見える」ことをどう保証するかを見ます。

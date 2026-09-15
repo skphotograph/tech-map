@@ -30,6 +30,26 @@ if (code < 0) {
 適切に使うと、成功時のコードが読みやすく残り、失敗時の対処を `catch` や上位のハンドラへまとめられます。  
 「すべての失敗を例外にする」が正解ではなく、**呼び出し側が見落としたときに困る失敗** を例外向き、と捉えると判断しやすいです。
 
+## まず try / catch を体験する
+
+失敗しうる処理を `try` で囲み、起きた例外の種類ごとに `catch` します。
+
+```java
+try {
+    int value = Integer.parseInt("not-a-number");
+    System.out.println(value);
+} catch (NumberFormatException e) {
+    System.err.println("number parse failed: " + e.getMessage());
+}
+```
+
+- `try` … 失敗しうる処理
+- `catch` … その種類の例外が起きたときの対処
+- ここでは標準エラーへ一行出すだけにしています（現場ではロガーを使うことが多いです）
+
+`finally` は、成功・失敗どちらでも実行したい後始末用です。  
+ファイルや接続の閉じ方は、あとの try-with-resources で厚く扱います。
+
 ## checked と unchecked
 
 大きく二つに分かれます。
@@ -129,8 +149,8 @@ class OrderService {
 try {
     service.place(userId);
 } catch (OrderException e) {
-    log.warn("order failed: {}", e.getMessage());
-    showMessage("注文を受け付けできませんでした");
+    System.err.println("order failed: " + e.getMessage());
+    // 画面や API 応答へ、ユーザー向けメッセージを返す
 } finally {
     metrics.increment("order.place.finished");
 }
@@ -159,7 +179,7 @@ try {
 :::warning[広い catch に注意]
 
 `catch (Exception e)` ですべて飲むと、バグ（想定外の `NullPointerException` など）まで隠します。  
-境界（コントローラの最外周など）でまとめて扱う場合でも、ログにスタックトレースを残し、再スローやエラー応答方針を決めます。
+境界（HTTP 入口の最外周など）でまとめて扱う場合でも、ログにスタックトレースを残し、再スローやエラー応答方針を決めます。
 
 :::
 

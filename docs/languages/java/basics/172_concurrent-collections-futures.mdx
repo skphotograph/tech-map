@@ -1,0 +1,125 @@
+---
+sidebar_position: 22
+---
+
+# 並行コレクションと CompletableFuture
+
+前のページでは、タスクをプールへ渡し、共有状態を `synchronized` や原子クラスで守る話を見ました。  
+共有するデータ構造が `Map` やリストのときは、ロック一択ではなく **並行コレクション** が候補になります。  
+また、結果を変換・合成したいときは `CompletableFuture` で非同期を組み立てます。  
+このページでは、その二つを扱います。
+
+## このページで分かること
+
+- 並行アクセスする `Map` に、通常の `HashMap` を使ってはいけない理由
+- `merge` / `compute` など、複合操作を原子的にする API の使い方
+- `CompletableFuture` で変換・合成・失敗処理をつなぐときの注意
+- 実行する Executor と、待ち境界の決め方
+
+## 並行コレクション
+
+共有 `Map` に通常の `HashMap` を使うと、データ破損や無限ループに近い症状が出ることがあります。  
+並行アクセスするなら、並行コレクションを使います。
+
+```java
+ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
+counts.merge("PAID", 1L, Long::sum);
+```
+
+`get` のあとに `put` する二段構えは、そのあいだに他スレッドが割り込めます。  
+`compute` / `merge` / `putIfAbsent` など、API が用意する複合操作を使えないか先に見ます。
+
+```java
+// 危ない例: 複合操作が原子的ではない
+Long current = counts.get("PAID");
+counts.put("PAID", current == null ? 1L : current + 1L);
+```
+
+:::info[並行コレクションの限界]
+
+個々の呼び出しがスレッドセーフでも、「複数キーをまとめて一貫して更新する」までは保証しません。  
+複数構造にまたがる不変条件は、別途ロックや単一スレッド化が必要です。
+
+:::
+
+<QuizChoice
+title="並行コレクションの限界"
+options={[
+{id: 'a', label: 'この二段処理は、ConcurrentHashMap なら常に安全'},
+{id: 'b', label: 'get と put のあいだに他スレッドが割り込めるので、別途原子的な API や設計が必要'},
+{id: 'c', label: 'HashMap に置き換えても同じ安全性になる'},
+]}
+answer="b"
+explanation="並行コレクションは単一の API 呼び出しの範囲で効きます。複合操作は merge / compute などを使うか、ロックや設計で守ります。"
+
+>
+
+  <div>次の更新について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
+
+Long current = counts.get("PAID");
+counts.put("PAID", current == null ? 1L : current + 1L);`}</code></pre>
+</QuizChoice>
+
+`CopyOnWriteArrayList` は読みが多く書きが稀なときに向きます。  
+書きのたびに配列コピーが走るので、更新が多い経路には向きません。
+
+## CompletableFuture の入口
+
+`CompletableFuture` は、非同期処理の結果を変換・合成できます。
+
+```java
+CompletableFuture<String> summary =
+    CompletableFuture
+        .supplyAsync(() -> loadOrder(1001L), executor)
+        .thenApply(order -> "order=" + order.id())
+        .exceptionally(error -> "order unavailable");
+
+String text = summary.join();
+```
+
+- `supplyAsync` … 値を返す非同期。実行する Executor を明示できる
+- `thenApply` … 前段の結果を同期的に変換
+- `thenCompose` … 結果から別の非同期処理へつなぎ、入れ子の Future を避ける
+- `exceptionally` / `handle` … 失敗時の回復やログ
+- `join` / `get` … 完了待ち（`join` はチェック例外を包まない）
+
+`supplyAsync` に Executor を渡さないと、共通の ForkJoinPool に載ります。  
+誰のプールで動いているかが曖昧になると、負荷の切り分けが難しくなります。
+
+非同期を始めた直後に毎回 `get` / `join` すると、実質直列です。  
+変換をパイプラインでつなぎ、**待つ境界**（HTTP 応答を返す直前、バッチの区切りなど）を決めます。  
+タイムアウト、キャンセル、失敗時に部分成功を許すかも、同じ設計の一部です。
+
+```java
+CompletableFuture<Order> order =
+    CompletableFuture.supplyAsync(() -> loadOrder(id), executor);
+CompletableFuture<User> user =
+    CompletableFuture.supplyAsync(() -> loadUser(userId), executor);
+
+CompletableFuture<String> page =
+    order.thenCombine(user, (o, u) -> o.id() + ":" + u.name());
+```
+
+独立した I/O を並べ、最後に合成する形は、待ち時間の隠蔽に向きます。
+
+## 実務での目安
+
+- `HashMap` を並行更新しない。複合操作は API の原子的メソッドを優先する
+- 並行コレクションは単一 API 呼び出しの範囲で効く、と覚える
+- 非同期はパイプラインでつなぎ、待ち境界とタイムアウトを決める
+- `supplyAsync` には、誰のプールかを明示する
+
+## よくあるつまずき
+
+- 通常の `HashMap` を複数スレッドから更新する
+- `ConcurrentHashMap` なら複数操作全体も安全だと思い込む
+- 非同期の直後に毎回 `get` / `join` する
+- Executor を渡さず、共通プールに負荷が寄る
+
+## まとめ
+
+- 並行コレクションは単一 API 呼び出しの範囲で効く
+- `CompletableFuture` は合成と失敗処理の道具。実行場所と待ち境界を設計する
+
+次は [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) で、プールの止め方、ロックの循環、スレッドごとの値の寿命を扱います。

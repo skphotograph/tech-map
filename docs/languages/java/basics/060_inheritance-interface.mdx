@@ -33,7 +33,7 @@ class UrgentTask extends Task {
 }
 ```
 
-`@Override` は必須ではありませんが、付けておくとシグネチャの食い違いをコンパイル時に検知できます。
+`@Override` は必須ではありませんが、付けておくと **シグネチャ**（メソッド名と引数の型の並び）の食い違いをコンパイル時に検知できます。
 
 <QuizChoice
 title="オーバーライド"
@@ -68,6 +68,7 @@ task.complete();`}</code></pre>
 ## インタフェース（implements）
 
 インタフェースは「できること」の契約です。  
+抽象メソッドには本体（`{ ... }`）が無く、実装クラス側で中身を書きます。  
 クラスは複数のインタフェースを実装できます。
 
 ```java
@@ -135,21 +136,26 @@ System.out.println(s.name());`}</code></pre>
 
 ## キャストの注意
 
-どうしても子固有のメソッドを呼びたいとき、キャストします。  
-型が合わないと実行時に `ClassCastException` です。
+どうしても子固有のメソッドを呼びたいとき、**キャスト**（「この参照を、別の型として扱う」宣言）をします。  
+実行時の実体がその型でなければ `ClassCastException` です。
 
 ```java
 Task task = new Task();
 UrgentTask urgent = (UrgentTask) task; // 失敗しうる
 ```
 
-現代の Java では、パターンマッチングで安全に分岐できます。
+<details>
+<summary>パターンマッチで安全に分岐する（Java 16+）</summary>
+
+現代の Java では、`instanceof` と変数宣言をまとめて書けます。
 
 ```java
 if (task instanceof UrgentTask urgent) {
     // urgent として使える
 }
 ```
+
+</details>
 
 キャストが増える設計は、そもそも参照型の選び方が粗いサインかもしれません。  
 インタフェースや適切な抽象に寄せられないか、先に考えます。

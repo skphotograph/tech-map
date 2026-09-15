@@ -26,9 +26,31 @@ Collector や少し長いパイプラインは、あとの [Stream と Collector
 ## ステップ1: いまの for ループで何をしているか
 
 一覧から「条件に合うものだけ残し、別の形で受け取る」は、もともとこう書けます。  
-（`for (Task task : tasks)` は [メソッドとクラス](./methods-and-classes) で触れた拡張 for です。）
+（拡張 for は [メソッドとクラス](./methods-and-classes) で触れました。）
 
 ```java
+class Task {
+    private final String title;
+    private final boolean open;
+
+    Task(String title, boolean open) {
+        this.title = title;
+        this.open = open;
+    }
+
+    boolean isOpen() {
+        return open;
+    }
+
+    String getTitle() {
+        return title;
+    }
+}
+
+List<Task> tasks = List.of(
+        new Task("review", true),
+        new Task("done", false));
+
 List<String> openTitles = new ArrayList<>();
 for (Task task : tasks) {
     if (task.isOpen()) {
@@ -86,13 +108,17 @@ names.forEach(name -> {
 重要なのは、**ラムダが何を返すべきかは、受け取る側の API が決める** ことです。  
 あとで見る Stream の `filter` は「残すかどうか」なので `boolean` を返すラムダを渡し、`map` は「変換後の値」を返すラムダを渡します。
 
+<details>
+<summary>並べ替えとメソッド参照（後回しでよい）</summary>
+
 ```java
 names.sort((left, right) -> left.length() - right.length());
 ```
 
-引数が一つのときは括弧を省略できます。  
 メソッド参照 `String::length` のような書き方は、「すでに名前があるメソッドを、そのまま渡す」短縮形です。  
 まずは `x -> ...` が読めれば十分です。
+
+</details>
 
 :::tip[ここまでのチェック]
 
@@ -128,6 +154,8 @@ List<String> openTitles = tasks.stream()
         .toList();
 ```
 
+（`tasks` と `Task` はステップ1と同じ前提です。）
+
 ステップ1の for と対応させると、こうです。
 
 | for でやっていたこと       | Stream           |
@@ -150,11 +178,23 @@ tasks を流す
 
 ```java
 long openCount = tasks.stream()
+        .filter(task -> task.isOpen())
+        .count();
+```
+
+<details>
+<summary>メソッド参照で短く書く</summary>
+
+`Task::isOpen` は `task -> task.isOpen()` と同じ役割です。  
+本線ではラムダ形で十分です。
+
+```java
+long openCount = tasks.stream()
         .filter(Task::isOpen)
         .count();
 ```
 
-`Task::isOpen` は `task -> task.isOpen()` と同じ役割のメソッド参照です。
+</details>
 
 ## ステップ4: 中間操作と終端操作（ここがつまずきやすい）
 
@@ -165,8 +205,8 @@ Stream の操作は、大きく二つに分かれます。
 
 ```java
 tasks.stream()
-        .filter(Task::isOpen)
-        .map(Task::getTitle);
+        .filter(task -> task.isOpen())
+        .map(task -> task.getTitle());
 // 終端が無い。結果のリストは手に入らない
 ```
 
@@ -294,5 +334,6 @@ for (Task task : tasks) {
 4. Optional は、無いかもしれない戻り値の箱
 5. 読みやすさで for に戻してよい
 
-次は [ヒープとガベージコレクション](./heap-and-gc) で、到達可能性と世代別回収を厚くします。  
+次は [ヒープとガベージコレクション](./heap-and-gc) で、オブジェクトがいつ不要と判定されるかを見ます。  
+文法の一段落から、実行時の寿命の話へ切り替わります。  
 型パラメータの続きは、そのあと [ジェネリクスと現代的な型](./generics-and-modern-types) へ進みます。

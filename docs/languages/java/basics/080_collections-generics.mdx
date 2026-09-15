@@ -38,8 +38,46 @@ stock.put("item-1", 3);
 まずはインタフェース型で変数を持ち、必要になったら実装を選ぶ、が無難です。
 
 ```java
-List<String> steps = new ArrayList<>(); // 左はインタフェース
+List<String> steps = new ArrayList<>(); // 左はインタフェース、右は実装
 ```
+
+[継承とインタフェース](./inheritance-interface) で見たように、`List` は「一覧として使える契約」、`ArrayList` はその契約を満たす実装のひとつです。  
+変数の型をインタフェースにしておくと、あとから実装を差し替えやすくなります。
+
+<details>
+<summary>参照でつないで伸ばす一覧（LinkedList のイメージ）</summary>
+
+要素を増やせる構造の一例は、ヒープ上のノードを参照でつないだものです。
+
+```mermaid
+flowchart LR
+    subgraph Stack["スタック"]
+        head["head"]
+    end
+
+    subgraph Heap["ヒープ"]
+        a["Node A"]
+        b["Node B"]
+        c["Node C<br/>next = null"]
+    end
+
+    head --> a
+    a -->|next| b
+    b -->|next| c
+```
+
+- 各ノードは別々のオブジェクトで、`next` が次への参照
+- 新しいノードを足せば、配列と違って長さを先に決めなくてよい
+
+標準の `List` がすべてこの形というわけではありません。
+
+- `ArrayList` は内部的には配列（必要に応じて大きい配列へ載せ替える）
+- `LinkedList` はノードを参照でつなぐ
+
+どちらも「動的なコレクションは、ヒープ上のデータと参照の組み合わせ」です。  
+だからリストをメソッドに渡して `add` すると呼び出し元に見えます。
+
+</details>
 
 <QuizChoice
 title="List / Set / Map"
@@ -75,6 +113,10 @@ String first = names.get(0); // キャスト不要
 
 ここでは「箱にラベルを貼る」感覚までで十分です。  
 「なぜ `List<Integer>` を `List<Number>` に渡せないのか」「`? extends` とは何か」は、あとの [ジェネリクスと現代的な型](./generics-and-modern-types) で、思考のステップを追って整理します。
+
+`List` の要素に `int` をそのままは書けません。  
+`List<Integer>` のようにラッパ型を使い、必要に応じて `int` ↔ `Integer` が自動で行き来します（オートボクシング／アンボクシング）。  
+ラッパは参照型なので、`null` が入ると NPE の対象になります。
 
 :::tip[覚えておくこと]
 

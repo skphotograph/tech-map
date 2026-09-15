@@ -1,5 +1,5 @@
 ---
-sidebar_position: 21
+sidebar_position: 24
 ---
 
 # メモリリークとヒープダンプ
@@ -7,7 +7,7 @@ sidebar_position: 21
 Java の「メモリリーク」は、C 言語のように `free` し忘れた穴ではありません。  
 **GC ルートから到達できるまま、もう使わないオブジェクトが残り続ける** 状態です。
 
-[ヒープとガベージコレクション](./heap-and-gc) で到達可能性を、[並行処理](./concurrency) でプールや `ThreadLocal` を見たあとに読むと、典型パターンが追いやすいです。  
+[ヒープとガベージコレクション](./heap-and-gc) で到達可能性を、[終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) でプールの止め方や `ThreadLocal` を見たあとに読むと、典型パターンが追いやすいです。  
 このページでは、よくある保持の形と、ヒープダンプで「誰が照らしているか」を特定する流れを扱います。
 
 ## このページで分かること
@@ -94,7 +94,7 @@ bus.subscribe(listener);
 ### `ThreadLocal` の置きっぱなし
 
 スレッドプールでは、スレッドがリクエストをまたいで再利用されます。  
-[並行処理](./concurrency) で触れたように、`ThreadLocal` はスレッドごとに値を持つ道具です。
+[終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) で触れたように、`ThreadLocal` はスレッドごとに値を持つ道具です。
 
 ```java
 private static final ThreadLocal<RequestContext> CONTEXT = new ThreadLocal<>();

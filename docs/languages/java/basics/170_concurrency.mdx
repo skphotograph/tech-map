@@ -1,21 +1,21 @@
 ---
-sidebar_position: 20
+sidebar_position: 21
 ---
 
-# 並行処理
+# 並行処理（プールと同期）
 
 処理を速くしようとスレッドを増やしたら、まれに件数が合わない、停止時にプロセスが終わらない、といった問題が起こることがあります。  
 並行処理では、**タスクを誰が実行するか** と **共有状態をどう守るか** を分けて考えます。  
-スレッド間の「見え方」のルール自体は、次の [Java メモリモデル](./memory-model) で扱います。  
-このページは、現場で先に必要な実務側です。
+スレッド間の「見え方」のルール自体は、あとの [Java メモリモデル](./memory-model) で扱います。  
+このページは、プールと同期の実務側です。  
+並行コレクションや非同期の組み立て、終了・デッドロックは続くページで扱います。
 
 ## このページで分かること
 
 - `Thread` を直接増やすより、`ExecutorService` にタスクを渡す理由
-- プールの種類、終了、割り込みの扱い
-- レースコンディションと、同期・原子クラス・並行コレクションの使い分け
-- `CompletableFuture` で非同期を組み立てるときの注意
-- デッドロックを避けるロックの取り方
+- プールの種類と、上限・拒否方針の決め方
+- レースコンディションと、同期・原子クラスの使い分け
+- ロックで守る範囲の決め方
 
 ## 並行処理が必要になる場面
 
@@ -139,45 +139,6 @@ ExecutorService executor = new ThreadPoolExecutor(
 
 :::
 
-## 終了と割り込み
-
-プールを作りっぱなしにすると、JVM が終了できなかったり、テストがハングしたりします。
-
-```java
-executor.shutdown(); // 新規受付を止め、実行中と待ち行列は続ける
-if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
-    executor.shutdownNow(); // 割り込みで打ち切りを試みる
-}
-```
-
-- `shutdown` … 優雅な停止の入口
-- `awaitTermination` … 終わりを待つ
-- `shutdownNow` … 待ちタスクを返し、実行中へ割り込みを試みる（必ずすぐ止まる保証ではない）
-
-タスク側は、割り込みを無視しないことが重要です。
-
-```java
-executor.submit(() -> {
-    try {
-        while (!Thread.currentThread().isInterrupted()) {
-            doWorkChunk();
-        }
-    } catch (InterruptedException e) {
-        Thread.currentThread().interrupt(); // 割り込み状態を戻す
-    }
-});
-```
-
-`InterruptedException` を握りつぶすと、停止要求が消えます。  
-再設定（`interrupt()`）するか、メソッドの `throws` で伝播するかを決めます。
-
-`Future#get` にはタイムアウト付きがあります。  
-無限待ちは、相手が死んだときに呼び出し元まで固めます。
-
-```java
-Integer amount = future.get(5, TimeUnit.SECONDS);
-```
-
 ## レースコンディション
 
 複数スレッドが同じ変更可能な状態を読み書きし、実行順序によって結果が変わる問題をレースコンディションと呼びます。
@@ -272,146 +233,24 @@ synchronized (this) {
 ロックを持ったまま、外部 HTTP や長い DB クエリを呼ぶと、他スレッドが長く待たされます。  
 I/O はロックの外へ出し、共有構造の更新だけを短く守る形を目指します。
 
-## 並行コレクション
-
-共有 `Map` に通常の `HashMap` を使うと、データ破損や無限ループに近い症状が出ることがあります。  
-並行アクセスするなら、並行コレクションを使います。
-
-```java
-ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
-counts.merge("PAID", 1L, Long::sum);
-```
-
-`get` のあとに `put` する二段構えは、そのあいだに他スレッドが割り込めます。  
-`compute` / `merge` / `putIfAbsent` など、API が用意する複合操作を使えないか先に見ます。
-
-```java
-// 危ない例: 複合操作が原子的ではない
-Long current = counts.get("PAID");
-counts.put("PAID", current == null ? 1L : current + 1L);
-```
-
-:::info[並行コレクションの限界]
-
-個々の呼び出しがスレッドセーフでも、「複数キーをまとめて一貫して更新する」までは保証しません。  
-複数構造にまたがる不変条件は、別途ロックや単一スレッド化が必要です。
-
-:::
-
-<QuizChoice
-title="並行コレクションの限界"
-options={[
-{id: 'a', label: 'この二段処理は、ConcurrentHashMap なら常に安全'},
-{id: 'b', label: 'get と put のあいだに他スレッドが割り込めるので、別途原子的な API や設計が必要'},
-{id: 'c', label: 'HashMap に置き換えても同じ安全性になる'},
-]}
-answer="b"
-explanation="並行コレクションは単一の API 呼び出しの範囲で効きます。複合操作は merge / compute などを使うか、ロックや設計で守ります。"
-
->
-
-  <div>次の更新について、正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
-
-Long current = counts.get("PAID");
-counts.put("PAID", current == null ? 1L : current + 1L);`}</code></pre>
-</QuizChoice>
-
-`CopyOnWriteArrayList` は読みが多く書きが稀なときに向きます。  
-書きのたびに配列コピーが走るので、更新が多い経路には向きません。
-
-## CompletableFuture の入口
-
-`CompletableFuture` は、非同期処理の結果を変換・合成できます。
-
-```java
-CompletableFuture<String> summary =
-    CompletableFuture
-        .supplyAsync(() -> loadOrder(1001L), executor)
-        .thenApply(order -> "order=" + order.id())
-        .exceptionally(error -> "order unavailable");
-
-String text = summary.join();
-```
-
-- `supplyAsync` … 値を返す非同期。実行する Executor を明示できる
-- `thenApply` … 前段の結果を同期的に変換
-- `thenCompose` … 結果から別の非同期処理へつなぎ、入れ子の Future を避ける
-- `exceptionally` / `handle` … 失敗時の回復やログ
-- `join` / `get` … 完了待ち（`join` はチェック例外を包まない）
-
-`supplyAsync` に Executor を渡さないと、共通の ForkJoinPool に載ります。  
-誰のプールで動いているかが曖昧になると、負荷の切り分けが難しくなります。
-
-非同期を始めた直後に毎回 `get` / `join` すると、実質直列です。  
-変換をパイプラインでつなぎ、**待つ境界**（HTTP 応答を返す直前、バッチの区切りなど）を決めます。  
-タイムアウト、キャンセル、失敗時に部分成功を許すかも、同じ設計の一部です。
-
-```java
-CompletableFuture<Order> order =
-    CompletableFuture.supplyAsync(() -> loadOrder(id), executor);
-CompletableFuture<User> user =
-    CompletableFuture.supplyAsync(() -> loadUser(userId), executor);
-
-CompletableFuture<String> page =
-    order.thenCombine(user, (o, u) -> o.id() + ":" + u.name());
-```
-
-独立した I/O を並べ、最後に合成する形は、待ち時間の隠蔽に向きます。
-
-## デッドロック
-
-複数スレッドが、互いに相手の持つロックを待ち続ける状態がデッドロックです。
-
-```text
-スレッド A: lock1 取得 → lock2 待ち
-スレッド B: lock2 取得 → lock1 待ち
-```
-
-避け方の基本です。
-
-- 複数ロックが必要なら、**取得順を全体で統一**する
-- ロック保持中に、別ロックを取る長い処理や外部 I/O を置かない
-- 可能ならロックを一つにまとめる、またはメッセージ渡しで共有を減らす
-- `tryLock` とタイムアウトで、永遠に待たない設計も検討する
-
-:::warning[ロック範囲を広げすぎない]
-
-範囲が広いと待ち時間が増え、別ロックとの循環も起こりやすくなります。  
-守る状態と処理を明確にし、必要最小限にします。
-
-:::
-
-再現が難しいときは、スレッドダンプで「何待ちか」を見ます。  
-`jcmd <pid> Thread.print` や、実行環境のスレッド一覧で、同じモニターを奪い合っていないかを確認します。
-
 ## 実務での目安
 
 - タスクとスレッド管理を分け、上限のあるプールを使う
 - 共有可変状態を減らし、残った場所だけ同期する
-- `HashMap` を並行更新しない。複合操作は API の原子的メソッドを優先する
-- 非同期はパイプラインでつなぎ、待ち境界とタイムアウトを決める
-- 停止時は `shutdown` → 待機 → 必要なら `shutdownNow`、タスクは割り込みに協力する
+- 単純なカウンタは原子クラス、複数状態のまとまりはロックや設計で守る
 - 「たまにしか壊れない」はレースの典型。ログのスレッド名とダンプを味方にする
 
 ## よくあるつまずき
 
 - タスクごとに無制限に `new Thread` する
 - `newCachedThreadPool` を本番の受け皿にする
-- Executor を終了せず、アプリやテストが止まらない
-- `InterruptedException` を空 catch する
-- 通常の `HashMap` を複数スレッドから更新する
-- `ConcurrentHashMap` なら複数操作全体も安全だと思い込む
-- 非同期の直後に毎回 `get` / `join` する
-- 複数ロックの取得順を統一しない
+- `count++` を一文だから安全だと思う
+- ロックを持ったまま長い I/O を呼ぶ
 
 ## まとめ
 
 - アプリはタスクを渡し、プールがスレッドを管理する
 - レースは共有可変状態の問題。減らす・原子的にする・ロックする
-- 並行コレクションは単一 API 呼び出しの範囲で効く
-- `CompletableFuture` は合成と失敗処理の道具。実行場所と待ち境界を設計する
-- デッドロックは順序と範囲で防ぐ
+- ロックの範囲は、不変条件をまたげる最小限にする
 
-次は [メモリリークとヒープダンプ](./memory-leaks-and-dumps) で、切れない参照と調査手順を扱います。  
-そのあと [Java メモリモデル](./memory-model) で、同期が「見える」ことをどう保証するかを見ます。
+次は [並行コレクションと CompletableFuture](./concurrent-collections-futures) で、共有 Map の安全な更新と非同期の組み立てを扱います。

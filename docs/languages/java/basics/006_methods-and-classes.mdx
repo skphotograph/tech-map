@@ -4,42 +4,68 @@ sidebar_position: 4
 
 # メソッドとクラス
 
-このページでは、処理をメソッドに切り出し、データと振る舞いをクラスにまとめる書き方の入口を押さえます。  
-継承やインタフェースの設計は、あとで [継承とインタフェース](./inheritance-interface) に任せます。  
-ここでは「読んで追える」「小さな型を自分で書ける」までです。
+同じ計算をコピペで増やすと、直す場所がバラバラになります。  
+「よく使う手順に名前を付ける」「関連するデータをひとつにまとめる」——この二つが、メソッドとクラスの入口です。  
+ここでは、小さなプログラムを自分で書けるところまで進みます。
 
 ## このページで分かること
 
-- メソッドの定義と呼び出し、引数と戻り値
+- メソッド（名前付きの手順）の定義と呼び出し
+- 早期 `return` でネストを浅くする書き方
 - クラス、フィールド、`new`
-- 配列の入口
-- `List` を少し触る
+- 配列と拡張 for、`List` の入口
 
-## メソッドは「名前の付いた処理」
+## メソッドは「名前の付いた手順書」
 
-同じ計算を何度も書くと、直し漏れが増えます。  
+キッチンで「2 と 3 を足す」を毎回口で説明するより、`add` と書いた手順書を渡した方が早いです。  
 入力を受け取り、結果を返すまとまりが **メソッド** です。
 
-```java
-static int add(int a, int b) {
-    return a + b;
-}
-
-int total = add(2, 3); // 5
-```
-
-- `int add(...)` … 戻り値の型が `int`
-- `(int a, int b)` … 呼び出す側から渡す引数
-- `return` … 呼び出し元へ結果を返す
-- `static` … ここでは「インスタンスなしで呼べる」入口（詳細は [static と final](./static-final)）
-
-戻り値が無い処理は、戻り値の型に `void` を書きます。
+Java では、メソッドは **クラスの中** に書きます。  
+[最初のプログラム](./first-program) の `main` と同じ入れ物です。
 
 ```java
-static void printTotal(int total) {
-    System.out.println(total);
+public class Calculator {
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    public static void main(String[] args) {
+        int total = add(2, 3);
+        System.out.println(total); // 5
+    }
 }
 ```
+
+読み方のポイントです。
+
+| 書き方           | たとえ                                     |
+| ---------------- | ------------------------------------------ |
+| `int add(...)`   | 手順書の名前が `add`。答えは整数で返す     |
+| `(int a, int b)` | 材料として渡すふたつの数                   |
+| `return a + b`   | 計算結果を呼び出し元へ返す                 |
+| `add(2, 3)`      | 手順書を実際に使う（呼び出す）             |
+
+戻り値が無い処理は、戻り値の型に `void` を書きます。  
+「画面に出すだけ」のように、返事が要らない手順です。
+
+```java
+public class Reporter {
+    static void printTotal(int total) {
+        System.out.println(total);
+    }
+
+    public static void main(String[] args) {
+        printTotal(5);
+    }
+}
+```
+
+:::tip[main から同じクラスの手順を呼ぶ]
+
+起動の入口 `main` も、クラスの中の手順書のひとつです。  
+上の例では、`main` から同じクラスの `add` / `printTotal` を呼んでいます。
+
+:::
 
 <QuizChoice
 title="メソッドの戻り値"
@@ -54,56 +80,93 @@ explanation="add(2, 3) は 2 + 3 を return するので、total には 5 が入
 >
 
   <div>次のコードのあと、<code>total</code> はどうなりますか。</div>
-  <pre className="language-java"><code>{`static int add(int a, int b) {
-    return a + b;
-}
+  <pre className="language-java"><code>{`public class Calculator {
+    static int add(int a, int b) {
+        return a + b;
+    }
 
-int total = add(2, 3);`}</code></pre>
+    public static void main(String[] args) {
+        int total = add(2, 3);
+    }
+}`}</code></pre>
 </QuizChoice>
 
-## クラスは「データと操作の型」
+## 早期 return: 入口で弾いて、中をすっきり
 
-現場のコードは、数値や文字列だけではありません。  
-注文番号と状態のように、**まとめて扱いたいデータ** を型にします。
+映画館の入り口で、まずチケットを確認する——合わなければその場でお帰り、合えば中の案内だけに集中する、という流れです。  
+条件が合わないときは、すぐ `return` してメソッドを抜けます。
 
 ```java
-class Order {
-    String id;
-    String status;
+public class OrderService {
+    static String label(int amount) {
+        if (amount < 0) {
+            return "invalid";
+        }
+        if (amount >= 1000) {
+            return "bulk";
+        }
+        return "normal";
+    }
 
-    void close() {
-        status = "CLOSED";
+    public static void main(String[] args) {
+        System.out.println(label(1200)); // bulk
+        System.out.println(label(-1));   // invalid
     }
 }
 ```
 
-- フィールド … インスタンスが持つデータ（`id`, `status`）
-- メソッド … そのデータに対する操作（`close`）
+- 最初の `if` で不正ならすぐ返す → その下は「通った人だけ」を扱える
+- `else` を何段も積み上げなくてよい
 
-実体を作るのが `new` です。
+すべてを早期 return にする必要はありません。  
+枝が深くなって読みにくくなったときに、この形を思い出してください。
+
+## クラスは「伝票のひな型」
+
+現場のコードは、数値や文字列だけではありません。  
+注文番号と状態のように、**まとめて扱いたいデータ** を型にします。
+
+たとえで言うと、クラスは「伝票のひな型」、`new` は「実際に一枚切る」です。
 
 ```java
-Order order = new Order();
-order.id = "ORD-1";
-order.status = "OPEN";
-order.close();
-System.out.println(order.status); // CLOSED
+public class OrderDemo {
+    static class Order {
+        String id;
+        String status;
+
+        void close() {
+            status = "CLOSED";
+        }
+    }
+
+    public static void main(String[] args) {
+        Order order = new Order();
+        order.id = "ORD-1";
+        order.status = "OPEN";
+        order.close();
+        System.out.println(order.status); // CLOSED
+    }
+}
 ```
 
-`Order order` は「`Order` を指す変数」で、`new Order()` が実体を作ります。  
-変数の中にオブジェクト全部が入るわけではない、という話は次のメモリ本編で厚く扱います。
+| 言葉                         | いまの読み方                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| フィールド（`id`, `status`） | 伝票に書く欄                                                                     |
+| メソッド（`close`）          | その伝票に対する操作。`order.close()` のように「どの伝票か」を先に指定する       |
+| `new Order()`                | 伝票を一枚切る（実体を作る）                                                     |
+| `Order order`                | 作った伝票を扱うための名前                                                       |
 
 :::tip[覚えておくこと]
 
-`new` で実体を作り、変数はその実体を指す。  
-フィールドで状態を持ち、メソッドで操作する。
+`new` で実体を作り、フィールドで状態を持ち、メソッドで操作する。
 
 :::
 
 <details>
 <summary>コンストラクタ（入口だけ）</summary>
 
-生成直後にフィールドをそろえたいときは、コンストラクタを使います。
+生成直後に欄をそろえたいときは、コンストラクタを使います。  
+「伝票を切る瞬間に、番号と状態も書いておく」イメージです。
 
 ```java
 class Order {
@@ -119,14 +182,15 @@ class Order {
 Order order = new Order("ORD-1", "OPEN");
 ```
 
-`this.id` は「このインスタンスのフィールド `id`」です。  
-引数名とフィールド名が同じときに、どちら向きの代入かをはっきりさせます。
+`this.id` は「この伝票の欄 `id`」です。  
+引数名と欄の名前が同じときに、どちら向きの代入かをはっきりさせます。
 
 </details>
 
-## 配列: 同じ型を並べる
+## 配列: 決まったマスのトレー
 
-同じ型の値を、添字（0 始まり）で並べるのが配列です。
+同じ型の値を、番号付きのマスに並べるのが配列です。  
+卵パックのように **マス数は最初に決まる** イメージです。
 
 ```java
 int[] quantities = new int[3];
@@ -138,15 +202,15 @@ System.out.println(quantities.length); // 3
 System.out.println(quantities[1]);     // 20
 ```
 
-- `new int[3]` … 長さ 3 の箱を用意する
-- `length` … 要素数（メソッド呼び出しではない）
-- 範囲外の添字は実行時エラーになる
-
-配列の実体がどこに置かれるかは、[型とメモリ](./types-and-memory) で扱います。
+- `new int[3]` … マスが 3 つのトレーを用意する
+- 番号は **0 から**（最初のマスが 0）
+- `length` … マスの数（メソッド呼び出しではない）
+- 無いマスを触ると実行時エラーになる
 
 ## 一覧を前から触る（拡張 for）
 
-配列やリストを「先頭から順に」触る定番が、次の書き方です（拡張 for / for-each とも呼ばれます）。
+配列やリストを「先頭から順に」触る定番が、次の書き方です（拡張 for / for-each とも呼ばれます）。  
+棚の本を、左から一冊ずつ手に取るイメージです。
 
 ```java
 String[] statuses = {"OPEN", "CLOSED"};
@@ -162,30 +226,34 @@ OPEN
 CLOSED
 ```
 
-- `:` の右が一覧、左が「今見ている 1 件」
+- `:` の右が一覧、左が「いま手に取っている 1 件」
 - 添字 `i` を自分で増やさなくてよい
-- あとで [ラムダ・Stream・Optional](./lambda-stream-optional) に入るときも、この形が比較の出発点になります
 
 ## List を少し触る
 
-追加や件数が変わりやすい一覧は、配列より `List` の方が扱いやすいことが多いです。
+追加や件数が変わりやすい一覧は、配列より `List` の方が扱いやすいことが多いです。  
+卵パック（固定）ではなく、**買い物袋（あとから入れられる）** に近いです。
 
 ```java
 import java.util.ArrayList;
 import java.util.List;
 
-List<String> statuses = new ArrayList<>();
-statuses.add("OPEN");
-statuses.add("CLOSED");
-System.out.println(statuses.size()); // 2
-System.out.println(statuses.get(0)); // OPEN
+public class StatusListDemo {
+    public static void main(String[] args) {
+        List<String> statuses = new ArrayList<>();
+        statuses.add("OPEN");
+        statuses.add("CLOSED");
+        System.out.println(statuses.size()); // 2
+        System.out.println(statuses.get(0)); // OPEN
+    }
+}
 ```
 
-`import` は、ほかのパッケージにある型をこのファイルで使うための宣言です。  
-今は「この 2 行があると `List` / `ArrayList` が書ける」と分かれば足ります。
+ファイルの先頭付近に書く `import` は、「ほかの引き出しにある道具を借りる」宣言です。  
+この 2 行があると、`List` / `ArrayList` が書けます。
 
-- `List<String>` … 要素が `String` のリスト（`<...>` はジェネリクスの入口。詳細は後のページ）
-- `add` で末尾に追加、`get` で取り出し、`size` で件数
+- `List<String>` … 文字の並びを入れる袋
+- `add` で入れる、`get` で取り出す、`size` で件数
 
 `List` も拡張 for で回せます。
 
@@ -195,14 +263,11 @@ for (String status : statuses) {
 }
 ```
 
-`List` / `Set` / `Map` の使い分けや、空と null の話は [コレクションとジェネリクス](./collections-generics) へ続きます。  
-ここでは「可変長の一覧がある」と分かれば十分です。
-
 <details>
 <summary>フィールドを外から隠す（private の入口）</summary>
 
-これまで例では、フィールドをそのまま触っていました。  
-現場では、外から直接書き換えられないよう `private` にし、メソッド経由で触ることが多いです。
+これまで例では、伝票の欄を外から直接書いていました。  
+外から直接触れないよう `private` にし、メソッド経由で触る書き方もあります。
 
 ```java
 class Order {
@@ -213,9 +278,6 @@ class Order {
     }
 }
 ```
-
-`public` / 無印（パッケージ内）/ `private` の細かい規則は、必要になったタイミングで足していけば足ります。  
-今は「見える範囲を狭められる」と知っておけば十分です。
 
 </details>
 
@@ -239,7 +301,6 @@ explanation="new で作った Order の close が status を書き換えるの�
     void close() {
         status = "CLOSED";
     }
-
 }
 
 Order order = new Order();
@@ -250,9 +311,10 @@ order.close();`}</code></pre>
 
 ## まとめ / 次に学ぶとよいこと
 
-- メソッドは引数を受け取り、`return` で結果を返す（または `void`）
-- クラスはフィールドとメソッドを持ち、`new` で実体を作る
-- 配列は固定長、拡張 for で順に触れ、`List` は増えやすい一覧の入口
+- メソッドはクラスの中に書き、材料を受け取り `return` で結果を返す（または `void`）
+- 早期 `return` で入口で弾くと、中の枝が浅くなる
+- クラスは伝票のひな型、`new` で一枚切り、名前を付けて扱う
+- 配列は固定マスのトレー、`List` はあとから入れられる袋
 
-ここまでで、本編のコードを追う最低限の書き方はそろいました。  
-次の [実行の仕組み](./execution-model) から、コンパイルと JVM、その先のメモリの話へ進みます。
+ここまでで、小さなプログラムを追う書き方はそろいました。  
+次は [実行の仕組み](./execution-model) へ進みます。
