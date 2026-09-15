@@ -16,7 +16,6 @@ sidebar_position: 7
 - クラス、フィールド、インスタンスメソッド
 - `new` で実体を作る
 - コンストラクタの入口
-- フィールドを外から隠す（`private`）の入口
 
 ## クラスは「伝票のひな型」
 
@@ -123,28 +122,6 @@ Order order = new Order("ORD-1", "OPEN");
 
 引数名と欄の名前が同じときに、どちら向きの代入かをはっきりさせます。
 
-## フィールドを外から隠す（`private`）
-
-これまで例では、伝票の欄を外から直接書いていました。  
-外から直接触れないよう `private` にし、メソッド経由で触る書き方もあります。
-
-```java
-class Order {
-    private String status;
-
-    void close() {
-        status = "CLOSED";
-    }
-
-    String currentStatus() {
-        return status;
-    }
-}
-```
-
-今は「見える範囲を狭められる」と知っておけば十分です。  
-細かい規則は、必要になったタイミングで足していきます。
-
 <details>
 <summary>main を持つクラスと、データのクラス</summary>
 
@@ -166,6 +143,5 @@ class Order {
 - クラスはフィールドとメソッドを持つひな型
 - `new` で実体を作り、名前を付けて扱う
 - コンストラクタで生成直後の欄をそろえられる
-- `private` で欄を隠し、メソッド経由にできる
 
-次は [配列と List](./arrays-and-lists) で、同じ型の値を並べて扱います。
+次は [アクセス修飾子](./access-modifiers) で、誰から見えるかを決めます。

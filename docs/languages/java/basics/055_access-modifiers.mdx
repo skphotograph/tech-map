@@ -1,0 +1,165 @@
+---
+sidebar_position: 8
+---
+
+# アクセス修飾子
+
+[クラスと new](./classes) では、伝票の欄を外から直接書いていました。  
+現場のコードでは、**誰から見えるか** を先に決めます。  
+それが **アクセス修飾子**（`public` / `private` など）です。
+
+入口の `public class` や `public static void main` に付いている `public` も、同じ仲間です。  
+「定型だから無視」ではなく、見える範囲の宣言だと押さえておきましょう。
+
+## このページで分かること
+
+- `public` と `private` の違い
+- 修飾子なし（同じパッケージから見える）
+- フィールドは隠し、メソッド経由で触る定番
+- `package` と見える範囲の関係（入口）
+
+## なぜ見える範囲を狭めるか
+
+伝票の状態を、誰でも `order.status = "..."` と書き換えられると、想定外の文字列が入ります。  
+「閉じる」は `close()` だけ、読むのは `currentStatus()` だけ——と窓口を決めると、壊れ方が減ります。
+
+ロッカーの中身は本人だけ触り、受付の窓口だけ外に出すイメージです。
+
+## `public` と `private`
+
+| 修飾子    | ざっくりした意味                      |
+| --------- | ------------------------------------- |
+| `public`  | どこからでも見える・呼べる            |
+| `private` | **そのクラスの中だけ** 見える・呼べる |
+
+```java
+public class Order {
+    private String status;
+
+    public Order(String status) {
+        this.status = status;
+    }
+
+    public void close() {
+        status = "CLOSED";
+    }
+
+    public String currentStatus() {
+        return status;
+    }
+}
+```
+
+```java
+Order order = new Order("OPEN");
+order.close();
+System.out.println(order.currentStatus()); // CLOSED
+// order.status = "HACK"; // コンパイルエラー（private）
+```
+
+- `status` は `private` → 外のクラスから直接触れない
+- `close` / `currentStatus` は `public` → 外から呼ぶ窓口
+
+:::tip[覚えておくこと]
+
+フィールドはまず `private`。  
+外に出す操作だけ `public` なメソッドにする。
+
+:::
+
+`main` を持つ入口クラスを `public` にするのも、「起動側から見える表札」だからです。  
+[最初のプログラム](./first-program) の定型と、ここでつながります。
+
+<QuizChoice
+title="private フィールド"
+options={[
+{id: 'a', label: 'CLOSED と出る'},
+{id: 'b', label: 'OPEN のまま'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="c"
+explanation="status は private なので、Order の外から order.status へ直接書けません。"
+
+>
+
+  <div>次のコードはコンパイルできますか。結果はどうなりますか。</div>
+  <pre className="language-java"><code>{`public class Order {
+    private String status;
+
+    public Order(String status) {
+        this.status = status;
+    }
+
+}
+
+Order order = new Order("OPEN");
+order.status = "CLOSED";
+System.out.println(order.status);`}</code></pre>
+</QuizChoice>
+
+## 修飾子なし（パッケージプライベート）
+
+`public` も `private` も書かないとき、Java では **同じパッケージのクラスから見える** 扱いになります（パッケージプライベート／デフォルト）。
+
+```java
+class Order {
+    String status; // 修飾子なし
+
+    void close() {
+        status = "CLOSED";
+    }
+}
+```
+
+小さなサンプルでは、修飾子なしのまま進むことも多いです。  
+チームの本番コードでは、意図が無い限りフィールドを開けっぱなしにしない、が定番です。
+
+<details>
+<summary>package 宣言との関係</summary>
+
+ソースの先頭に次のように書くことがあります。
+
+```java
+package com.example.order;
+```
+
+同じ `package` に属するクラスどうしが、「修飾子なし」で見える範囲です。  
+ディレクトリ構成と `package` を揃える話は [実行の仕組み](./execution-model) でも触れます。  
+入門の単一ファイルでは `package` を省略して構いません。
+
+</details>
+
+## メソッドにも付ける
+
+見える範囲はフィールドだけではありません。  
+ヘルパー用の計算は `private` メソッドにして、外からは呼べないようにできます。
+
+```java
+public class PriceLabel {
+    public static String forAmount(int amount) {
+        return prefix() + amount;
+    }
+
+    private static String prefix() {
+        return "yen:";
+    }
+}
+```
+
+`forAmount` は外から使う。 `prefix` は内側の部品——役割分担が読みやすくなります。
+
+## よくあるつまずき
+
+- フィールドを全部 `public` のままにして、想定外の代入が入る
+- `private` にしたフィールドを、別クラスから直接読もうとしてコンパイルエラー
+- 「修飾子なし＝どこからでも見える」と思い込む（実際は同じパッケージ向け）
+- `public` を「大事な印」だと誤解する（見える範囲の宣言）
+
+## まとめ / 次に学ぶとよいこと
+
+- `public` は広く見える、`private` はそのクラス内だけ
+- 修飾子なしは同じパッケージから見える
+- フィールドは隠して、メソッドを窓口にするのが定番
+- 入口の `public class` / `public ... main` も、同じ「見える範囲」の話
+
+次は [配列と List](./arrays-and-lists) で、同じ型の値を並べて扱います。

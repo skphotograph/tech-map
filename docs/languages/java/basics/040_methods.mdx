@@ -17,6 +17,7 @@ Java では、メソッドは **クラスの中** に書きます。
 - 引数と戻り値、`void`
 - `main` から同じクラスの手順を呼ぶ
 - 早期 `return` でネストを浅くする書き方
+- 同じ名前で引数が違うメソッド（オーバーロード）
 
 ## メソッドは「名前の付いた手順書」
 
@@ -145,17 +146,75 @@ public class OrderService {
 すべてを早期 return にする必要はありません。  
 枝が深くなって読みにくくなったときに、この形を思い出してください。
 
+## 同じ名前で引数が違う（オーバーロード）
+
+同じ目的の手順でも、渡す材料の個数や型が違うことがあります。  
+そのとき **同じ名前のメソッドを、引数の違いで並べる** ことができます（オーバーロード）。
+
+```java
+public class Greeter {
+    static String greet(String name) {
+        return "hello, " + name;
+    }
+
+    static String greet(String name, int times) {
+        return greet(name) + " x" + times;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(greet("Aiko"));      // hello, Aiko
+        System.out.println(greet("Aiko", 3));   // hello, Aiko x3
+    }
+}
+```
+
+呼び出し側は、渡した引数に合う定義が選ばれます。  
+戻り値の型だけを変えて同じ引数にする、はできません（区別できないため）。
+
+:::tip[覚えておくこと]
+
+オーバーロードは「同じ名前・違う引数」。  
+戻り値の型だけを変えて同じ引数にする、はできない。
+
+:::
+
+<QuizChoice
+title="オーバーロードの呼び出し"
+options={[
+{id: 'a', label: 'hello, Aiko'},
+{id: 'b', label: 'hello, Aiko x2'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="引数が String と int のふたつなので、greet(String, int) が選ばれます。"
+
+>
+
+  <div>次のコードの出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`static String greet(String name) {
+    return "hello, " + name;
+}
+
+static String greet(String name, int times) {
+return greet(name) + " x" + times;
+}
+
+System.out.println(greet("Aiko", 2));`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - メソッドをクラスの外に書いてしまう
 - 戻り値の型と `return` の値が合わない
 - `void` なのに値を返そうとする／返すメソッドで `return` を忘れる
 - 引数の個数や型を呼び出しと定義で食い違わせる
+- 戻り値の型だけ違うオーバーロードを書こうとしてコンパイルエラー
 
 ## まとめ / 次に学ぶとよいこと
 
 - メソッドはクラスの中に書き、引数を受け取り `return` で返す（または `void`）
 - `main` から同じクラスの手順を呼んで組み立てられる
 - 早期 `return` で入口で弾くと、中の枝が浅くなる
+- 同じ名前で引数が違うメソッドを並べられる（オーバーロード）
 
 次は [クラスと new](./classes) で、データと操作をひとつの型にまとめます。
