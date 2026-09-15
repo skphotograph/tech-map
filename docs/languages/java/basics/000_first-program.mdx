@@ -17,7 +17,8 @@ sidebar_position: 2
 ## なぜ最初に「動かす」か
 
 教材のコードを眺めても、手元で一度も動かしていないと、エラーの出方が想像しにくいです。  
-ここでは最短の一巡だけ押さえ、仕組みの細部は次の [実行の仕組み](./execution-model) に任せます。
+ここでは最短の一巡だけ押さえます。  
+JDK / JVM やクラスパスの話は、書き方をそろえたあとの [実行の仕組み](./execution-model) で厚く扱います。
 
 ## Hello を書く
 
@@ -34,9 +35,10 @@ public class Hello {
 
 読み方のポイントです。
 
-- `public class Hello` … `Hello` というクラスを定義する
+- `public class Hello` … `Hello` というクラスを定義する（`public` は「外からも見える」入口の定型）
 - `main` … JVM が起動時に探す入口メソッド
 - `System.out.println(...)` … 標準出力に一行書いて改行する
+- `String[] args` … 起動引数用の文字列配列。配列そのものは [メソッドとクラス](./methods-and-classes) で触れるので、今は定型の一部と見てよい
 
 :::tip[覚えておくこと]
 

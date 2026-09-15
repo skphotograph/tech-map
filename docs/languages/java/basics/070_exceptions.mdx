@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # 例外とリソース解放
@@ -185,7 +185,7 @@ try {
 
 ファイル、ソケット、DB 接続、スレッドプールなど、OS や外部が握る資源は、Java オブジェクトの GC とは別寿命です。  
 参照が切れても、すぐ OS 側のハンドルが返るとは限りません。  
-[ヒープとガベージコレクション](./heap-and-gc) が回収するのは、主にヒープ上のオブジェクトです。
+[ヒープとガベージコレクション](./heap-and-gc) が回収するのは、主にヒープ上のオブジェクトです（詳細はそのページ）。
 
 ```java
 // 悪い例: 成功時しか閉じない
@@ -215,8 +215,12 @@ try {
 いまは **try-with-resources** で自動クローズするのが基本です。  
 `AutoCloseable`（または旧来の `Closeable`）を実装した資源が対象です。
 
+`Files` など NIO.2 の詳細は [ファイルとリソース管理](./files-and-resources) へ任せます。  
+ここでの本題は「例外が起きても閉じる形」です。  
+また `var` は、右辺から型が明らかなときの局所変数の書き方（型推論）です。今は「型名の代わりに書けることがある」と分かれば足ります。
+
 ```java
-try (var reader = Files.newBufferedReader(path)) {
+try (BufferedReader reader = Files.newBufferedReader(path)) {
     return reader.readLine();
 }
 ```

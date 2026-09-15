@@ -144,6 +144,28 @@ System.out.println(quantities[1]);     // 20
 
 配列の実体がどこに置かれるかは、[型とメモリ](./types-and-memory) で扱います。
 
+## 一覧を前から触る（拡張 for）
+
+配列やリストを「先頭から順に」触る定番が、次の書き方です（拡張 for / for-each とも呼ばれます）。
+
+```java
+String[] statuses = {"OPEN", "CLOSED"};
+for (String status : statuses) {
+    System.out.println(status);
+}
+```
+
+出力例:
+
+```text
+OPEN
+CLOSED
+```
+
+- `:` の右が一覧、左が「今見ている 1 件」
+- 添字 `i` を自分で増やさなくてよい
+- あとで [ラムダ・Stream・Optional](./lambda-stream-optional) に入るときも、この形が比較の出発点になります
+
 ## List を少し触る
 
 追加や件数が変わりやすい一覧は、配列より `List` の方が扱いやすいことが多いです。
@@ -159,11 +181,43 @@ System.out.println(statuses.size()); // 2
 System.out.println(statuses.get(0)); // OPEN
 ```
 
-- `List<String>` … 要素が `String` のリスト（ジェネリクスの入口）
+`import` は、ほかのパッケージにある型をこのファイルで使うための宣言です。  
+今は「この 2 行があると `List` / `ArrayList` が書ける」と分かれば足ります。
+
+- `List<String>` … 要素が `String` のリスト（`<...>` はジェネリクスの入口。詳細は後のページ）
 - `add` で末尾に追加、`get` で取り出し、`size` で件数
+
+`List` も拡張 for で回せます。
+
+```java
+for (String status : statuses) {
+    System.out.println(status);
+}
+```
 
 `List` / `Set` / `Map` の使い分けや、空と null の話は [コレクションとジェネリクス](./collections-generics) へ続きます。  
 ここでは「可変長の一覧がある」と分かれば十分です。
+
+<details>
+<summary>フィールドを外から隠す（private の入口）</summary>
+
+これまで例では、フィールドをそのまま触っていました。  
+現場では、外から直接書き換えられないよう `private` にし、メソッド経由で触ることが多いです。
+
+```java
+class Order {
+    private String status;
+
+    void close() {
+        status = "CLOSED";
+    }
+}
+```
+
+`public` / 無印（パッケージ内）/ `private` の細かい規則は、必要になったタイミングで足していけば足ります。  
+今は「見える範囲を狭められる」と知っておけば十分です。
+
+</details>
 
 <QuizChoice
 title="クラスと new"
@@ -198,7 +252,7 @@ order.close();`}</code></pre>
 
 - メソッドは引数を受け取り、`return` で結果を返す（または `void`）
 - クラスはフィールドとメソッドを持ち、`new` で実体を作る
-- 配列は固定長、`List` は増えやすい一覧の入口
+- 配列は固定長、拡張 for で順に触れ、`List` は増えやすい一覧の入口
 
 ここまでで、本編のコードを追う最低限の書き方はそろいました。  
 次の [実行の仕組み](./execution-model) から、コンパイルと JVM、その先のメモリの話へ進みます。

@@ -21,6 +21,13 @@ Web アプリケーションでは、次のような分け方がよく見られ�
 - Service: ユースケースや業務ルールを実行する
 - Repository / DAO: データの保存や取得を隠蔽する
 
+設計の入口で見た [レイヤードアーキテクチャと MVC](../design/layered-and-mvc) の四層は、業務の地図です。  
+ここでいう三層は Web 実装での通称で、だいたい次のように対応します。
+
+- Presentation ≈ Controller
+- Application / Domain ≈ Service
+- Infrastructure ≈ Repository
+
 Repository はドメインの言葉でデータの集合を扱うことが多く、DAO はテーブルや SQL に近い操作を表すことが多い名前です。  
 ただし、用語の使い分けはプロジェクトによって異なるため、名前より実際の責務を確認します。
 
@@ -45,7 +52,15 @@ public final class OrderService {
 ## DI は依存する部品を外から渡す仕組み
 
 DI は Dependency Injection、つまり依存性の注入です。  
-クラス自身が必要な実装を生成する代わりに、外部の組み立て役から受け取ります。
+クラス自身が必要な実装を生成する代わりに、外部の組み立て役から受け取ります。  
+コンストラクタで依存を渡す考え方は [リファクタリングの道具箱](../design/refactoring-toolkit) でも触れました。ここではコンテナのアノテーションまで含めて見ます。
+
+:::tip[アノテーションは宣言]
+
+`@Inject` や `@Autowired` は「ここに注入して」という宣言です。  
+実際に読む・組み立てる主体はコンテナ側です。仕組みの入口は [アノテーションとリフレクション](../basics/annotations-reflection) を参照してください。
+
+:::
 
 ```java
 OrderRepository repository = new JdbcOrderRepository(dataSource);

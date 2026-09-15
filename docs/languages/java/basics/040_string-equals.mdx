@@ -1,9 +1,10 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # String と equals
 
+[型とメモリ](./types-and-memory) で見た「参照は行き先」が、文字列比較ではいちばん効いてきます。  
 このページでは、`String` の扱いと、`==` / `equals` / `hashCode` の関係を、コレクションで壊れないところまで落とします。  
 「ログでは同じ文字列なのに比較が合わない」「入れたはずのキーが Map から消える」は、ここが曖昧なときに起きます。
 
@@ -192,7 +193,8 @@ public final class UserId {
 
 ## hashCode とのセット
 
-`HashSet` や `HashMap` のキーでは、次の流れで探します。
+`Set` や `Map`（実装の例: `HashSet` / `HashMap`）のキーでは、次の流れで探します。  
+コレクション API の使い分けは [コレクションとジェネリクス](./collections-generics) で扱います。ここでは **桶 → equals** の契約だけ見てください。
 
 1. `hashCode` で桶（バケット）を決める
 2. その桶の中で `equals` により同値を探す
@@ -272,7 +274,8 @@ key.code = "B"; // もう map から見つけにくい
 
 ## record と生成コード
 
-`record` は成分に基づく `equals` / `hashCode` / `toString` を生成します。
+`record` は成分に基づく `equals` / `hashCode` / `toString` を生成します。  
+書き方の詳細や現代的な型としての位置づけは、後の [ジェネリクスと現代的な型](./generics-and-modern-types) でも扱います。今は「手書きの契約を生成に任せられる」と分かれば足ります。
 
 ```java
 record UserId(String value) {

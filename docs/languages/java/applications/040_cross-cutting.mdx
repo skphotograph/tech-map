@@ -38,7 +38,8 @@ public record CreateOrderRequest(
 
 ## Filter、Interceptor、Middleware
 
-名称と適用範囲はスタックによって異なりますが、リクエストの前後へ共通処理を差し込む考え方は共通します。
+名称と適用範囲はスタックによって異なりますが、リクエストの前後へ共通処理を差し込む考え方は共通します。  
+製品名では Servlet Filter、Spring の Interceptor、同様の Middleware などと呼ばれます。ここでは「HTTP 入口に近い共通処理」の総称だと捉えてください。
 
 代表的な用途には、次のものがあります。
 

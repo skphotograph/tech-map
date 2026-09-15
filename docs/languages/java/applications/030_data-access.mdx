@@ -82,7 +82,8 @@ Spring Data は JPA と対立する分類ではなく、JPA などのデータ�
 ## トランザクション境界
 
 一つのユースケースで複数の更新を行う場合、まとめて成功または失敗させます。  
-そのため、トランザクション境界は Repository の個別メソッドではなく、ユースケースを表す Service メソッドに置くことがよくあります。
+そのため、トランザクション境界は Repository の個別メソッドではなく、ユースケースを表す Service メソッドに置くことがよくあります。  
+`commit` / `rollback` の手元イメージは [JDBC の基礎](../basics/jdbc-basics) を参照してください。フレームワークは、その境界を宣言的に張ることが多いです。
 
 ```java
 public void placeOrder(PlaceOrderCommand command) {

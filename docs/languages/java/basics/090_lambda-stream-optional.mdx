@@ -1,5 +1,5 @@
 ---
-sidebar_position: 11
+sidebar_position: 12
 ---
 
 # ラムダ・Stream・Optional
@@ -25,7 +25,8 @@ Collector や少し長いパイプラインは、あとの [Stream と Collector
 
 ## ステップ1: いまの for ループで何をしているか
 
-一覧から「条件に合うものだけ残し、別の形で受け取る」は、もともとこう書けます。
+一覧から「条件に合うものだけ残し、別の形で受け取る」は、もともとこう書けます。  
+（`for (Task task : tasks)` は [メソッドとクラス](./methods-and-classes) で触れた拡張 for です。）
 
 ```java
 List<String> openTitles = new ArrayList<>();
@@ -293,4 +294,5 @@ for (Task task : tasks) {
 4. Optional は、無いかもしれない戻り値の箱
 5. 読みやすさで for に戻してよい
 
-次は [ジェネリクスと現代的な型](./generics-and-modern-types) や [Stream と Collector](./stream-and-collectors) で、型と一覧処理をさらに積み上げます。
+次は [ヒープとガベージコレクション](./heap-and-gc) で、到達可能性と世代別回収を厚くします。  
+型パラメータの続きは、そのあと [ジェネリクスと現代的な型](./generics-and-modern-types) へ進みます。
