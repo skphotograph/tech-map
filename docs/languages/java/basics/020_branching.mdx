@@ -13,6 +13,7 @@ sidebar_position: 4
 
 - `if` / `else` でふたつの道を選ぶ
 - `else if` で枝を増やす
+- `switch` 文で決まった候補ごとに道を選ぶ
 - 条件は `boolean`（はい／いいえ）になる式であること
 - `&&` / `||` / `!` で条件を組み合わせる入口
 
@@ -96,6 +97,121 @@ if (yen >= 1000) {
 順番を間違えると、意図と違う枝に入ります。  
 厳しい条件（大きい金額など）を先に書くことが多いです。
 
+## `switch` 文: ロッカーの番号で開ける
+
+「いくつ以上か」ではなく、**決まった候補のどれか** で道を選びたいときがあります。
+注文の状態が `"OPEN"` / `"PAID"` / `"CLOSED"` のどれか、のようにです。  
+ロッカーの番号を見て、その扉だけ開けるイメージが `switch` 文です。
+
+```java
+String status = "PAID";
+
+switch (status) {
+    case "OPEN":
+        System.out.println("edit");
+        break;
+    case "PAID":
+        System.out.println("ship");
+        break;
+    case "CLOSED":
+        System.out.println("archive");
+        break;
+    default:
+        System.out.println("unknown");
+        break;
+}
+```
+
+出力例:
+
+```text
+ship
+```
+
+読み方です。
+
+1. `switch (status)` … 比べる値を決める
+2. `case "PAID":` … その値のとき、ここから実行する
+3. `break;` … この枝で終わり、`switch` を抜ける
+4. `default:` … どの `case` にも当てはまらないときの受け皿（省略可）
+
+`else if` の連打でも書けますが、候補がはっきりしているときは `switch` の方が追いやすいことが多いです。  
+逆に「1000 円以上」のような範囲の比較は、`if` の方が向きます。
+
+:::warning[break を忘れない]
+
+`break` が無いと、当てはまった `case` のあと、次の `case` へ落ち続けます（フォールスルー）。  
+意図しない動きになりやすいので、入門では **各枝の末尾に `break`** を付ける癖にします。
+
+:::
+
+```java
+int code = 1;
+
+switch (code) {
+    case 1:
+        System.out.println("one");
+        // break が無い
+    case 2:
+        System.out.println("two");
+        break;
+    default:
+        System.out.println("other");
+        break;
+}
+```
+
+この例では `one` のあとに `two` も出ます。  
+「1 のときだけ one」が欲しいなら、`break` が必要です。
+
+複数の候補で同じ処理にしたいときは、`case` を並べられます。
+
+```java
+switch (status) {
+    case "OPEN":
+    case "REVIEW":
+        System.out.println("active");
+        break;
+    default:
+        System.out.println("other");
+        break;
+}
+```
+
+:::tip[覚えておくこと]
+
+`switch` は「この値ならこの扉」。  
+各扉の終わりに `break`。どれでもないときは `default`。
+
+:::
+
+<QuizChoice
+title="switch と break"
+options={[
+{id: 'a', label: 'edit だけ出る'},
+{id: 'b', label: 'ship だけ出る'},
+{id: 'c', label: 'ship と archive が出る'},
+]}
+answer="b"
+explanation="status は PAID なので case &quot;PAID&quot; から動き、break で抜けます。break が無ければ次の case にも落ちます。"
+
+>
+
+  <div>次のコードの出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`String status = "PAID";
+switch (status) {
+    case "OPEN":
+        System.out.println("edit");
+        break;
+    case "PAID":
+        System.out.println("ship");
+        break;
+    case "CLOSED":
+        System.out.println("archive");
+        break;
+}`}</code></pre>
+</QuizChoice>
+
 ## 条件を組み合わせる
 
 複数の条件を同時に見たいときは、次を使います。
@@ -146,6 +262,7 @@ if (bulkMember) {
 
 - `=`（代入）を条件に書いてしまう（比較は `==`）
 - `else if` の順番を逆にして、先の広い条件に吸われる
+- `switch` で `break` を忘れ、次の `case` まで落ちる
 - `&&` と `||` を取り違える
 - 波括弧の対応がズレて、見た目と違う道が動く
 
@@ -153,6 +270,7 @@ if (bulkMember) {
 
 - `if` / `else` で道を選ぶ。条件は `boolean`
 - `else if` で枝を増やし、上から最初の当たりだけが動く
+- `switch` 文は決まった候補ごとの扉。各枝の末尾に `break`
 - `&&` / `||` / `!` で条件を組み合わせられる
 
 次は [繰り返し](./loops) で、同じ作業を回数や条件に応じて回します。
