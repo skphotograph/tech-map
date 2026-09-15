@@ -78,6 +78,15 @@
 - 新規カテゴリを追加する場合は `_category_.json`（`label` / `position`）も用意する
 - front matter に `sidebar_position` を付け、同階層内の順序を明示する
 - 句点（`。`）の直後は半角スペース 2 つを入れて改行する（Markdown のソフト改行）。箇条書き・番号付きリストの項目内では適用しない
+- 折りたたみは次の形式にする（`<details>` と `<summary>` のあいだに空行を入れない）
+
+```html
+<details>
+<summary>タイトル</summary>
+
+コンテンツ
+</details>
+```
 
 ## 正確性・安全性
 

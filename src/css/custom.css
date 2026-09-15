@@ -21,7 +21,9 @@
   --ifm-color-primary-lighter: #148d84;
   --ifm-color-primary-lightest: #1aa094;
   --ifm-font-family-base: 'IBM Plex Sans', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  --ifm-heading-font-family: 'Syne', 'IBM Plex Sans', 'Hiragino Sans', sans-serif;
+  /* 教材本文の見出しは読みやすさ優先。装飾用ディスプレイ書体はトップのみ */
+  --ifm-heading-font-family: 'IBM Plex Sans', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --train-display-font: 'Syne', 'IBM Plex Sans', 'Hiragino Sans', sans-serif;
   --ifm-code-font-size: 95%;
   --ifm-navbar-background-color: rgba(244, 247, 251, 0.88);
   --ifm-footer-background-color: var(--train-ink);
@@ -52,7 +54,7 @@ html {
 }
 
 .navbar__title {
-  font-family: var(--ifm-heading-font-family);
+  font-family: var(--train-display-font);
   font-weight: 700;
   letter-spacing: -0.02em;
 }

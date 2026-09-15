@@ -40,7 +40,7 @@
 
 .brand {
   margin: 0 0 1rem;
-  font-family: var(--ifm-heading-font-family);
+  font-family: var(--train-display-font);
   font-size: clamp(3.2rem, 10vw, 6.5rem);
   font-weight: 800;
   line-height: 0.92;
@@ -51,7 +51,7 @@
 
 .headline {
   margin: 0 0 1rem;
-  font-family: var(--ifm-heading-font-family);
+  font-family: var(--train-display-font);
   font-size: clamp(1.6rem, 3.4vw, 2.35rem);
   font-weight: 700;
   line-height: 1.25;

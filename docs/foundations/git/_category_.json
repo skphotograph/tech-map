@@ -1,0 +1,8 @@
+{
+  "label": "Git",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "foundations/git/index"
+  }
+}
