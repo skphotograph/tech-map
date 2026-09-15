@@ -109,6 +109,32 @@ count++; // 読み取り、加算、書き込み
 
 :::
 
+<QuizChoice
+  title="可視性"
+  options={[
+    {id: 'a', label: 'stop() を呼べば、run 側のループは必ずすぐ終わる'},
+    {id: 'b', label: '同期が無いので、run 側から stopped の更新が見えないことがある'},
+    {id: 'c', label: 'stopped が非 volatile でも、別スレッドからの書き込みは常にすぐ見える'},
+  ]}
+  answer="b"
+  explanation="同期や volatile などの橋が無いと、書き込みが他スレッドから見えないことがあります。フラグ用途なら volatile などが候補です。"
+>
+  <div>別スレッドから stop() を呼ぶとき、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`class Worker {
+    private boolean stopped = false;
+
+    void run() {
+        while (!stopped) {
+            // 作業
+        }
+    }
+
+    void stop() {
+        stopped = true;
+    }
+}`}</code></pre>
+</QuizChoice>
+
 ## happens-before は「見える」の契約
 
 happens-before は、JMM における「この操作の結果は、後続の操作から見えるべき」という関係です。  
@@ -213,6 +239,29 @@ int get() {
 これではモニタが違うため、排他も可視性の橋も、意図したようには掛かりません。  
 `synchronized` と書いてあることと、同じ鍵であることは別です。
 
+<QuizChoice
+  title="同じロック"
+  options={[
+    {id: 'a', label: 'writeLock と readLock が別でも、count の更新は常に見える'},
+    {id: 'b', label: '読む側と書く側で同じモニタを共有しないと、橋が掛からない'},
+    {id: 'c', label: 'synchronized があれば、ロック対象は何でも同じ効果'},
+  ]}
+  answer="b"
+  explanation="happens-before の橋は、同じモニタを介した unlock → lock で掛かります。別オブジェクトだと意図した可視性がありません。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`private final Object writeLock = new Object();
+private final Object readLock = new Object();
+private int count;
+
+void increment() {
+    synchronized (writeLock) { count++; }
+}
+int get() {
+    synchronized (readLock) { return count; }
+}`}</code></pre>
+</QuizChoice>
+
 ## 並行 API の境界を使う
 
 低レイヤの関係を自前で組むより、標準ライブラリの同期境界を使う方が安全です。
@@ -305,32 +354,6 @@ record Label(String text) {}
 
 コンストラクタで `this` を他スレッドへ渡す（リスナー登録など）は、初期化途中の公開になりやすく、避けます。
 
-
-<QuizChoice
-  title="可視性"
-  options={[
-    {id: 'a', label: 'stop() を呼べば、run 側のループは必ずすぐ終わる'},
-    {id: 'b', label: '同期が無いので、run 側から stopped の更新が見えないことがある'},
-    {id: 'c', label: 'stopped を volatile にしなくても count++ と同様に安全'},
-  ]}
-  answer="b"
-  explanation="同期や volatile などの橋が無いと、書き込みが他スレッドから見えないことがあります。フラグ用途なら volatile などが候補です（count++ の原子性とは別問題です）。"
->
-  <div>別スレッドから stop() を呼ぶとき、正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`class Worker {
-    private boolean stopped = false;
-
-    void run() {
-        while (!stopped) {
-            // work
-        }
-    }
-
-    void stop() {
-        stopped = true;
-    }
-}`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

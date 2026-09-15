@@ -93,6 +93,21 @@ Order order = findOrder(orderId)
 `get()` を存在確認なしで呼ぶと、空のときに例外になります。  
 入口ページと同じく、「無かったとき」を先に決める書き方に寄せます。
 
+<QuizChoice
+  title="max の戻り"
+  options={[
+    {id: 'a', label: '空の一覧なら null が返る'},
+    {id: 'b', label: '空かもしれないので Optional で受け取る'},
+    {id: 'c', label: '空なら必ず例外になる'},
+  ]}
+  answer="b"
+  explanation="findFirst や max は 0 件もあり得るので Optional を返します。無いときの方針を orElse / ifPresent などで決めます。"
+>
+  <div>次の結果の型について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`Optional<Order> largestOrder = orders.stream()
+    .max(Comparator.comparingInt(Order::amount));`}</code></pre>
+</QuizChoice>
+
 ## ステップ3: 終端で「欲しい形」を選ぶ（Collector）
 
 ここまでの終端は `toList` や `count` が中心でした。  
@@ -129,6 +144,21 @@ Map<String, Long> countByStatus = orders.stream()
 ```
 
 「グループ化したあと、さらにどう集計するか」を二段で書いている、と捉えると追いやすいです。
+
+<QuizChoice
+  title="groupingBy"
+  options={[
+    {id: 'a', label: 'ステータスごとの List に振り分ける'},
+    {id: 'b', label: '注文を 1 件の Map に潰す'},
+    {id: 'c', label: '終端が無いので何も起きない'},
+  ]}
+  answer="a"
+  explanation="groupingBy はキー（ここでは status）ごとに要素をリストへ振り分けます。collect が終端です。"
+>
+  <div>次のコードがすることに近いものはどれですか。</div>
+  <pre className="language-java"><code>{`Map<String, List<Order>> ordersByStatus = orders.stream()
+    .collect(Collectors.groupingBy(Order::status));`}</code></pre>
+</QuizChoice>
 
 ### 真偽の 2 群に分けたい → partitioningBy
 
@@ -214,9 +244,9 @@ IntSummaryStatistics statistics = orders.stream()
   answer="b"
   explanation="for で一時変数に集めていた「最後に欲しい形」を、toList / groupingBy / toMap などの終端に置き換える、と考えると選びやすいです。"
 >
-  <div>
-    Stream の終端で Collector を使うとき、先に決めるべきなのはどれですか。
-  </div>
+  <div>次のように状態ごとの一覧が欲しいとき、先に決めるべきなのはどれですか。</div>
+  <pre className="language-java"><code>{`// 欲しい形: Map<String, List<Order>>（status → 注文一覧）
+orders.stream().collect(/* どれを選ぶ？ */);`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき

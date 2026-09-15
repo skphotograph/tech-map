@@ -41,6 +41,24 @@ orders.add(new Order(1001L, 3000));
 
 :::
 
+<QuizChoice
+  title="引数の型"
+  options={[
+    {id: 'a', label: '必ず ArrayList に限定する'},
+    {id: 'b', label: '必要な操作に合わせて Collection や List などへ広げる'},
+    {id: 'c', label: '常に Object にして呼び出し側に任せる'},
+  ]}
+  answer="b"
+  explanation="読むだけなら Collection などで十分です。実装クラスに縛ると呼び出し側の選択肢が狭まります。"
+>
+  <div>次のメソッドの引数型として、近い方針はどれですか。</div>
+  <pre className="language-java"><code>{`static int totalAmount(Collection<Order> orders) {
+    return orders.stream()
+        .mapToInt(Order::amount)
+        .sum();
+}`}</code></pre>
+</QuizChoice>
+
 ## 内部のコレクションをそのまま返さない
 
 次のクラスは、登録済みの注文を `List.copyOf` でコピーして返します。  
@@ -71,6 +89,26 @@ final class OrderBook {
 不変リストにしても、要素そのものが変更可能なら、その要素の状態は変えられます。  
 境界全体を不変にしたい場合は、要素を `record` などの不変な値にするか、要素もコピーする必要があります。  
 </details>
+
+<QuizChoice
+  title="内部リストの返し方"
+  options={[
+    {id: 'a', label: '内部の可変 ArrayList をそのまま返すのがいちばん安全'},
+    {id: 'b', label: 'List.copyOf などで、呼び出し側の変更が内部に届かない形にする'},
+    {id: 'c', label: '常に null を返して変更を防ぐ'},
+  ]}
+  answer="b"
+  explanation="可変リストをそのまま返すと、呼び出し側の add が内部状態を壊します。コピーや読み取り専用の契約を先に決めます。"
+>
+  <div>次の <code>orders()</code> について、適切な方針はどれですか。</div>
+  <pre className="language-java"><code>{`final class OrderBook {
+    private final List<Order> orders = new ArrayList<>();
+
+    List<Order> orders() {
+        return List.copyOf(orders);
+    }
+}`}</code></pre>
+</QuizChoice>
 
 ## 「結果なし」は空で返す
 
@@ -105,19 +143,6 @@ for (Order order : findLargeOrders(orders, 5000)) {
 順序が必要なのに `Set` を使う、キーの重複方針を決めずに `Map` へ変換する、といった選択は不具合につながります。  
 データ量が小さい段階から性能だけで選ぶのではなく、まず意味に合う型を選びます。  
 
-
-<QuizChoice
-  title="API 境界のコレクション"
-  options={[
-    {id: 'a', label: '内部の可変 ArrayList をそのまま返すのが、いちばん安全'},
-    {id: 'b', label: '呼び出し側にどこまで変更を許すかを決めてから、返す形を選ぶ'},
-    {id: 'c', label: '常に null を返して、空との区別を呼び出し側に任せる'},
-  ]}
-  answer="b"
-  explanation="返すコレクションを呼び出し側が add できると、想定外の共有変更が起きえます。読み取り専用にする、コピーを返す、など境界の契約を先に決めます。"
->
-  <div>メソッドが List を返すとき、設計として近いものはどれですか。</div>
-</QuizChoice>
 
 ## よくあるつまずき
 

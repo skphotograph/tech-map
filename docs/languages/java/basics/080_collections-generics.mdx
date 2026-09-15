@@ -41,6 +41,22 @@ stock.put("item-1", 3);
 List<String> steps = new ArrayList<>(); // 左はインタフェース
 ```
 
+<QuizChoice
+  title="List / Set / Map"
+  options={[
+    {id: 'a', label: '順序ありの明細行 → Set、タグの重複なし → List'},
+    {id: 'b', label: '順序ありの明細行 → List、タグの重複なし → Set、ID 対応 → Map'},
+    {id: 'c', label: 'どれも Map で足りるので、List と Set は使わない'},
+  ]}
+  answer="b"
+  explanation="List は順序と重複可、Set は重複なし、Map はキーから値です。用途に合うインタフェースを選びます。"
+>
+  <div>次の用途に合う組み合わせはどれですか。</div>
+  <pre className="language-java"><code>{`// 明細の行（順番あり）
+// 許可タグ（同じ文字は一つ）
+// 商品 ID → 在庫数`}</code></pre>
+</QuizChoice>
+
 ## ジェネリクスの基本
 
 `<String>` のように型引数を付けると、**入れられる型がコンパイル時に縛られます**。
@@ -64,6 +80,21 @@ String first = names.get(0); // キャスト不要
 取り出しのキャスト地獄を避けるのが第一の価値。
 
 :::
+
+<QuizChoice
+  title="ジェネリクスの効果"
+  options={[
+    {id: 'a', label: 'コンパイルでき、実行時に Integer が入る'},
+    {id: 'b', label: 'コンパイルエラーになる'},
+    {id: 'c', label: 'コンパイルは通るが、取り出し時に必ず例外になる'},
+  ]}
+  answer="b"
+  explanation="List&lt;String&gt; には String 以外を入れられません。失敗をコンパイル時に止めます。"
+>
+  <div>次の 2 行目はどうなりますか。</div>
+  <pre className="language-java"><code>{`List<String> names = new ArrayList<>();
+names.add(42);`}</code></pre>
+</QuizChoice>
 
 <details>
 <summary>ダイヤモンド演算子</summary>
@@ -105,7 +136,6 @@ List<Order> findOrders(String userId) {
 
 「無い」を null で表す慣習が残っている API もあります。  
 自分で返す側を設計するときは、**空コレクションを返す** 方が扱いやすい場面が多いです。
-
 
 <QuizChoice
   title="空と null"

@@ -28,6 +28,20 @@ Hello.java  --javac-->  Hello.class  --java-->  JVM 上で実行
 バイトコードは「特定の OS の機械語」ではなく、JVM が解釈できる中間形式です。  
 同じ `.class` を、対応する JVM が入った環境へ持っていって動かせる、というのが Java の強みのひとつです。
 
+<QuizChoice
+  title="ソースから実行まで"
+  options={[
+    {id: 'a', label: 'java が .java を直接機械語にして実行する'},
+    {id: 'b', label: 'javac が .class（バイトコード）を作り、java が JVM 上で実行する'},
+    {id: 'c', label: 'javac が .class を作り、その後は OS が機械語として直接実行する'},
+  ]}
+  answer="b"
+  explanation="javac はバイトコードの .class を生成します。実行は java コマンド経由で JVM が担います。"
+>
+  <div>次の流れで正しいものはどれですか。</div>
+  <pre className="language-text"><code>{`Hello.java  --???-->  Hello.class  --???-->  実行`}</code></pre>
+</QuizChoice>
+
 ## JDK / JRE / JVM
 
 名前が似ているので、役割だけ分けて覚えます。
@@ -77,6 +91,33 @@ order started
 `java OrderApp` のときは、拡張子 `.class` を付けません。  
 クラス名（とパッケージがある場合はその完全修飾名）を渡します。
 
+<QuizChoice
+  title="起動コマンド"
+  options={[
+    {id: 'a', label: 'java OrderApp.class'},
+    {id: 'b', label: 'java OrderApp'},
+    {id: 'c', label: 'javac OrderApp（拡張子なし）'},
+  ]}
+  answer="b"
+  explanation="実行時は拡張子なしのクラス名を渡します。javac はソース（.java）をコンパイルするコマンドです。"
+>
+  <div>コンパイル済みの <code>OrderApp</code> を起動するとき、適切なのはどれですか。</div>
+  <pre className="language-bash"><code>{`javac OrderApp.java
+# 次に実行するコマンドは？`}</code></pre>
+</QuizChoice>
+
+<QuizFill
+  title="javac が生成するファイル"
+  answer="class"
+  explanation="javac は .java をバイトコードの .class に変換します。実行時は java OrderApp のように、拡張子なしのクラス名を渡すのが基本です。"
+  placeholder="拡張子（ドットなし）"
+  caseSensitive={false}
+>
+  <div>次のコマンドのあと、生成されるファイル名の空欄に入る拡張子は何ですか（ドットは付けない）。</div>
+  <pre className="language-text"><code>{`javac OrderApp.java
+→ OrderApp.□□□`}</code></pre>
+</QuizFill>
+
 ## クラスローディング（入口だけ）
 
 JVM は起動時に、必要なクラスをまとめて全部メモリに載せるわけではありません。  
@@ -106,18 +147,6 @@ java OrderApp.java
 
 </details>
 
-
-<QuizFill
-  title="javac が生成するファイル"
-  answer="class"
-  explanation="javac は .java をバイトコードの .class に変換します。実行時は java OrderApp のように、拡張子なしのクラス名を渡すのが基本です。"
-  placeholder="拡張子（ドットなし）"
-  caseSensitive={false}
->
-  <div>次のコマンドのあと、生成されるファイル名の空欄に入る拡張子は何ですか（ドットは付けない）。</div>
-  <pre className="language-text"><code>{`javac OrderApp.java
-→ OrderApp.□□□`}</code></pre>
-</QuizFill>
 
 ## よくあるつまずき
 

@@ -151,6 +151,21 @@ Integer first = ints.get(0); // ints 側から見ると破綻
 
 その答えがワイルドカードです。
 
+<QuizChoice
+  title="List の親子"
+  options={[
+    {id: 'a', label: 'コンパイルできる'},
+    {id: 'b', label: 'コンパイルエラーになる'},
+    {id: 'c', label: 'コンパイルは通るが、実行時に必ず例外になる'},
+  ]}
+  answer="b"
+  explanation="整数のリストを数のリスト型へ代入できると、数のリスト経由で Double を add でき「整数だけ」の約束が壊れます。そのためコンパイルエラーになります。関連型をまとめて読むときは ? extends などを使います。"
+>
+  <div>次の代入はどうなりますか。</div>
+  <pre className="language-java"><code>{`List<Integer> ints = new ArrayList<>();
+List<Number> numbers = ints;`}</code></pre>
+</QuizChoice>
+
 ## ステップ4: 読みたいのか、書きたいのかで記号が変わる
 
 やりたいことが「中身を読む」なのか「中身を足す」なのかで、安全な書き方が分かれます。
@@ -349,21 +364,6 @@ record Rejected(String reason) implements OrderResult {}
 成功／失敗のような閉じた形に向きます。  
 第三者が自由に実装を足す拡張点には向きません。
 
-
-<QuizChoice
-  title="List の親子"
-  options={[
-    {id: 'a', label: 'コンパイルできる'},
-    {id: 'b', label: 'コンパイルエラーになる'},
-    {id: 'c', label: 'コンパイルは通るが、実行時に必ず例外になる'},
-  ]}
-  answer="b"
-  explanation="整数のリストを数のリスト型へ代入できると、数のリスト経由で Double を add でき「整数だけ」の約束が壊れます。そのためコンパイルエラーになります。関連型をまとめて読むときは ? extends などを使います。"
->
-  <div>次の代入はどうなりますか。</div>
-  <pre className="language-java"><code>{`List<Integer> ints = new ArrayList<>();
-List<Number> numbers = ints;`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

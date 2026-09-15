@@ -101,6 +101,30 @@ order = null; // このメソッド内の箱は切れた
 `process` がフィールドやキャッシュに `order` を保存していれば、まだ届きます。  
 ローカル変数の寿命と、オブジェクトグラフの寿命を分けて考えてください。
 
+<QuizChoice
+  title="到達できないとは"
+  options={[
+    {id: 'a', label: 'A の pdf の方が回収候補になりやすい'},
+    {id: 'b', label: 'B の pdf の方が回収候補になりやすい'},
+    {id: 'c', label: 'どちらも同じタイミングで必ず回収される'},
+  ]}
+  answer="b"
+  explanation="GC が見るのは到達可能かどうかです。A は static な Map が照らし続けるので残りやすいです。B はメソッドを抜けて他から届かなければ回収候補になります。"
+>
+  <div>回収候補になりやすいのはどちらですか。</div>
+  <pre className="language-java"><code>{`// A
+static final Map<String, byte[]> hold = new HashMap<>();
+void cache(String id, byte[] pdf) {
+    hold.put(id, pdf);
+}
+
+// B
+void once() {
+    byte[] pdf = loadPdf();
+    send(pdf);
+}`}</code></pre>
+</QuizChoice>
+
 ## 世代別という仮説
 
 多くのホットスポットの GC は、オブジェクトを年齢で分けて扱います。  
@@ -163,6 +187,20 @@ JIT は、メソッド内で完結し外へ漏れないオブジェクトを、�
 プロファイラで割り当てが見えない一時オブジェクトがある、という話が出たら、この最適化を疑う、程度で十分です。
 
 </details>
+
+<QuizChoice
+  title="世代別 GC の発想"
+  options={[
+    {id: 'a', label: 'すべてのオブジェクトを毎回ヒープ全体から探すのが基本方針'},
+    {id: 'b', label: 'すぐ不要になるものが多いので、若い領域を頻繁に掃く'},
+    {id: 'c', label: 'Old に昇格したオブジェクトは、二度と回収されない'},
+  ]}
+  answer="b"
+  explanation="ほとんどのオブジェクトはすぐに不要になる、という仮説のもと、若い世代を頻繁に掃きます。Old も回収対象になり得ます。"
+>
+  <div>次の説明のうち、世代別 GC の芯に近いものはどれですか。</div>
+  <pre className="language-text"><code>{`Eden → Survivor →（生き延びる）→ Old`}</code></pre>
+</QuizChoice>
 
 ## Stop-The-World と「止まったように見える」
 
@@ -345,30 +383,6 @@ GC が多いときは次の二系統に分けます。
 
 :::
 
-
-<QuizChoice
-  title="到達できないとは"
-  options={[
-    {id: 'a', label: 'A の pdf の方が回収候補になりやすい'},
-    {id: 'b', label: 'B の pdf の方が回収候補になりやすい'},
-    {id: 'c', label: 'どちらも同じタイミングで必ず回収される'},
-  ]}
-  answer="b"
-  explanation="GC が見るのは到達可能かどうかです。A は static な Map が照らし続けるので残りやすいです。B はメソッドを抜けて他から届かなければ回収候補になります。"
->
-  <div>回収候補になりやすいのはどちらですか。</div>
-  <pre className="language-java"><code>{`// A
-static final Map<String, byte[]> hold = new HashMap<>();
-void cache(String id, byte[] pdf) {
-    hold.put(id, pdf);
-}
-
-// B
-void once() {
-    byte[] pdf = loadPdf();
-    send(pdf);
-}`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

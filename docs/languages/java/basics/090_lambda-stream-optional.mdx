@@ -100,6 +100,20 @@ names.sort((left, right) -> left.length() - right.length());
 
 :::
 
+<QuizChoice
+  title="ラムダの読み方"
+  options={[
+    {id: 'a', label: '左が処理、右が引数'},
+    {id: 'b', label: '左が引数、右が処理（または戻り値になる式）'},
+    {id: 'c', label: 'Stream の中だけでしか書けない'},
+  ]}
+  answer="b"
+  explanation="name -&gt; ... は「左を受け取り、右を実行する」形です。Stream 専用ではありません。"
+>
+  <div>次のラムダについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`names.forEach(name -> System.out.println(name));`}</code></pre>
+</QuizChoice>
+
 ## ステップ3: Stream は「残す・変換する・受け取る」の並べ方
 
 同じ処理を Stream で書くと、次のようになります。
@@ -167,6 +181,23 @@ Stream は「流して変換・集計する」道具。
 使い終わった Stream を、もう一度 `filter` から使い回すものではありません。  
 必要なら、元のコレクションから再度 `stream()` します。
 
+<QuizChoice
+  title="Stream が動かないとき"
+  options={[
+    {id: 'a', label: 'この時点で titles に結果が入っている'},
+    {id: 'b', label: '終端操作が無いので、一覧としてはまだ確定していない'},
+    {id: 'c', label: 'stream() しただけで変換は完了している'},
+  ]}
+  answer="b"
+  explanation="filter / map は中間操作で、toList や count などの終端操作まで書かないと結果が確定しないことが多いです。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`var titles = List.of("a", "bb").stream()
+    .filter(s -> s.length() > 1)
+    .map(String::toUpperCase);
+// ここで終わり`}</code></pre>
+</QuizChoice>
+
 ## ステップ5: Optional は「無いかもしれない」を戻り値で表す
 
 `Optional<T>` は、値があるかもしれない箱です。  
@@ -203,6 +234,23 @@ Stream の `findFirst` や `max` が `Optional` を返すのも、同じ発想�
 「0 件かもしれない結果」を、null ではなく型で受け取ります。  
 詳しいつなぎ方は [Stream と Collector](./stream-and-collectors) へ続きます。
 
+<QuizChoice
+  title="Optional の受け取り方"
+  options={[
+    {id: 'a', label: 'get() を呼べば、空でも必ず値が取れる'},
+    {id: 'b', label: 'orElse などで「無かったとき」を先に決める方が安全'},
+    {id: 'c', label: 'Optional 変数自体を null にして「無し」を表す'},
+  ]}
+  answer="b"
+  explanation="get() は空のときに例外になります。orElse / orElseThrow などで無い場合を先に決める書き方が安全です。Optional 自体を null にはしません。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`Optional<User> maybe = findUser(userId);
+String label = maybe
+    .map(User::getName)
+    .orElse("unknown");`}</code></pre>
+</QuizChoice>
+
 ## ステップ6: 無理に Stream にしない
 
 次のようなときは、普通の for や早期 return の方が読みやすいことが多いです。
@@ -222,23 +270,6 @@ for (Task task : tasks) {
 「モダンだから Stream」ではなく、**読み手が追いやすいか** で選びます。  
 副作用（通知、保存、ログ）が本体のときは、パイプラインより文の並びの方が意図が伝わることがあります。
 
-
-<QuizChoice
-  title="Stream が動かないとき"
-  options={[
-    {id: 'a', label: 'この時点で openTitles に結果が入っている'},
-    {id: 'b', label: '終端操作が無いので、一覧としてはまだ確定していない'},
-    {id: 'c', label: 'stream() しただけで変換は完了している'},
-  ]}
-  answer="b"
-  explanation="filter / map は中間操作で、toList や count などの終端操作まで書かないと結果が確定しないことが多いです。"
->
-  <div>次のコードについて、正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`var openTitles = tasks.stream()
-    .filter(Task::isOpen)
-    .map(Task::getTitle);
-// ここで終わり`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

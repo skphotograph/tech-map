@@ -77,6 +77,22 @@ Executor を作成した側は、原則として終了処理にも責任を持�
 
 :::
 
+<QuizChoice
+  title="タスクの渡し方"
+  options={[
+    {id: 'a', label: 'リクエストごとに new Thread するのが本番の定石'},
+    {id: 'b', label: 'タスクを ExecutorService に渡し、プールで再利用する'},
+    {id: 'c', label: 'Thread を作らず、Future だけで並列になる'},
+  ]}
+  answer="b"
+  explanation="業務コードではタスクをプールへ渡すのが基本です。毎回 new Thread すると上限管理や終了処理が崩れやすいです。"
+>
+  <div>次の書き方に近い方針はどれですか。</div>
+  <pre className="language-java"><code>{`ExecutorService executor = Executors.newFixedThreadPool(4);
+Future<Integer> future = executor.submit(() -> loadOrderAmount(1001L));
+int amount = future.get();`}</code></pre>
+</QuizChoice>
+
 ## プールの選び方
 
 `Executors` のファクトリは便利ですが、用途を間違えると危険です。
@@ -212,6 +228,25 @@ count.incrementAndGet();
 `AtomicInteger` は、そのフィールドに対する単一の更新操作を原子的にします。  
 「カウンタを増やし、かつ別のリストへ追加する」のような複数状態のまとまりには、ロックや別設計が要ります。
 
+<QuizChoice
+  title="レースコンディション"
+  options={[
+    {id: 'a', label: 'count++ は一文なので、複数スレッドから呼んでも常に安全'},
+    {id: 'b', label: '読み取り・加算・書き込みに分かれるので、同期や原子クラスが要る'},
+    {id: 'c', label: 'AtomicInteger なら、複数フィールドのまとまり更新も自動で安全'},
+  ]}
+  answer="b"
+  explanation="count++ は複合操作です。単一フィールドなら AtomicInteger や synchronized が候補ですが、複数状態のまとまりは別途設計が要ります。"
+>
+  <div>次の更新について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`class NaiveCounter {
+    int count;
+    void increment() {
+        count++; // 読み取り → 加算 → 書き込み
+    }
+}`}</code></pre>
+</QuizChoice>
+
 ## 同期の範囲を決める
 
 ロックは狭いほど待ちが減ります。  
@@ -258,6 +293,23 @@ counts.put("PAID", current == null ? 1L : current + 1L);
 複数構造にまたがる不変条件は、別途ロックや単一スレッド化が必要です。
 
 :::
+
+<QuizChoice
+  title="並行コレクションの限界"
+  options={[
+    {id: 'a', label: 'この二段処理は、ConcurrentHashMap なら常に安全'},
+    {id: 'b', label: 'get と put のあいだに他スレッドが割り込めるので、別途原子的な API や設計が必要'},
+    {id: 'c', label: 'HashMap に置き換えても同じ安全性になる'},
+  ]}
+  answer="b"
+  explanation="並行コレクションは単一の API 呼び出しの範囲で効きます。複合操作は merge / compute などを使うか、ロックや設計で守ります。"
+>
+  <div>次の更新について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
+
+Long current = counts.get("PAID");
+counts.put("PAID", current == null ? 1L : current + 1L);`}</code></pre>
+</QuizChoice>
 
 `CopyOnWriteArrayList` は読みが多く書きが稀なときに向きます。  
 書きのたびに配列コピーが走るので、更新が多い経路には向きません。
@@ -336,23 +388,6 @@ CompletableFuture<String> page =
 - 停止時は `shutdown` → 待機 → 必要なら `shutdownNow`、タスクは割り込みに協力する
 - 「たまにしか壊れない」はレースの典型。ログのスレッド名とダンプを味方にする
 
-
-<QuizChoice
-  title="並行コレクションの限界"
-  options={[
-    {id: 'a', label: 'この二段処理は、ConcurrentHashMap なら常に安全'},
-    {id: 'b', label: 'get と put のあいだに他スレッドが割り込めるので、別途原子的な API や設計が必要'},
-    {id: 'c', label: 'HashMap に置き換えても同じ安全性になる'},
-  ]}
-  answer="b"
-  explanation="並行コレクションは単一の API 呼び出しの範囲で効きます。複合操作は merge / compute などを使うか、ロックや設計で守ります。"
->
-  <div>次の更新について、正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`ConcurrentMap<String, Long> counts = new ConcurrentHashMap<>();
-
-Long current = counts.get("PAID");
-counts.put("PAID", current == null ? 1L : current + 1L);`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

@@ -35,6 +35,26 @@ System.out.println(b.openCount); // 同じ場所を見ている
 カウンタやキャッシュ、設定の置き場として便利な一方、テストやマルチスレッドでは副作用の温床にもなります。  
 「本当に全体で一つでよいか」を疑う癖が大事です。
 
+<QuizChoice
+  title="static フィールド"
+  options={[
+    {id: 'a', label: 'コンパイルエラーになる'},
+    {id: 'b', label: '2 と出る（クラス名経由でも同じ共有場所）'},
+    {id: 'c', label: '0 と出る（インスタンスからは見えない）'},
+  ]}
+  answer="b"
+  explanation="static フィールドはクラス側の共有です。TicketCounter.issued への代入も、インスタンス経由の参照も同じ場所を見ます。"
+>
+  <div>次のコードのあと、出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`class TicketCounter {
+    static int issued;
+}
+
+TicketCounter a = new TicketCounter();
+TicketCounter.issued = 2;
+System.out.println(a.issued);`}</code></pre>
+</QuizChoice>
+
 ## static メソッド：インスタンスなしで呼ぶ
 
 `static` メソッドは、インスタンスを用意せずにクラス名で呼びます。  
@@ -79,13 +99,37 @@ static は「インスタンスに属さない」。
 final int maxRetry = 3;
 // maxRetry = 5; // コンパイルエラー
 
-final User user = new User("a");
-user.setName("b"); // 中身の変更は可能（参照の付け替えだけ不可）
-// user = new User("c"); // コンパイルエラー
+class User {
+    String name;
+}
+
+final User user = new User();
+user.name = "b"; // 中身の変更は可能（参照の付け替えだけ不可）
+// user = new User(); // コンパイルエラー
 ```
 
 参照型の `final` は「中身が不変」を意味しません。  
 不変にしたいなら、フィールドを `final` にし、セッターを置かない、コレクションを変更不可にする、などが別途必要です。
+
+<QuizChoice
+  title="final の意味"
+  options={[
+    {id: 'a', label: 'name への代入もコンパイルエラーになる'},
+    {id: 'b', label: 'name への代入はでき、user = new User() だけがコンパイルエラー'},
+    {id: 'c', label: 'どちらも実行時例外になる'},
+  ]}
+  answer="b"
+  explanation="参照型の final は付け替え禁止です。オブジェクトのフィールド変更は別問題です。"
+>
+  <div>次のうち、正しい説明はどれですか。</div>
+  <pre className="language-java"><code>{`class User {
+    String name;
+}
+
+final User user = new User();
+user.name = "b";     // ?
+// user = new User(); // ?`}</code></pre>
+</QuizChoice>
 
 ## 定数の定番パターン
 
@@ -116,28 +160,6 @@ public final class OrderStatus {
 
 </details>
 
-
-<QuizChoice
-  title="static フィールド"
-  options={[
-    {id: 'a', label: 'a.issued は 1、b.issued は 0'},
-    {id: 'b', label: 'a.issued も b.issued も 1'},
-    {id: 'c', label: 'コンパイルエラーになる'},
-  ]}
-  answer="b"
-  explanation="static フィールドはクラス側の共有です。インスタンスが別でも同じ場所を見ます。final とは別の話なので、static でも可変なら書き換えられます。"
->
-  <div>次のコードのあと、出力はどうなりますか。</div>
-  <pre className="language-java"><code>{`class TicketCounter {
-    static int issued;
-    int number;
-}
-
-TicketCounter a = new TicketCounter();
-TicketCounter b = new TicketCounter();
-a.issued++;
-System.out.println(b.issued);`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

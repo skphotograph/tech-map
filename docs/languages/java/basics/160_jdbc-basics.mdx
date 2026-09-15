@@ -64,6 +64,46 @@ try (Connection connection = dataSource.getConnection();
 値ではなく、テーブル名や並び順などの SQL 構造はプレースホルダーにできません。  
 動的に切り替える必要がある場合は、許可した候補から選ぶ設計にします。  
 
+接続・Statement・ResultSet は OS 側の資源です。  
+上の例のように `try-with-resources` で閉じると、例外パスでも漏れにくくなります。
+
+<QuizChoice
+  title="PreparedStatement"
+  options={[
+    {id: 'a', label: '外部入力を SQL 文字列へ連結して組み立てる'},
+    {id: 'b', label: '値は ? プレースホルダーへ set する'},
+    {id: 'c', label: 'テーブル名も ? で必ず渡す'},
+  ]}
+  answer="b"
+  explanation="値は PreparedStatement のプレースホルダーへ設定します。文字列連結は SQL インジェクションの温床です。テーブル名などの構造はプレースホルダーにできません。"
+>
+  <div>次の検索で、正しい方針はどれですか。</div>
+  <pre className="language-java"><code>{`String sql = """
+    SELECT order_id, amount
+      FROM orders
+     WHERE order_id = ?
+    """;
+statement.setLong(1, orderId);`}</code></pre>
+</QuizChoice>
+
+<QuizChoice
+  title="JDBC とリソース"
+  options={[
+    {id: 'a', label: 'ResultSet や Statement は GC に任せればよい'},
+    {id: 'b', label: 'Connection / Statement / ResultSet も閉じる（try-with-resources など）'},
+    {id: 'c', label: 'コミットさえすれば close は不要'},
+  ]}
+  answer="b"
+  explanation="JDBC の資源も外部リソースです。例外パスも含め、try-with-resources などで確実に閉じます。トランザクションの commit/rollback とは別の話です。"
+>
+  <div>次のように書く意図として、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`try (Connection connection = dataSource.getConnection();
+     PreparedStatement statement = connection.prepareStatement(sql);
+     ResultSet result = statement.executeQuery()) {
+    // 結果を読む
+}`}</code></pre>
+</QuizChoice>
+
 ## 更新件数を確認する
 
 ```java
@@ -118,6 +158,28 @@ try (Connection connection = dataSource.getConnection()) {
 接続プールへ返す前に接続状態を復元する処理は、通常は DataSource や管理基盤へ任せます。  
 </details>
 
+<QuizChoice
+  title="commit と rollback"
+  options={[
+    {id: 'a', label: '途中で失敗しても commit すれば整合する'},
+    {id: 'b', label: '成功したら commit、失敗したら rollback で中途半端な更新を残さない'},
+    {id: 'c', label: 'autoCommit を true のまま複数更新すれば十分'},
+  ]}
+  answer="b"
+  explanation="複数更新をまとめるときは autoCommit を止め、成功時 commit・失敗時 rollback が基本です。"
+>
+  <div>次のパターンについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`connection.setAutoCommit(false);
+try {
+    updateOrder(connection, orderId);
+    insertHistory(connection, orderId);
+    connection.commit();
+} catch (SQLException e) {
+    connection.rollback();
+    throw e;
+}`}</code></pre>
+</QuizChoice>
+
 ## ORM や SQL マッパーとの関係
 
 JPA のような ORM は、Java オブジェクトとテーブルの対応付けを抽象化します。  
@@ -126,20 +188,6 @@ MyBatis のような SQL マッパーは、SQL を明示しながら結果との
 
 これらの仕組みも下層では JDBC やデータベース接続を利用します。  
 JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザクション境界の調査に役立ちます。  
-
-
-<QuizChoice
-  title="JDBC とリソース"
-  options={[
-    {id: 'a', label: 'ResultSet や Statement は GC に任せればよい'},
-    {id: 'b', label: 'Connection / Statement / ResultSet も閉じる（try-with-resources など）'},
-    {id: 'c', label: 'コミットさえすれば close は不要'},
-  ]}
-  answer="b"
-  explanation="JDBC の資源も外部リソースです。例外パスも含め、try-with-resources などで確実に閉じます。トランザクションの commit/rollback とは別の話です。"
->
-  <div>JDBC で SQL を実行するとき、リソースについて正しいものはどれですか。</div>
-</QuizChoice>
 
 ## よくあるつまずき
 

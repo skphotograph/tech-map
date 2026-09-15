@@ -146,6 +146,27 @@ executor.submit(() -> loadAllOrdersIntoMemory());
 コールバックを長く生きる場所へ渡すと、外側の巨大なオブジェクトまで一緒に生きます。  
 コールバックは `static` なネストクラスにする、必要な値だけコピーする、外側を弱く持つ、などでグラフを切します。
 
+<QuizChoice
+  title="切れない参照の典型"
+  options={[
+    {id: 'a', label: 'set したあとに remove しなくても、次のリクエストで自動的に消える'},
+    {id: 'b', label: 'プール上のスレッドに値が残りうるので、finally などで remove する'},
+    {id: 'c', label: 'ThreadLocal は常に弱参照なので、リークにはならない'},
+  ]}
+  answer="b"
+  explanation="スレッドプールではスレッドが再利用されます。remove しないと次のリクエストやアイドルスレッドに文脈が残ります。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`private static final ThreadLocal<RequestContext> CONTEXT =
+    new ThreadLocal<>();
+
+void begin(RequestContext ctx) {
+    CONTEXT.set(ctx);
+    handle();
+    // remove していない
+}`}</code></pre>
+</QuizChoice>
+
 ## 調査の流れ
 
 最初から全コードを読まない方が速いです。
@@ -236,7 +257,11 @@ GC は到達可能なものを回収できないので、「なぜ到達可能�
   answer="b"
   explanation="件数の多いクラスが犯人とは限りません。static な Map などが照らしている経路を切ることが本筋です。ヒープ上限を上げると症状が隠れることがあります。"
 >
-  <div>メモリが単調増加しているとき、調査の優先度がいちばん高い見方はどれですか。</div>
+  <div>次のようなキャッシュが増え続けているとき、調査の優先度がいちばん高い見方はどれですか。</div>
+  <pre className="language-java"><code>{`class ReportCache {
+    private static final Map<String, byte[]> pdfs = new HashMap<>();
+    // put ばかりで、消す経路が無い
+}`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき

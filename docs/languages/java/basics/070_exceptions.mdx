@@ -81,6 +81,26 @@ unchecked はコンパイルが通っても、無視してよい失敗という�
 checked を避けるためだけに、意味のない unchecked へ変換すると、契約が呼び出し側から消えます。  
 逆に、すべての失敗を checked にすると、シグネチャが長くなり形骸化することもあります。
 
+<QuizChoice
+  title="checked と unchecked"
+  options={[
+    {id: 'a', label: '両方とも throws 宣言が必須'},
+    {id: 'b', label: 'readConfig は throws か catch が必要で、requirePositive は宣言なしでもコンパイル可'},
+    {id: 'c', label: 'IllegalArgumentException だけ throws が必須'},
+  ]}
+  answer="b"
+  explanation="IOException は checked なので対処か宣言が必要です。RuntimeException 系は宣言なしでもコンパイルできます（無視してよい意味ではありません）。"
+>
+  <div>次の二つのメソッドについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`void readConfig() throws IOException { ... }
+
+void requirePositive(int n) {
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive");
+    }
+}`}</code></pre>
+</QuizChoice>
+
 ## throw と throws
 
 - `throw` … 例外オブジェクトを実際に投げる
@@ -230,6 +250,28 @@ GC 任せにしない。`finally` での手書き `close` より、構文に任�
 
 :::
 
+<QuizChoice
+  title="リソースの閉じ方"
+  options={[
+    {id: 'a', label: 'A（成功時だけ close）で十分'},
+    {id: 'b', label: 'B（try-with-resources）の方が、例外時も含めて閉じやすい'},
+    {id: 'c', label: 'どちらも GC が同じタイミングで閉じてくれる'},
+  ]}
+  answer="b"
+  explanation="ファイルや接続は OS 側の資源です。成功時だけの close は例外時に届きません。try-with-resources が基本形です。"
+>
+  <div>例外が起きても閉じたいとき、適切なのはどれですか。</div>
+  <pre className="language-java"><code>{`// A
+InputStream in = Files.newInputStream(path);
+parse(in);
+in.close();
+
+// B
+try (InputStream in = Files.newInputStream(path)) {
+    parse(in);
+}`}</code></pre>
+</QuizChoice>
+
 自前クラスを資源にするときは `AutoCloseable` を実装し、`close` を冪等（何度呼んでも安全）に近づけると扱いやすいです。
 
 ```java
@@ -280,28 +322,6 @@ NIO.2 のパス操作や大きなファイルの読み方は [ファイルとリ
 - メッセージに秘密情報を載せない
 - 「握りつぶし」と「意図的に無視」を、コメントやメトリクスで区別する
 
-
-<QuizChoice
-  title="リソースの閉じ方"
-  options={[
-    {id: 'a', label: 'A（成功時だけ close）で十分'},
-    {id: 'b', label: 'B（try-with-resources）の方が、例外時も含めて閉じやすい'},
-    {id: 'c', label: 'どちらも GC が同じタイミングで閉じてくれる'},
-  ]}
-  answer="b"
-  explanation="ファイルや接続は OS 側の資源です。成功時だけの close は例外時に届きません。try-with-resources が基本形です。"
->
-  <div>例外が起きても閉じたいとき、適切なのはどれですか。</div>
-  <pre className="language-java"><code>{`// A
-InputStream in = Files.newInputStream(path);
-parse(in);
-in.close();
-
-// B
-try (InputStream in = Files.newInputStream(path)) {
-    parse(in);
-}`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

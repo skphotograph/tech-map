@@ -61,6 +61,27 @@ final class OrderHandler {
 
 :::
 
+<QuizChoice
+  title="アノテーションは宣言だけ"
+  options={[
+    {id: 'a', label: '@Handler を付けた瞬間に、自動でルーティングが登録される'},
+    {id: 'b', label: '読み取って動作する側（フレームワークや自前コード）が別途必要'},
+    {id: 'c', label: 'Retention が SOURCE なら実行時に必ず読める'},
+  ]}
+  answer="b"
+  explanation="アノテーションはメタデータです。実行時に読むなら RetentionPolicy.RUNTIME などが必要で、さらに読み取り側の実装が要ります。"
+>
+  <div>次の定義について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Handler {
+    String value();
+}
+
+@Handler("order")
+final class OrderHandler {}`}</code></pre>
+</QuizChoice>
+
 ## リフレクションで型を調べる
 
 リフレクションは、実行時にクラス、メソッド、フィールドなどの情報を調べ、操作する仕組みです。  
@@ -119,7 +140,6 @@ for (Method method : type.getDeclaredMethods()) {
 用途に応じて、実行時の柔軟性とコンパイル時の検査を選びます。  
 </details>
 
-
 <QuizChoice
   title="実行時にアノテーションを読む"
   options={[
@@ -130,7 +150,18 @@ for (Method method : type.getDeclaredMethods()) {
   answer="b"
   explanation="実行時リフレクションで読むには、アノテーション側の保持方針が RUNTIME である必要があります。付けただけではフレームワークが動くわけでもありません。"
 >
-  <div>フレームワークが実行時にアノテーションを読む前提として、近いものはどれですか。</div>
+  <div>次のコードが <code>order</code> を出す前提として、近いものはどれですか。</div>
+  <pre className="language-java"><code>{`@Retention(RetentionPolicy.RUNTIME) // SOURCE だと？
+@Target(ElementType.TYPE)
+public @interface Handler {
+    String value();
+}
+
+@Handler("order")
+final class OrderHandler {}
+
+Handler handler = OrderHandler.class.getAnnotation(Handler.class);
+System.out.println(handler.value());`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき

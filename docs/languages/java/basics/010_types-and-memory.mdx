@@ -67,41 +67,67 @@ flowchart TB
 ### 参照型は実体ではなく行き先を持つ
 
 ```java
-Cart cartA = new Cart();
-Cart cartB = cartA;
-cartA.add(new LineItem("BOOK", 1));
+class Box {
+    int count;
+}
+
+Box boxA = new Box();
+Box boxB = boxA;
+boxA.count = 1;
 ```
 
-`new Cart()` で作られる実体はヒープに置かれます。  
-`cartA` と `cartB` が持っているのは、その実体への参照です。
+`new Box()` で作られる実体はヒープに置かれます。  
+`boxA` と `boxB` が持っているのは、その実体への参照です。
 
 ```mermaid
 flowchart LR
     subgraph Stack["スタックフレーム"]
-        cartA["cartA"]
-        cartB["cartB"]
+        boxA["boxA"]
+        boxB["boxB"]
     end
 
     subgraph Heap["ヒープ"]
-        cart["Cart<br/>品目: BOOK × 1"]
+        box["Box<br/>count = 1"]
     end
 
-    cartA --> cart
-    cartB --> cart
+    boxA --> box
+    boxB --> box
 ```
 
-コピーされたのは `Cart` の中身ではなく、**同じ行き先** です。  
-だから `cartA` 経由の変更は、`cartB` からも見えます。
+コピーされたのは `Box` の中身ではなく、**同じ行き先** です。  
+だから `boxA` 経由の変更は、`boxB` からも見えます。
 
 ```java
-System.out.println(cartB.size()); // 1
+System.out.println(boxB.count); // 1
+System.out.println(boxA == boxB); // true（同じ行き先）
 ```
 
 ここで押さえるのは次の一行です。
 
 > プリミティブ型は値を持つ。参照型は実体への参照を持つ。
 
-`cartA` という箱にカート全体が入っている、と考えない方があとが楽です。
+`boxA` という箱にオブジェクト全体が入っている、と考えない方があとが楽です。
+
+<QuizChoice
+  title="参照のコピー"
+  options={[
+    {id: 'a', label: 'boxB.count は 0 のまま'},
+    {id: 'b', label: 'boxB.count は 1'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="boxB = boxA でコピーされるのは行き先です。同じ Box を共有するので、boxA.count への代入は boxB からも見えます。"
+>
+  <div>次のコードのあと、<code>boxB.count</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`class Box {
+    int count;
+}
+
+Box boxA = new Box();
+Box boxB = boxA;
+boxA.count = 1;
+// boxB.count は？`}</code></pre>
+</QuizChoice>
 
 ## スタックとヒープ
 
@@ -113,15 +139,15 @@ System.out.println(cartB.size()); // 1
 ```mermaid
 flowchart LR
     subgraph Stack["スタック"]
-        main["main フレーム<br/>cart → 参照<br/>codes → 参照"]
+        main["main フレーム<br/>box → 参照<br/>codes → 参照"]
     end
 
     subgraph Heap["ヒープ"]
-        cart["Cart"]
+        box["Box"]
         codes["int 配列<br/>10, 20, 30"]
     end
 
-    main --> cart
+    main --> box
     main --> codes
 ```
 
@@ -131,20 +157,20 @@ flowchart LR
 ### `new` はヒープに実体を作る
 
 ```java
-Cart cart = new Cart();
+Box box = new Box();
 ```
 
 この 1 行は、次の三つがまとまったものです。
 
-1. ヒープに `Cart` の実体を確保する
+1. ヒープに `Box` の実体を確保する
 2. コンストラクタで初期化する
-3. その実体への参照を変数 `cart` に入れる
+3. その実体への参照を変数 `box` に入れる
 
 | 部分 | 意味 |
 | ---- | ---- |
-| `Cart cart` | `Cart` を指す変数を用意する |
+| `Box box` | `Box` を指す変数を用意する |
 | `new` | 新しいインスタンスを生成する |
-| `Cart()` | コンストラクタ呼び出し。生成した直後の初期化 |
+| `Box()` | コンストラクタ呼び出し。生成した直後の初期化 |
 
 変数の中にオブジェクト全部が入るわけではありません。
 
@@ -159,6 +185,20 @@ Java は次の分担を取ります。
 これにより、同じ注文や同じリストを、コピーせずに複数のメソッドから扱えます。  
 その代わり、**意図しない共有** も起きやすくなります。  
 「渡したのに反映されすぎる」のは、この設計の裏返しです。
+
+<QuizChoice
+  title="new の置き場"
+  options={[
+    {id: 'a', label: 'Box の実体はスタックに置かれ、参照はヒープに入る'},
+    {id: 'b', label: 'Box の実体はヒープに置かれ、変数 box は参照（行き先）を持つ'},
+    {id: 'c', label: '実体も参照も、すべてスタックにだけ置かれる'},
+  ]}
+  answer="b"
+  explanation="new で作る実体はヒープ側です。ローカル変数 box が持つのはその行き先です。"
+>
+  <div>次の 1 行について、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`Box box = new Box();`}</code></pre>
+</QuizChoice>
 
 ## スタックフレームとスコープ
 
@@ -255,12 +295,19 @@ static void bump(int n) {
 ### 参照を渡す
 
 ```java
-Order order = new Order("ORD-1");
+class Order {
+    String id;
+    String status;
+}
+
+Order order = new Order();
+order.id = "ORD-1";
+order.status = "OPEN";
 close(order);
-System.out.println(order.getStatus()); // CLOSED
+System.out.println(order.status); // CLOSED
 
 static void close(Order target) {
-    target.setStatus("CLOSED");
+    target.status = "CLOSED";
 }
 ```
 
@@ -271,11 +318,12 @@ static void close(Order target) {
 
 ```java
 static void replace(Order target) {
-    target = new Order("ORD-OTHER");
+    target = new Order();
+    target.id = "ORD-OTHER";
 }
 ```
 
-`replace` のあと、呼び出し元の `order` は元の `"ORD-1"` のままです。  
+`replace` のあと、呼び出し元の `order.id` は元の `"ORD-1"` のままです。  
 付け替えたのは、メソッド内のローカルな箱だけです。
 
 :::tip[覚えておくこと]
@@ -294,7 +342,7 @@ static void replace(Order target) {
     {id: 'c', label: 'コンパイルエラーになる'},
   ]}
   answer="b"
-  explanation="int の引数は値のコピーが渡されます。bump 内の n を書き換えても、呼び出し元の x は変わりません。参照型なら「行き先」のコピーなので、フィールド変更は共有されますが、付け替えは呼び出し元に影響しません。"
+  explanation="int の引数は値のコピーが渡されます。bump 内の n を書き換えても、呼び出し元の x は変わりません。"
 >
   <div>次のコードを実行したあと、<code>x</code> はどうなりますか。</div>
   <pre className="language-java"><code>{`void bump(int n) {
@@ -303,6 +351,35 @@ static void replace(Order target) {
 
 int x = 1;
 bump(x);`}</code></pre>
+</QuizChoice>
+
+<QuizChoice
+  title="参照の渡し方"
+  options={[
+    {id: 'a', label: 'status は CLOSED、id は other'},
+    {id: 'b', label: 'status は CLOSED、id は ORD-1'},
+    {id: 'c', label: 'status は OPEN、id は ORD-1'},
+  ]}
+  answer="b"
+  explanation="参照のコピーが渡るので status の変更は共有されます。一方 order = new Order() はメソッド内の変数の付け替えだけで、呼び出し元の order が指す先は変わりません。"
+>
+  <div>次のコードのあと、呼び出し元の <code>order</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`class Order {
+    String id;
+    String status;
+}
+
+void touch(Order order) {
+    order.status = "CLOSED";
+    order = new Order();
+    order.id = "other";
+}
+
+Order order = new Order();
+order.id = "ORD-1";
+order.status = "OPEN";
+touch(order);
+// order.status と order.id は？`}</code></pre>
 </QuizChoice>
 
 ### 戻り値はフレームが消える前に渡す
@@ -457,6 +534,28 @@ static List<byte[]> cache = new ArrayList<>();
 このようなフィールドは、プロセスが生きているあいだ参照を持ち続けます。  
 「GC があるから消える」は、参照が切れたあとの話です。
 
+<QuizChoice
+  title="static の共有"
+  options={[
+    {id: 'a', label: 'a.issued は 1、b.issued は 0'},
+    {id: 'b', label: 'a.issued も b.issued も 1'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="static フィールドはクラス側の共有です。インスタンスが別でも同じ場所を見ます。"
+>
+  <div>次のコードのあと、<code>b.issued</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`class TicketCounter {
+    static int issued;
+    int number;
+}
+
+TicketCounter a = new TicketCounter();
+TicketCounter b = new TicketCounter();
+a.issued++;
+// b.issued は？`}</code></pre>
+</QuizChoice>
+
 ## `null` は「行き先がない」
 
 参照型の変数は、まだ行き先がないとき `null` を取れます。  
@@ -464,7 +563,7 @@ static List<byte[]> cache = new ArrayList<>();
 
 ```java
 Order order = null;
-order.getId(); // NPE
+order.id = "ORD-1"; // NPE
 ```
 
 NPE は「Java が壊れた」のではなく、**存在しない行き先にアクセスした** 合図です。  
@@ -478,6 +577,25 @@ NPE は「Java が壊れた」のではなく、**存在しない行き先にア
 ラッパは参照型なので、今度は NPE の対象になります。
 
 </details>
+
+<QuizChoice
+  title="null 参照"
+  options={[
+    {id: 'a', label: 'id に ORD-1 が入る'},
+    {id: 'b', label: 'NullPointerException になる'},
+    {id: 'c', label: 'コンパイルエラーになる'},
+  ]}
+  answer="b"
+  explanation="order は null（行き先がない）なので、フィールドへのアクセスは実行時に NullPointerException になります。"
+>
+  <div>次のコードはどうなりますか。</div>
+  <pre className="language-java"><code>{`class Order {
+    String id;
+}
+
+Order order = null;
+order.id = "ORD-1";`}</code></pre>
+</QuizChoice>
 
 ## ここまで分かると何が変わるか
 
@@ -509,30 +627,6 @@ Java にはガベージコレクションがあります。
 使わなくなったものが勝手に消える、ではありません。  
 **どこかから到達できるオブジェクトは回収されません。**  
 その仕組みは次の [ヒープとガベージコレクション](./heap-and-gc) で、回収の単位まで落とします。
-
-
-<QuizChoice
-  title="メソッドに渡したあと"
-  options={[
-    {id: 'a', label: 'n は 99、status は CLOSED、ID は other'},
-    {id: 'b', label: 'n は 1、status は CLOSED、ID は ORD-1'},
-    {id: 'c', label: 'n は 1、status は OPEN、ID は ORD-1'},
-  ]}
-  answer="b"
-  explanation="プリミティブの n は値のコピーだけが書き換わります。参照型は同じ Order を共有するので setStatus は呼び出し元にも見えますが、引数変数の付け替え（new Order）は呼び出し元の変数には影響しません。"
->
-  <div>次のコードのあと、呼び出し元の <code>n</code> と <code>order</code> の状態として正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`void touch(int n, Order order) {
-    n = 99;
-    order.setStatus("CLOSED");
-    order = new Order("other");
-}
-
-int n = 1;
-Order order = new Order("ORD-1");
-order.setStatus("OPEN");
-touch(n, order);`}</code></pre>
-</QuizChoice>
 
 ## よくあるつまずき
 

@@ -26,6 +26,21 @@ sidebar_position: 16
 
 「日時だから `LocalDateTime`」と決めるのではなく、その値が一意な瞬間を表すのかを確認します。  
 
+<QuizChoice
+  title="日時の型選び"
+  options={[
+    {id: 'a', label: '誕生日も監査時刻も LocalDateTime で統一する'},
+    {id: 'b', label: '誕生日は LocalDate、世界で一意な瞬間は Instant など、意味で分ける'},
+    {id: 'c', label: '常に Date を使い、表示だけ ZoneId で整える'},
+  ]}
+  answer="b"
+  explanation="日付・現地日時・UTC 上の一瞬は別の意味です。型を分けるとタイムゾーン事故を減らせます。"
+>
+  <div>次の用途に合う選び方はどれですか。</div>
+  <pre className="language-java"><code>{`// 利用者の誕生日
+// サーバが記録するイベント発生時刻（UTC の一瞬）`}</code></pre>
+</QuizChoice>
+
 ## 日付を扱う
 
 ```java
@@ -74,6 +89,23 @@ System.out.println(localTime);
 業務上必要な地域は `ZoneId` として明示します。  
 
 :::
+
+<QuizChoice
+  title="Instant と ZoneId"
+  options={[
+    {id: 'a', label: 'Instant を atZone すると、同じ瞬間をその地域の時計表示へ写せる'},
+    {id: 'b', label: 'ZoneId を付けると Instant の中身（UTC の瞬間）自体が変わる'},
+    {id: 'c', label: 'サーバのデフォルトタイムゾーンに任せるのが安全'},
+  ]}
+  answer="a"
+  explanation="Instant は瞬間そのもの、atZone は表示・地域規則への投影です。デフォルト TZ 依存は環境差の温床です。"
+>
+  <div>次のコードについて、正しいものはどれですか。</div>
+  <pre className="language-java"><code>{`Instant occurredAt = Instant.parse("2026-09-15T01:00:00Z");
+ZonedDateTime localTime =
+    occurredAt.atZone(ZoneId.of("Asia/Tokyo"));
+// 2026-09-15T10:00+09:00[Asia/Tokyo]`}</code></pre>
+</QuizChoice>
 
 ## 文字列を解析・整形する
 
