@@ -1,0 +1,168 @@
+---
+sidebar_position: 4
+---
+
+# 文字列の基本
+
+注文 ID を `"OPEN"` と `"open"` で別物として扱いたい。  
+数値の `==` とは違い、文字列は **中身の比較** に専用のやり方があります。  
+このページでは、`equals` とよく使う操作の入口を押さえます。
+
+[変数と計算](./variables-and-calculation) で `String` 型と連結（`+`）を見ました。  
+参照の仕組みや `hashCode`、文字列プールの話は [String と equals](./string-equals) で厚く扱います。
+
+## このページで分かること
+
+- 文字列の中身の比較は `equals` を使う
+- `length()` / `isEmpty()` で長さと空を調べる
+- 連結と、条件分岐での使い方
+- `null` の文字列に触るときの注意（入口）
+
+## 中身の比較は `equals`
+
+`String` は **参照型** です。  
+文字列の **中身（同じ文字の並びか）** を調べるときは **`equals`** を使います。
+
+```java
+String status = "PAID";
+System.out.println(status.equals("PAID")); // true
+System.out.println(status.equals("OPEN")); // false
+```
+
+`==` は別の問い——「同じオブジェクトを指しているか」——を見る演算子です。  
+文字列の **内容** を比べる用途では使いません。入門では **`equals` に統一** しておくと安全です。
+
+:::tip[覚えておくこと]
+
+文字列の中身が同じか → `equals`。  
+`==` は文字列の内容比較には使わない。
+
+:::
+
+<QuizChoice
+title="文字列の比較"
+options={[
+{id: 'a', label: 'a == b'},
+{id: 'b', label: 'a.equals(b)'},
+{id: 'c', label: 'a = b'},
+]}
+answer="b"
+explanation="中身の同値比較は equals です。== は参照の同一性、a = b は代入です。"
+
+>
+
+  <div>変数 <code>a</code> と <code>b</code> の中身（文字の並び）が同じか調べるのに適切なのはどれですか。</div>
+</QuizChoice>
+
+## 長さと空: `length()` / `isEmpty()`
+
+```java
+String status = "OPEN";
+
+System.out.println(status.length());  // 4
+System.out.println(status.isEmpty()); // false
+
+String note = "";
+System.out.println(note.isEmpty());   // true
+```
+
+出力例:
+
+```text
+4
+false
+true
+```
+
+- `length()` … 文字の並びの長さ（0 以上）
+- `isEmpty()` … 長さが 0 なら `true`
+
+「何も入っていない」ときは `isEmpty()` の方が意図が読み取りやすいことが多いです。
+
+## 連結と表示
+
+`+` で文字列をつなげられます（復習）。
+
+```java
+String prefix = "ORD-";
+int number = 1001;
+String orderId = prefix + number; // "ORD-1001"
+System.out.println(orderId);
+```
+
+出力例:
+
+```text
+ORD-1001
+```
+
+## 条件分岐で使う
+
+[条件分岐](./branching) の `if` や `switch` では、文字列の **中身** で分岐します。
+
+```java
+String status = "PAID";
+
+if (status.equals("PAID")) {
+    System.out.println("ship");
+}
+
+if ("OPEN".equals(status)) {
+    System.out.println("edit");
+}
+```
+
+2 行目の `"OPEN".equals(status)` は、定数側から `equals` を呼ぶ書き方です。  
+`status` が `null` のときも `false` になり、`NullPointerException` を避けやすいです。
+
+## `null` との向き合い方（入口）
+
+参照型の変数は、まだ行き先が無いとき **`null`** を取れます。  
+`null` に対して `length()` や `equals` を呼ぶと、実行時に **NullPointerException**（NPE）になります。
+
+```java
+String status = null;
+// status.equals("OPEN"); // 実行時エラー（NPE）
+```
+
+「行き先が無いのに触った」という読み方です。
+
+:::info[空文字と null]
+
+空文字 `""` は「中身が 0 文字の文字列オブジェクト」です。  
+`null` は「行き先が無い」で、別物です。
+
+:::
+
+<QuizChoice
+title="isEmpty の結果"
+options={[
+{id: 'a', label: 'true'},
+{id: 'b', label: 'false'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="a"
+explanation="空文字は長さ 0 なので isEmpty() は true です。"
+
+>
+
+  <div>次のコードの出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`String label = "";
+System.out.println(label.isEmpty());`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 文字列比較に `==` を使う
+- `null` の変数に `equals` を呼ぶ（定数側から呼ぶ書き方を検討）
+- 空文字と `null` を同じだと思い込む
+- 大文字小文字の違いを見落とす（必要なら `equalsIgnoreCase` などを検討）
+
+## まとめ / 次に学ぶとよいこと
+
+- 中身の比較は `equals`。`==` は文字列の内容比較に使わない
+- `length()` / `isEmpty()` で長さと空を調べる
+- 条件分岐では `"定数".equals(変数)` が安全なことが多い
+- `null` に触ると NPE になりうる
+
+次は [条件分岐](./branching) で、比較の結果を使って道を選びます。

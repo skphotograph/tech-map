@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # メソッド
@@ -8,8 +8,7 @@ sidebar_position: 6
 「よく使う手順に名前を付ける」——それが **メソッド** です。
 
 Java では、メソッドは **クラスの中** に書きます。  
-[最初のプログラム](./first-program) の `main` と同じ入れ物です。  
-データのまとめ方（クラスのフィールドや `new`）は次のページです。
+[最初のプログラム](./first-program) の `main` と同じ入れ物です。
 
 ## このページで分かること
 
@@ -36,12 +35,12 @@ public class OrderService {
 }
 ```
 
-| 書き方                                  | たとえ                                               |
-| --------------------------------------- | ---------------------------------------------------- |
-| `int calculateLineTotal(...)`           | 手順書の名前が `calculateLineTotal`。答えは整数で返す |
-| `(int quantity, int unitPrice)`         | 材料として渡す数量と単価                             |
-| `return quantity * unitPrice`           | 計算結果を呼び出し元へ返す                           |
-| `calculateLineTotal(2, 1200)`           | 手順書を実際に使う（呼び出す）                       |
+| 書き方                          | たとえ                                                |
+| ------------------------------- | ----------------------------------------------------- |
+| `int calculateLineTotal(...)`   | 手順書の名前が `calculateLineTotal`。答えは整数で返す |
+| `(int quantity, int unitPrice)` | 材料として渡す数量と単価                              |
+| `return quantity * unitPrice`   | 計算結果を呼び出し元へ返す                            |
+| `calculateLineTotal(2, 1200)`   | 手順書を実際に使う（呼び出す）                        |
 
 呼び出し側では、返ってきた値を変数に入れたり、そのまま使ったりできます。
 
@@ -216,4 +215,4 @@ System.out.println(applyDiscount(1000, 10));`}</code></pre>
 - 早期 `return` で入口で弾くと、中の枝が浅くなる
 - 同じ名前で引数が違うメソッドを並べられる（オーバーロード）
 
-次は [クラスと new](./classes) で、データと操作をひとつの型にまとめます。
+次は [入力と引数](./input-and-args) で、起動引数と数値への変換の入口を押さえます。

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 11
+sidebar_position: 19
 ---
 
 # 型と参照
@@ -148,7 +148,7 @@ console.log(order.status);`}</code></pre>
 
 ## スプレッド構文で浅いコピーを作る
 
-変更を共有したくないときは、スプレッド構文 `...` で新しいオブジェクトや配列を作れます。
+[現代的な構文](./modern-syntax) で触れたスプレッド構文 `...` で、新しいオブジェクトや配列を作れます。
 
 ```js
 const originalOrder = {
@@ -207,4 +207,4 @@ console.log(original.customer.name); // "Ren"
 - オブジェクトと配列は、代入すると同じ参照を共有する
 - `{ ...obj }` と `[...arr]` で外側の浅いコピーを作れる
 
-次は [等価と比較](./equality-and-coercion) で、値が同じかどうかを安全に判定する方法を学びます。
+次は [Promise](./promises) で、すぐには結果が返らない非同期処理の成功と失敗を扱います。

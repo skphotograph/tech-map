@@ -1,5 +1,5 @@
 ---
-sidebar_position: 12
+sidebar_position: 21
 ---
 
 # String と equals
@@ -8,7 +8,8 @@ sidebar_position: 12
 ログに出すと、どちらも `"ORD-1001"` に見える。  
 名札の文字は同じなのに、「同一人物か」と「同姓同名か」を取り違えている、という感覚です。
 
-このページでは、`String` の扱いと、`==` / `equals` の切り分けを固めます。
+[文字列の基本](./string-basics) で `equals` の入口を押さえました。  
+このページでは、参照の同一性・文字列プール・`hashCode` まで含めて **`String` 比較の契約** を固めます。
 
 ## このページで分かること
 
@@ -334,4 +335,4 @@ record UserId(String value) {
 - `equals` と `hashCode` はセット。ハッシュベースのコレクションの前提
 - キーは不変に保つ
 
-次は [static と final](./static-final) で、共有と再代入禁止の意味を見ます。
+次は [ヒープとガベージコレクション](./heap-and-gc) で、オブジェクトがいつ不要と判定されるかを見ます。

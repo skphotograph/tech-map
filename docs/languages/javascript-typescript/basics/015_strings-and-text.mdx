@@ -1,0 +1,207 @@
+---
+sidebar_position: 4
+---
+
+# 文字列とテキスト
+
+注文 ID や状態コードは、プログラムの中では **文字列** として扱うことが多いです。  
+比較や表示だけでなく、整形や数値への変換まで含めて、文字列を扱う基本を押さえましょう。
+
+[最初のプログラム](./first-program) の `process.argv` から渡る値も文字列です。  
+ここでは、文字列の操作と、数値として使うための変換を学びます。
+
+## このページで分かること
+
+- 文字列の長さ、部分取得、含むかどうかの判定
+- テンプレートリテラルと `+` による連結
+- `Number` / `parseInt` / `parseFloat` と `Math.floor` / `Math.round`
+- コマンドライン引数を数値として使う（正常な入力）
+
+## 文字列の基本操作
+
+文字列リテラルは `'...'`、`"..."`、またはバッククォート `` `...` `` で書きます。
+
+```js
+const orderId = 'ORD-1001';
+const status = 'OPEN';
+
+console.log(orderId.length); // 8
+console.log(status.includes('OP')); // true
+console.log(orderId.startsWith('ORD')); // true
+```
+
+`length` は文字数、`includes` は部分文字列を含むか、`startsWith` は先頭一致を調べます。
+
+部分だけ取り出すときは `slice` を使います。  
+2 番目の引数は **終了位置の手前** までです。
+
+```js
+const code = 'ORD-1001';
+console.log(code.slice(4, 8)); // 1001
+```
+
+前後の空白を除くときは `trim`、大文字小文字をそろえるときは `toLowerCase` / `toUpperCase` があります。
+
+```js
+const input = '  PAID  ';
+console.log(input.trim()); // PAID
+console.log(input.trim().toLowerCase()); // paid
+```
+
+:::tip[文字列は変更しない]
+
+JavaScript の文字列は、メソッドを呼んでも元の値は書き換わりません。  
+`trim()` の結果は、新しい文字列として返ります。
+
+:::
+
+<QuizChoice
+title="slice の結果"
+options={[
+{ id: 'a', label: '1001' },
+{ id: 'b', label: 'ORD-' },
+{ id: 'c', label: 'ORD-1001' },
+]}
+answer="a"
+explanation="slice(4, 8) は添字 4 以上 8 未満、つまり 1001 です。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const code = "ORD-1001";
+console.log(code.slice(4, 8));`}</code></pre>
+</QuizChoice>
+
+## テンプレートリテラルと連結
+
+値を文字列に埋め込むときは、バッククォート `` ` `` の **テンプレートリテラル** が読みやすいです。
+
+```js
+const orderId = 1001;
+console.log(`order-${orderId}`); // order-1001
+```
+
+`+` でも文字列をつなげられます。  
+どちらか一方が文字列だと、数値の足し算ではなく **連結** になります。
+
+```js
+const label = 'order-' + 1001; // order-1001
+console.log(1 + '2'); // 12
+console.log(1 + 2); // 3
+```
+
+計算と連結が混ざる行は、括弧で意図をはっきりさせます。
+
+## 文字列を数値へ変換する
+
+コマンドライン引数は文字列として届きます。  
+計算に使う前に、数値へ変換します。
+
+| 関数 / 方法        | 向いている場面                   |
+| ------------------ | -------------------------------- |
+| `Number(text)`     | 全体が数値として読める文字列     |
+| `parseInt(text)`   | 先頭から整数部分だけ取り出す     |
+| `parseFloat(text)` | 先頭から小数を含む数値を取り出す |
+
+```js
+console.log(Number('1200')); // 1200
+console.log(parseInt('1200', 10)); // 1200
+console.log(parseFloat('3.5kg')); // 3.5
+```
+
+`Number('1200円')` のように変換できない文字列は **NaN** という特殊な値になります。
+
+## コマンドライン引数を数値計算に使う
+
+引数が正しい数値文字列である前提で、数量を計算する例です。
+
+```js
+const unitPrice = 350;
+const quantity = Number(process.argv[2]);
+
+console.log(unitPrice * quantity);
+```
+
+```bash
+node price.js 3
+```
+
+```text
+1050
+```
+
+`process.argv[2]` は `"3"` という文字列ですが、`Number(...)` で数値 `3` に変換してから掛け算しています。
+
+:::warning[引数は文字列]
+
+`process.argv[2]` が `"3"` でも `"3" + 1` は `"31"` になります。  
+計算前に `Number(...)` で意図をはっきりさせましょう。
+
+:::
+
+## `Math` で整数にそろえる
+
+割引計算の途中結果を整数円にそろえるときなど、**Math** オブジェクトのメソッドを使います。
+
+```js
+const price = 999;
+const taxIncluded = price * 1.1;
+
+console.log(Math.floor(taxIncluded)); // 1098（切り捨て）
+console.log(Math.round(taxIncluded)); // 1099（四捨五入）
+console.log(Math.ceil(taxIncluded)); // 1099（切り上げ）
+```
+
+金額は最小単位の整数で持つ設計が多いため、小数が出たらどこで丸めるかを決めておきます。  
+[変数と計算](./variables-and-calculation) で触れた小数誤差にも注意してください。
+
+<QuizChoice
+title="Number の結果"
+options={[
+{ id: 'a', label: '1200' },
+{ id: 'b', label: 'NaN' },
+{ id: 'c', label: '"1200"' },
+]}
+answer="a"
+explanation="Number('1200') は文字列全体を数値 1200 に変換します。"
+
+>
+
+  <div>次の式の結果はどれですか。</div>
+  <pre className="language-js"><code>{`const result = Number("1200");`}</code></pre>
+</QuizChoice>
+
+<QuizChoice
+title="コマンドライン引数の計算"
+options={[
+{ id: 'a', label: '1050' },
+{ id: 'b', label: '3503' },
+{ id: 'c', label: 'NaN' },
+]}
+answer="a"
+explanation="Number(process.argv[2]) で 3 になり、350 * 3 は 1050 です。"
+
+>
+
+  <div><code>node price.js 3</code> と実行したとき、次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const unitPrice = 350;
+const quantity = Number(process.argv[2]);
+console.log(unitPrice * quantity);`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `slice` の終了位置を「含む」までだと思い込む
+- `+` が足し算か連結かを見ずに書く
+- `parseInt` に基数 `10` を付け忘れる（2 引数版を使う習慣をつける）
+- 引数を数値に変換せず、文字列連結で計算してしまう
+
+## まとめ / 次に学ぶとよいこと
+
+- `length` / `includes` / `slice` / `trim` で文字列を読む・整える
+- テンプレートリテラル `` `order-${id}` `` と `+` 連結の違い
+- `Number` / `parseInt` / `parseFloat` で文字列を数値へ
+- `Math.floor` / `Math.round` で整数にそろえる
+- `process.argv` の引数は文字列なので、計算前に `Number(...)` で変換する
+
+次は [条件分岐](./branching) で、文字列や数値の比較結果に応じて処理を選びます。
