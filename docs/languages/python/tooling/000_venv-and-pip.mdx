@@ -6,7 +6,7 @@ sidebar_position: 2
 
 端末全体へパッケージを入れると、別プロジェクトの更新が今のアプリへ影響します。  
 「昨日まで動いていたのに、別件の作業あとに壊れた」——依存の共有が原因のことがよくあります。  
-`venv` で環境を分け、pip をその環境の Python から呼び出しましょう。  
+`venv` で環境を分け、pip をその環境の Python から呼び出しましょう。
 
 ## このページで分かること
 
@@ -18,29 +18,29 @@ sidebar_position: 2
 ## なぜ仮想環境を分けるか
 
 プロジェクト A はライブラリの古い版、プロジェクト B は新しい版が必要なことがあります。  
-同じ Python 環境へ両方を入れると、どちらかが壊れるか、どちらの版が入っているか追いにくくなります。  
+同じ Python 環境へ両方を入れると、どちらかが壊れるか、どちらの版が入っているか追いにくくなります。
 
 仮想環境（`venv`）は、プロジェクトごとに **専用の Python コマンドとパッケージ置き場** を作る仕組みです。  
 作成に使った Python のバージョンを利用しながら、導入するパッケージをほかの環境から分離します。  
-切り替えれば、そのプロジェクトが必要とする組み合わせだけを使えます。  
+切り替えれば、そのプロジェクトが必要とする組み合わせだけを使えます。
 
 :::tip[覚えておくこと]
 
 依存はプロジェクト単位で隔離する。  
-「どの Python で動いているか」を確認できるようにする。  
+「どの Python で動いているか」を確認できるようにする。
 
 :::
 
 ## 仮想環境を作る
 
-プロジェクトのディレクトリで次を実行します。  
+プロジェクトのディレクトリで次を実行します。
 
 ```bash
 python -m venv .venv
 ```
 
 成功時は通常何も表示されず、`.venv` ディレクトリが作られます。  
-有効化方法はシェルで異なります。  
+有効化方法はシェルで異なります。
 
 ```bash title="Windows PowerShell"
 .venv\Scripts\Activate.ps1
@@ -55,25 +55,25 @@ source .venv/bin/activate
 ```
 
 有効化後は、プロンプトに環境名が付くことが多いです。  
-より確実な確認は、実行中の Python のパスを見ることです。  
+より確実な確認は、実行中の Python のパスを見ることです。
 
 ```bash
 python -c "import sys; print(sys.executable)"
 ```
 
-出力パスに `.venv` が含まれていれば、その環境の Python を使っています。  
+出力パスに `.venv` が含まれていれば、その環境の Python を使っています。
 
 <details>
 <summary>Activate.ps1 が拒否されるとき（Windows）</summary>
 
 実行ポリシーの制限でスクリプトが止まることがあります。  
-その場合は、ドキュメントや社内手順に沿ってポリシーを確認するか、`cmd` 用の `activate.bat` を使います。  
+その場合は、ドキュメントや社内手順に沿ってポリシーを確認するか、`cmd` 用の `activate.bat` を使います。
 
 </details>
 
 ## pip を Python 経由で使う
 
-パッケージの導入・確認は、いま選ばれている Python に紐づく pip で行います。  
+パッケージの導入・確認は、いま選ばれている Python に紐づく pip で行います。
 
 ```bash
 python -m pip --version
@@ -82,10 +82,10 @@ python -m pip show httpx
 ```
 
 `python -m pip` は、「この `python` に対応する pip」を実行します。  
-単に `pip install ...` と書くと、別の Python の pip が動いてしまい、入れたつもりが別環境、ということが起きやすいです。  
+単に `pip install ...` と書くと、別の Python の pip が動いてしまい、入れたつもりが別環境、ということが起きやすいです。
 
 導入成功時は `Successfully installed` のような表示が出ます。  
-`show` では `Version` と、`Location` が `.venv` 配下かを確認します。  
+`show` では `Version` と、`Location` が `.venv` 配下かを確認します。
 
 <QuizChoice
 title="pip の呼び出し"
@@ -102,19 +102,19 @@ explanation="python -m pip は、現在の Python に対応する pip を使い�
   <div>有効な仮想環境へパッケージを導入するコマンドはどれですか。</div>
 </QuizChoice>
 
-一覧確認と削除は次のとおりです。  
+一覧確認と削除は次のとおりです。
 
 ```bash
 python -m pip list
 python -m pip uninstall httpx
 ```
 
-作業後は `deactivate` で環境を終了できます。  
+作業後は `deactivate` で環境を終了できます。
 
 :::warning[仮想環境をリポジトリへ入れない]
 
 `.venv/` は容量が大きく、端末固有のパスも含みます。  
-`.gitignore` へ追加し、依存関係の宣言から各端末で作り直します。  
+`.gitignore` へ追加し、依存関係の宣言から各端末で作り直します。
 
 :::
 
@@ -132,4 +132,4 @@ python -m pip uninstall httpx
 - pip は `python -m pip` で呼び出す
 - `.venv/` は共有せず、依存の宣言から作り直す
 
-次は [pyproject.toml と依存関係](./pyproject-and-dependencies) で、必要なパッケージを宣言します。  
+次は [pyproject.toml と依存関係](./pyproject-and-dependencies) で、必要なパッケージを宣言します。
