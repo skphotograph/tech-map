@@ -162,6 +162,25 @@
 - `baseUrl` は `/`（Cloudflare Pages などルート配信向け）。リンクや静的アセットは Docusaurus の仕組み（`Link`、`useBaseUrl` など）に従う。
 - 不要な依存関係や設定の追加は最小限にする。
 
+## Git 運用
+
+- 新しい作業を始める前に `git fetch origin main` を実行し、リモートの最新状態を取得する。
+- 作業ブランチは、現在チェックアウト中のブランチやローカルの `main` ではなく、必ず最新の `origin/main` から新規作成する。
+
+```bash
+git fetch origin main
+git switch -c <新しいブランチ名> origin/main
+```
+
+- マージ済み・クローズ済みの Pull Request で使ったブランチを、別の変更に再利用しない。追加の変更は最新の `origin/main` から別ブランチを作成する。
+- 古いブランチで作業していたことに気づいた場合、そのまま `main` をマージして履歴を継ぎ足さない。最新の `origin/main` から新規ブランチを作り、必要なコミットだけを移す。
+- push や Pull Request 作成の前に、次のコマンドでコミットと差分を確認する。意図しない過去の変更やマージコミットが含まれている場合は、そのまま公開しない。
+
+```bash
+git log --oneline origin/main..HEAD
+git diff --stat origin/main...HEAD
+```
+
 ## 作業時の確認
 
 教材やサイトを変更したら、必要に応じて次を行う。
