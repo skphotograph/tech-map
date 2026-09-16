@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 7
 ---
 
 # 繰り返し
@@ -13,7 +13,6 @@ sidebar_position: 5
 
 - `for` で回数を決めて繰り返す方法
 - `while` で条件が成り立つ間だけ繰り返す方法
-- `for...of` で配列の値を順に取り出す方法
 - `break` / `continue` で流れを変える方法
 
 ## `for` で決まった回数を繰り返す
@@ -145,51 +144,6 @@ do {
 
 </details>
 
-## `for...of` で配列の値を順に取り出す
-
-複数の値を並べた **配列** から、一つずつ取り出すときは `for...of` が読みやすい書き方です。
-
-```js
-const statuses = ['OPEN', 'PAID', 'CLOSED'];
-
-for (const status of statuses) {
-  console.log(status);
-}
-```
-
-```text
-OPEN
-PAID
-CLOSED
-```
-
-`status` には、配列 `statuses` の値が先頭から一つずつ入ります。  
-添字やカウンタが不要なら、古典的な `for` より意図が伝わりやすくなります。
-
-:::tip[配列を順に読むなら]
-
-配列の値を先頭から使うだけなら、`for...of` を第一候補にします。
-
-:::
-
-<QuizChoice
-title="for...of の値"
-options={[
-{id: 'a', label: '0 と 1'},
-{id: 'b', label: 'OPEN と PAID'},
-{id: 'c', label: 'statuses が 2 回'},
-]}
-answer="b"
-explanation="for...of は配列の値を先頭から取り出します。status には OPEN、次に PAID が入ります。"
-
->
-
- <div>次のコードで表示される値はどれですか。<pre className="language-js"><code>{`const statuses = ["OPEN", "PAID"];
-for (const status of statuses) {
-  console.log(status);
-}`}</code></pre></div>
-</QuizChoice>
-
 ## `break` と `continue` で流れを変える
 
 ループを途中で終えるには `break`、その周の残りだけを飛ばすには `continue` を使います。
@@ -224,24 +178,20 @@ for (let i = 0; i < 5; i++) {
 | ---------------------------- | -------------- |
 | 決まった回数だけ処理する     | `for`          |
 | 条件が成り立つ間だけ処理する | `while`        |
-| 配列の値を順に処理する       | `for...of`     |
 
-どれでも書ける場面はあります。  
-開始・終了・対象が読み手に伝わりやすい形を選びます。
+一覧の各要素を順に処理する書き方は、[配列](./arrays) で `for...of` として学びます。
 
 ## よくあるつまずき
 
 - `i < 3` と `i <= 3` を取り違え、実行回数が一つずれる
 - `while` の中で条件に使う値を更新せず、ループが終わらない
-- 配列の値が欲しいのに、必要のないカウンタを自分で管理する
 - `break` と `continue` を取り違える
-- ループ内で宣言した変数を、ループの外でも使えると思う
+- ループ内で宣言した `let` 変数を、ループの外でも使えると思う
 
 ## まとめ / 次に学ぶとよいこと
 
 - `for` は開始・条件・更新をまとめて書く
 - `while` は条件が `true` の間だけ繰り返す
-- 配列の値を順に使うなら `for...of` が読みやすい
 - `break` はループを終了し、`continue` は次の周へ進む
 - 終了条件と、その条件へ近づく更新を確認する
 

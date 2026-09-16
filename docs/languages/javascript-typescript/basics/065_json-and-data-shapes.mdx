@@ -1,0 +1,202 @@
+---
+sidebar_position: 12
+---
+
+# JSON とデータのやりとり
+
+注文データをテキストとして保存したり、別のプログラムへ渡したりするとき、**JSON** という形式がよく使われます。  
+JavaScript のオブジェクトや配列と JSON は似ていますが、同じものではありません。  
+往復のルールを押さえると、データの受け渡しで迷いにくくなります。
+
+## このページで分かること
+
+- JSON テキストと JavaScript の値の対応
+- `JSON.stringify` でオブジェクトを文字列へ
+- `JSON.parse` で文字列をオブジェクトへ
+- 変換できない値と、失敗時のエラー
+
+## JSON とは
+
+**JSON**（JavaScript Object Notation）は、データをテキストで表すための書式です。  
+キーはダブルクォート `"` で囲み、文字列値もダブルクォートです。
+
+```json
+{
+  "id": "ORD-1001",
+  "status": "OPEN",
+  "items": ["mug", "notebook"]
+}
+```
+
+見た目は [オブジェクト](./objects) と [配列](./arrays) に近いですが、JSON は **やりとり用のテキスト** です。  
+JavaScript のコードそのものではありません。
+
+## JavaScript の値を JSON 文字列へ — `JSON.stringify`
+
+オブジェクトや配列を JSON テキストへ変換するには `JSON.stringify` を使います。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  items: ['mug', 'notebook'],
+};
+
+const jsonText = JSON.stringify(order);
+
+console.log(jsonText);
+```
+
+```text
+{"id":"ORD-1001","status":"OPEN","items":["mug","notebook"]}
+```
+
+1 行にまとまった文字列として出力されます。  
+読みやすく整形したいときは、第 3 引数にインデント幅を渡せます。
+
+```js
+console.log(JSON.stringify(order, null, 2));
+```
+
+```text
+{
+  "id": "ORD-1001",
+  "status": "OPEN",
+  "items": [
+    "mug",
+    "notebook"
+  ]
+}
+```
+
+:::tip[JSON.stringify の用途]
+
+ログ出力や、テキストとしてデータを渡すときに使います。
+
+:::
+
+<QuizChoice
+title="JSON.stringify の結果"
+options={[
+{ id: 'a', label: 'JavaScript のオブジェクトのまま' },
+{ id: 'b', label: 'JSON 形式の文字列' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="b"
+explanation="JSON.stringify は値を JSON テキスト（文字列）へ変換します。"
+
+>
+
+  <div>次の式の結果はどれですか。</div>
+  <pre className="language-js"><code>{`JSON.stringify({ id: "ORD-1001" })`}</code></pre>
+</QuizChoice>
+
+## JSON 文字列を JavaScript の値へ — `JSON.parse`
+
+受け取った JSON テキストを、オブジェクトや配列として使うには `JSON.parse` です。
+
+```js
+const jsonText = '{"id":"ORD-1001","status":"OPEN"}';
+
+const order = JSON.parse(jsonText);
+
+console.log(order.id); // ORD-1001
+console.log(order.status); // OPEN
+```
+
+`order` は [オブジェクト](./objects) と同じく、ドット記法でプロパティを読めます。
+
+```js
+const listJson = '[{"id":"ORD-1001"},{"id":"ORD-1002"}]';
+const orders = JSON.parse(listJson);
+
+console.log(orders.length); // 2
+console.log(orders[0].id); // ORD-1001
+```
+
+`orders` は [配列](./arrays) なので、`length` や添字 `[0]` が使えます。
+
+## 往復を確認する
+
+同じデータ形状が保たれるか、短いスクリプトで確かめられます。
+
+```js
+const original = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  amounts: [800, 1200],
+};
+
+const restored = JSON.parse(JSON.stringify(original));
+
+console.log(restored.id); // ORD-1001
+console.log(restored.amounts[1]); // 1200
+```
+
+`restored` は `original` とは別のオブジェクトですが、中身の値は同じ形で取り出せます。
+
+<QuizChoice
+title="JSON.parse の結果"
+options={[
+{ id: 'a', label: 'PAID' },
+{ id: 'b', label: '"PAID"' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="a"
+explanation="JSON.parse 後は通常のオブジェクトになり、order.status は文字列 PAID です。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const order = JSON.parse('{"status":"PAID"}');
+console.log(order.status);`}</code></pre>
+</QuizChoice>
+
+## JSON に含まれないもの
+
+JSON はデータ交換向けの制限付き形式です。  
+次のような値は、期待どおり JSON にならないか、失われます。
+
+- 関数（[オブジェクト](./objects) のメソッドなど）
+- `undefined`（オブジェクトのプロパティ値としては省略される）
+- コメント（JSON 自体にコメント構文はない）
+
+```js
+const data = {
+  id: 'ORD-1001',
+  note: undefined,
+  close() {},
+};
+
+console.log(JSON.stringify(data)); // {"id":"ORD-1001"}
+```
+
+`note` と `close` は JSON 文字列に現れません。
+
+## パースに失敗したとき
+
+JSON の文法に合わない文字列を `JSON.parse` すると、**SyntaxError** が発生します。
+
+```js
+JSON.parse('{ id: "ORD-1001" }'); // キーにクォートがない → SyntaxError
+```
+
+[最初のプログラム](./first-program) で学んだとおり、メッセージの行番号と、引用符・カンマの対応を確認します。
+
+## よくあるつまずき
+
+- JSON のキーをシングルクォートで書く（JSON ではダブルクォートが必要）
+- `JSON.parse` の結果をさらに `JSON.parse` する二重変換
+- 関数付きオブジェクトをそのまま JSON 化し、消えたプロパティに気づかない
+- JavaScript オブジェクトと JSON 文字列を同じものだと思い込む
+- 壊れた JSON を parse し、SyntaxError の原因を JSON 側で探さない
+
+## まとめ / 次に学ぶとよいこと
+
+- JSON はデータをテキストで表す形式で、キーと文字列値は `"` で囲む
+- `JSON.stringify` で JavaScript の値 → JSON 文字列
+- `JSON.parse` で JSON 文字列 → JavaScript のオブジェクトや配列
+- 関数や `undefined` は JSON にそのまま載らない
+- 文法違反の JSON は `JSON.parse` で SyntaxError になる
+
+次は [モジュール](./modules) で、関数や値をファイルに分けて再利用します。

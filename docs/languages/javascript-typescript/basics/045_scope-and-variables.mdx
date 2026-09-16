@@ -1,0 +1,179 @@
+---
+sidebar_position: 9
+---
+
+# スコープと変数の有効範囲
+
+同じ名前の変数が、場所によって見えたり見えなかったりすると、意図しない値を読んでしまうことがあります。  
+**スコープ** は、その変数が **どこから参照できるか** を決めるルールです。
+
+[繰り返し](./loops) の `for (let i = 0; ...)` や、[関数](./functions) の引数・本体も、このルールの上に乗っています。
+
+## このページで分かること
+
+- ブロックスコープ（`let` / `const` と `{ ... }`）
+- 関数スコープ（関数の中で宣言した変数と仮引数）
+- 同じ名前のシャドーイング
+- 外側の変数を関数の中から読むこと
+
+## ブロックスコープ
+
+`if` や `for` の `{ ... }` で囲んだ部分を **ブロック** と呼びます。  
+`let` と `const` で宣言した変数は、**宣言したブロックの中だけ** で使えます。
+
+```js
+const amount = 1200;
+
+if (amount >= 1000) {
+  const label = 'bulk';
+  console.log(label); // bulk
+}
+
+console.log(label); // ReferenceError
+```
+
+`label` は `if` のブロックの中だけの名前です。  
+ブロックの外からは存在しないため、参照すると `ReferenceError` になります。
+
+`for` ループも同じです。
+
+```js
+for (let i = 0; i < 3; i++) {
+  console.log(i);
+}
+
+console.log(i); // ReferenceError
+```
+
+[繰り返し](./loops) で使った `let i` は、ループの `{ ... }` の中だけ有効です。  
+ループが終わったあとに `i` を使う必要があるなら、ループの **外** で別途宣言します。
+
+:::tip[let / const の有効範囲]
+
+`let` と `const` は、宣言したブロックと、その内側のブロックでのみ使えます。
+
+:::
+
+<QuizChoice
+title="ブロックの外から参照"
+options={[
+{ id: 'a', label: 'bulk と表示される' },
+{ id: 'b', label: 'ReferenceError になる' },
+{ id: 'c', label: 'undefined と表示される' },
+]}
+answer="b"
+explanation="label は if ブロック内だけの変数です。外から参照すると ReferenceError になります。"
+
+>
+
+  <div>次のコードの最後の行を実行するとどうなりますか。</div>
+  <pre className="language-js"><code>{`if (true) {
+  const label = "bulk";
+}
+console.log(label);`}</code></pre>
+</QuizChoice>
+
+## 関数スコープ
+
+[関数](./functions) の `{ ... }` の中で `let` や `const` で宣言した変数は、その関数の中だけで使えます。
+
+```js
+function printTotal(unitPrice, quantity) {
+  const subtotal = unitPrice * quantity;
+  console.log(subtotal);
+}
+
+printTotal(350, 2); // 700
+console.log(subtotal); // ReferenceError
+```
+
+仮引数 `unitPrice` と `quantity` も、関数が呼ばれている間だけ有効な名前です。  
+関数の外からは、引数の値には直接アクセスできません。
+
+関数の中で作った値を外へ渡したいときは、`return` で返します。  
+これが、スコープを越えて値を渡す基本的な方法です。
+
+## 同じ名前を内側で隠す（シャドーイング）
+
+内側のブロックで外側と同じ名前を宣言すると、**内側では内側の変数** が使われます。  
+外側の変数は、内側からは一時的に見えなくなります。
+
+```js
+const status = 'OPEN';
+
+if (true) {
+  const status = 'PAID';
+  console.log(status); // PAID
+}
+
+console.log(status); // OPEN
+```
+
+内側の `status` は外側とは別の変数です。  
+ブロックを抜けると、再び外側の `status` が見えます。
+
+シャドーイング自体はエラーではありませんが、同じ名前が多いと追いにくくなります。  
+意図がなければ、別名を付ける方が読みやすいことが多いです。
+
+<QuizChoice
+title="シャドーイング"
+options={[
+{ id: 'a', label: 'OPEN' },
+{ id: 'b', label: 'PAID' },
+{ id: 'c', label: 'ReferenceError' },
+]}
+answer="b"
+explanation="if ブロック内では、内側で宣言した status（PAID）が使われます。"
+
+>
+
+  <div>次のコードで、if ブロック内の出力はどれですか。</div>
+  <pre className="language-js"><code>{`const status = "OPEN";
+if (true) {
+  const status = "PAID";
+  console.log(status);
+}`}</code></pre>
+</QuizChoice>
+
+## 外側の変数を関数の中から読む
+
+関数の **外** で宣言した `const` は、関数の **中** から読めます。
+
+```js
+const taxRate = 0.1;
+
+function calculateTotal(price) {
+  return price * (1 + taxRate);
+}
+
+console.log(calculateTotal(1000)); // 1100
+console.log(taxRate); // 0.1
+```
+
+関数は外側の `taxRate` を参照できます。  
+逆に、関数内だけの名前を外から読もうとすると `ReferenceError` になります。
+
+<details>
+<summary>古い var の関数スコープ</summary>
+
+[変数と計算](./variables-and-calculation) で触れた `var` は、ブロックではなく **関数** を単位に有効範囲が決まります。  
+新しく書くコードでは `let` と `const` を使い、`var` は既存コードを読むときの知識として留めます。
+
+</details>
+
+## よくあるつまずき
+
+- `for (let i = ...)` の `i` をループの外でも使えると思う
+- `if` の `{ ... }` の中だけで宣言した変数を、外で使う
+- シャドーイングで、外側の変数まで書き換わったと思い込む
+- 関数の仮引数を、呼び出し元のスコープから直接読もうとする
+
+## まとめ / 次に学ぶとよいこと
+
+- `let` / `const` は宣言したブロックとその内側でのみ有効
+- 関数内の変数と仮引数は、その関数の中だけ
+- 内側で同じ名前を宣言すると、外側の名前は一時的に隠れる
+- 関数の外の `const` は、関数の中から読める
+- 値を外へ渡す基本は `return`
+
+次は [オブジェクト](./objects) で、関連するデータと処理をひとまとまりにします。
