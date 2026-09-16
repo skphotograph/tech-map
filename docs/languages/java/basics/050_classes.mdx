@@ -54,13 +54,33 @@ public class OrderDemo {
 | `new Order()`                | 伝票を一枚切る（実体を作る）                                               |
 | `Order order`                | 作った伝票を扱うための名前                                                 |
 
-前のページの `static` な手順は、伝票を切らずに呼べました。  
-ここでの `close` は、**切った伝票に対して** 呼びます。
+ここまでの `close` は、切った伝票に対する操作です。  
+一方、数量と単価から小計を出すような手順は、特定の伝票が無くても呼べます。  
+そのときは `static` を付けます。  
+上の `Order` と並べて、呼び方の違いを見ます。
 
-| 呼び方          | たとえ                           |
-| --------------- | -------------------------------- |
-| `add(2, 3)`     | 伝票なしで使える手順（`static`） |
-| `order.close()` | 「この伝票」を指定して呼ぶ手順   |
+```java
+public class OrderDemo {
+    static int lineTotal(int quantity, int unitPrice) {
+        return quantity * unitPrice;
+    }
+
+    public static void main(String[] args) {
+        int total = lineTotal(2, 1200); // 2400。伝票を切らず、名前で呼ぶ
+
+        Order order = new Order();
+        order.status = "OPEN";
+        order.close(); // 切った伝票に対して呼ぶ
+        System.out.println(total);
+        System.out.println(order.status); // CLOSED
+    }
+}
+```
+
+| 呼び方                | たとえ                           |
+| --------------------- | -------------------------------- |
+| `lineTotal(2, 1200)`  | 伝票なしで使える手順（`static`） |
+| `order.close()`       | 「この伝票」を指定して呼ぶ手順   |
 
 :::tip[覚えておくこと]
 
