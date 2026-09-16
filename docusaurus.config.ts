@@ -4,10 +4,10 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
-const baseUrl = '/training/';
+const baseUrl = '/tech-map/';
 
 const config: Config = {
-  title: 'Training',
+  title: 'Tech Map',
   tagline: '技術を、体系的に。',
   favicon: 'img/favicon.ico',
 
@@ -43,7 +43,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   organizationName: 'skphotograph',
-  projectName: 'training',
+  projectName: 'tech-map',
 
   onBrokenLinks: 'throw',
 
@@ -63,7 +63,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/skphotograph/training/tree/main/',
+          editUrl: 'https://github.com/skphotograph/tech-map/tree/main/',
         },
         blog: false,
         theme: {
@@ -79,9 +79,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Training',
+      title: 'Tech Map',
       logo: {
-        alt: 'Training',
+        alt: 'Tech Map',
         src: 'img/logo.png',
         srcDark: 'img/logo.png',
       },
@@ -93,7 +93,7 @@ const config: Config = {
           label: '教材',
         },
         {
-          href: 'https://github.com/skphotograph/training',
+          href: 'https://github.com/skphotograph/tech-map',
           label: 'GitHub',
           position: 'right',
         },
@@ -116,12 +116,12 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/skphotograph/training',
+              href: 'https://github.com/skphotograph/tech-map',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Training. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Tech Map. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

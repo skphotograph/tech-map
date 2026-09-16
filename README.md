@@ -1,4 +1,4 @@
-# Training
+# Tech Map
 
 IT技術に関する学習教材を包括的にまとめたサイトです。[Docusaurus](https://docusaurus.io/) で構築しています。
 

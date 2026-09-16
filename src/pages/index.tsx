@@ -9,13 +9,13 @@ import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const visual = useBaseUrl('/img/training.png');
+  const visual = useBaseUrl('/img/tech-map.png');
   return (
     <header className={styles.hero}>
       <img className={styles.heroVisual} src={visual} alt="" />
       <div className={styles.heroScrim} aria-hidden="true" />
       <div className={clsx('container', styles.heroInner)}>
-        <p className={styles.brand}>Training</p>
+        <p className={styles.brand}>Tech Map</p>
         <Heading as="h1" className={styles.headline}>
           技術を、体系的に。
         </Heading>
@@ -39,7 +39,7 @@ function HomepageHeader() {
 export default function Home(): ReactNode {
   return (
     <Layout
-      title="Training"
+      title="Tech Map"
       description="IT技術に関する学習教材を包括的にまとめたサイト"
     >
       <HomepageHeader />
