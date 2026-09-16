@@ -1,0 +1,143 @@
+---
+sidebar_position: 11
+---
+
+# カプセル化と窓口メソッド
+
+[アクセス修飾子](./access-modifiers) で、フィールドを `private` にして外から直接触れないようにしました。  
+ここでは、**外に出す操作の付け方**——読む窓口、意味のある変更、内部だけの手順——を定番の形で押さえます。
+
+## このページで分かること
+
+- getter（値を読む窓口）の付け方
+- 状態を直接書き換えず、意味のある操作（`close()` など）を置く
+- 内部用の `private` メソッドで役割を分ける
+
+## getter と意味のある窓口
+
+`private` にしたあと、外から状態を知りたいとき **getter** を置きます。  
+命名は `get` + 欄名（先頭大文字）が慣習です。
+
+```java
+public class Order {
+    private String id;
+    private String status;
+
+    public Order(String id, String status) {
+        this.id = id;
+        this.status = status;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void close() {
+        status = "CLOSED";
+    }
+}
+```
+
+```java
+Order order = new Order("ORD-1", "OPEN");
+order.close();
+System.out.println(order.getStatus()); // CLOSED
+```
+
+成功例:
+
+```text
+CLOSED
+```
+
+- `getStatus()` / `getId()` … 今の値を **読む** だけ（欄を書き換えない）
+- `close()` … 「閉じる」という **意味のある操作** で状態を変える
+
+`setStatus("CLOSED")` のように setter を機械的に並べると、想定外の文字列が入りやすくなります。  
+**許可した操作**（`close` / `confirm` など）をメソッド名にした方が、読み手に意図が伝わります。
+
+:::tip[覚えておくこと]
+
+フィールドは `private`。  
+読むなら getter、変えるなら意味のある窓口メソッド。
+
+:::
+
+<QuizChoice
+title="窓口メソッド"
+options={[
+{id: 'a', label: 'status は OPEN のまま'},
+{id: 'b', label: 'status は CLOSED'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="b"
+explanation="close() が内部の status を CLOSED に書き換えるので、getStatus() は CLOSED を返します。"
+
+>
+
+  <div>次のコードの出力はどうなりますか。</div>
+  <pre className="language-java"><code>{`Order order = new Order("ORD-1", "OPEN");
+order.close();
+System.out.println(order.getStatus());`}</code></pre>
+</QuizChoice>
+
+## 内部だけの手順は `private`
+
+長い計算の一部は、外に見せない `private` メソッドに分けます。
+
+```java
+public class PriceLabel {
+    public String format(int amount) {
+        return prefix() + amount;
+    }
+
+    private String prefix() {
+        return "yen:";
+    }
+}
+```
+
+```java
+System.out.println(new PriceLabel().format(2400));
+```
+
+成功例:
+
+```text
+yen:2400
+```
+
+`format` が外の窓口、`prefix` は内側の部品——[アクセス修飾子](./access-modifiers) の続きです。
+
+<QuizChoice
+title="private フィールドへのアクセス"
+options={[
+{id: 'a', label: 'getStatus() で読める'},
+{id: 'b', label: 'order.status で直接読める'},
+{id: 'c', label: 'どちらも読めない'},
+]}
+answer="a"
+explanation="status は private なので外から直接触れません。public な getStatus() が窓口です。"
+
+>
+
+  <div>上の Order クラス（status は private、getStatus は public）について、外のクラスから状態を読む正しい方法はどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- すべてのフィールドに setter を機械的に付け、規則を外に漏らす
+- getter なのに内部状態を書き換えてしまう
+- `private` フィールドを別クラスから直接触ろうとする
+
+## まとめ / 次に学ぶとよいこと
+
+- getter は読む窓口。`get` + 欄名が慣習
+- 変更は `close()` のような意味のあるメソッドに寄せる
+- 内部の部品は `private` メソッドへ分ける
+
+次は [配列と List](./arrays-and-lists) で、同じ型の値を並べて扱います。

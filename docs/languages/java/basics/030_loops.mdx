@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # 繰り返し
@@ -81,13 +81,21 @@ explanation="i が 0, 1, 2 のとき条件 i &lt; 3 がはいなので、本体�
 合計のように、ループの外の変数を更新することもあります。
 
 ```java
-int[] lineTotals = {1200, 450, 800};
 int sum = 0;
-for (int i = 0; i < lineTotals.length; i++) {
-    sum += lineTotals[i];
+for (int i = 0; i < 3; i++) {
+    sum += 400;
 }
-System.out.println(sum); // 2450（マグカップ + ノート + ケーブル）
+System.out.println(sum); // 1200
 ```
+
+出力例:
+
+```text
+1200
+```
+
+「同じ加算を 3 回」——カウンタだけで合計できます。  
+一覧を添字で回す書き方は [配列と List](./arrays-and-lists) で扱います。
 
 ## `while`: 終わる条件が主役
 

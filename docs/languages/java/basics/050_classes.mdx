@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 9
 ---
 
 # クラスと new
@@ -15,7 +15,9 @@ sidebar_position: 7
 
 - クラス、フィールド、インスタンスメソッド
 - `new` で実体を作る
+- フィールドの初期値（デフォルト）
 - コンストラクタの入口
+- 参照型と `null` の入口
 
 ## クラスは「伝票のひな型」
 
@@ -131,6 +133,54 @@ Order order = new Order("ORD-1", "OPEN");
 引数名と欄の名前が同じとき、`id = id` だとどちら向きか分かりません。  
 `this.id = id` と書くと、「欄へ、引数の値を入れる」がはっきりします。
 
+## フィールドの初期値（デフォルト）
+
+`new` した直後、欄に値を入れていなくても **型ごとの初期値** が入ります。
+
+| 型        | 初期値（例） |
+| --------- | ------------ |
+| `int`     | `0`          |
+| `boolean` | `false`      |
+| `double`  | `0.0`        |
+| 参照型    | `null`       |
+
+```java
+class Counter {
+    int count;
+    String label;
+}
+
+Counter counter = new Counter();
+System.out.println(counter.count);  // 0
+System.out.println(counter.label);  // null
+```
+
+出力例:
+
+```text
+0
+null
+```
+
+ローカル変数（メソッドの `{ }` の中）には、初期値は自動では付きません。  
+フィールドだけが、この表のルールで始まります。
+
+## `null` は「行き先がまだ無い」
+
+`String` や自作クラスのような参照型の欄は、初期値が **`null`** です。  
+`null` の欄に `.` で触ると **NullPointerException**（NPE）になります。
+
+```java
+class Label {
+    String text;
+}
+
+Label label = new Label();
+// label.text.length(); // 実行時エラー（NPE）
+```
+
+[文字列の基本](./string-basics) でも触れたとおり、空文字 `""` と `null` は別物です。
+
 ## よくあるつまずき
 
 - `new` せずにフィールドへ触ろうとしてエラーになる
@@ -143,5 +193,6 @@ Order order = new Order("ORD-1", "OPEN");
 - クラスはフィールドとメソッドを持つひな型
 - `new` で実体を作り、名前を付けて扱う
 - コンストラクタで生成直後の欄をそろえられる
+- フィールドには型ごとの初期値がある（参照型は `null`）
 
 次は [アクセス修飾子](./access-modifiers) で、誰から見えるかを決めます。
