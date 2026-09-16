@@ -1,6 +1,6 @@
 # Tech Map
 
-IT技術に関する学習教材を包括的にまとめたサイトです。[Docusaurus](https://docusaurus.io/) で構築しています。
+自分が学んだ IT 技術の整理メモを公開するサイトです。[Docusaurus](https://docusaurus.io/) で構築しています。
 
 ## セットアップ
 

@@ -8,7 +8,7 @@ const baseUrl = '/';
 
 const config: Config = {
   title: 'Tech Map',
-  tagline: '技術を、体系的に。',
+  tagline: '学んだ道の、足跡。',
   favicon: 'img/favicon.ico',
 
   headTags: [
@@ -87,7 +87,7 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: '教材',
+          label: '記録',
         },
         {
           href: 'https://github.com/skphotograph/tech-map',
@@ -100,7 +100,7 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: '教材',
+          title: '記録',
           items: [
             {
               label: 'はじめに',
