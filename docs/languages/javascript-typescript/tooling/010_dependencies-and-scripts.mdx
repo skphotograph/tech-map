@@ -1,0 +1,142 @@
+---
+sidebar_position: 3
+---
+
+# 依存関係と scripts
+
+ライブラリを追加できても、それが本番実行に必要なのか、開発中だけ使うのかが曖昧だと、配布するものまで膨らみます。  
+さらに、各自が長いコマンドを手入力すると、オプションの違いが結果の違いになります。  
+依存関係の分類と npm scripts は、このふたつを整理します。
+
+## このページで分かること
+
+- `dependencies` と `devDependencies` の違い
+- パッケージを追加・削除する方法
+- `scripts` に開発手順をまとめる方法
+- script からプロジェクト内のコマンドを使える理由
+
+## 実行に必要な依存関係
+
+アプリケーションの動作中に読み込むパッケージは、`dependencies` に置きます。  
+次のコマンドは、例として `lodash-es` を追加します。
+
+```bash
+npm install lodash-es
+```
+
+成功すると、出力の末尾に追加したパッケージ数と監査結果が表示され、`package.json` に項目が増えます。
+
+```json
+{
+  "dependencies": {
+    "lodash-es": "^4.17.21"
+  }
+}
+```
+
+`npm install <パッケージ名>` は、既定で `dependencies` へ記録します。  
+アプリケーションのコードが `import` し、本番実行にも必要ならこちらです。
+
+## 開発時だけ必要な依存関係
+
+テストランナー、コード整形、型チェックなど、開発やビルドで使うツールは `devDependencies` に置きます。
+
+```bash
+npm install --save-dev prettier
+```
+
+短く `npm install -D prettier` とも書けます。  
+成功すると `package.json` に次のような項目が増えます。
+
+```json
+{
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
+```
+
+分類の基準は「開発者が使うか」ではなく、**配布先でアプリケーションを実行するときに必要か**です。  
+フロントエンドのビルドでコードへ取り込まれるライブラリなど、配置方法によって判断が変わる場合は、利用するビルドツールの規約も確認します。
+
+| 記録先            | 主な役割                     | 例                          |
+| ----------------- | ---------------------------- | --------------------------- |
+| `dependencies`    | アプリケーションの実行に必要 | HTTP クライアント、入力検証 |
+| `devDependencies` | 開発・テスト・ビルドで必要   | テスト、整形、型チェック    |
+
+<QuizChoice
+title="依存関係の分類"
+options={[
+{ id: 'a', label: 'dependencies' },
+{ id: 'b', label: 'devDependencies' },
+]}
+answer="b"
+explanation="コード整形ツールは通常、アプリケーションの実行中ではなく開発時に使うため devDependencies に置きます。"
+
+>
+
+ <div>コード整形ツールを開発時だけ使います。記録先として適切なのはどちらですか。</div>
+</QuizChoice>
+
+## scripts で手順に名前を付ける
+
+コマンドを毎回手入力せず、目的が分かる名前で `scripts` に登録します。
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test",
+    "format": "prettier --write .",
+    "check": "npm run test && npm run format"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
+```
+
+たとえばテストは次のように実行します。
+
+```bash
+npm run test
+```
+
+成功時には Node.js のテスト結果が表示され、失敗件数が `0` であることを確認できます。  
+`check` では `&&` の左側が成功したときだけ右側へ進むため、複数の確認を順番に実行できます。
+
+script の中では、`node_modules/.bin` に用意されたコマンドへ自動的にパスが通ります。  
+そのため、グローバルインストールに頼らず、プロジェクトが指定した `prettier` を `prettier --write .` と呼び出せます。
+
+:::tip[手順を scripts に寄せる]
+
+README や CI から同じ `npm run test` を呼べるようにすると、使用するツールとオプションのずれを減らせます。
+
+:::
+
+## パッケージを削除する
+
+不要になったパッケージは、記述だけを手で消さずに npm から削除します。
+
+```bash
+npm uninstall lodash-es
+```
+
+成功すると `package.json` と `package-lock.json` が更新され、不要なインストール内容も整理されます。
+
+## よくあるつまずき
+
+- すべてのパッケージを `dependencies` に入れ、実行環境へ不要なツールまで持ち込む
+- 開発時だけのツールを端末へグローバルインストールし、チームでバージョンがずれる
+- script と同じ長いコマンドを README や CI に重複して書く
+- `package.json` の依存だけを手で消し、ロックファイルやインストール済み内容と食い違わせる
+
+## まとめ / 次に学ぶとよいこと
+
+- 実行時に必要なものは `dependencies`、開発時だけなら `devDependencies` に置く
+- `npm install -D` は開発用の依存関係を追加する
+- `scripts` はチームで共有する手順に名前を付ける
+- script はプロジェクトにインストールしたツールを使う
+
+次は [ロックファイルとインストール](./lockfile-and-install) で、同じ依存関係を別の環境でも再現する方法を学びます。

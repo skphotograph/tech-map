@@ -1,0 +1,8 @@
+{
+  "label": "npm と開発ツール",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "languages/javascript-typescript/tooling/index"
+  }
+}

@@ -1,0 +1,350 @@
+---
+sidebar_position: 16
+---
+
+# async / await と fetch
+
+通信処理で `then` をいくつもつなぐと、どの処理がどの結果を受け取るのか追いにくくなることがあります。  
+Promise の成功結果を、通常の変数へ代入するような形で上から下へ読めるようにする構文が **async / await** です。Promise を別の仕組みに置き換えるのではなく、Promise の扱い方を読みやすくします。
+
+## このページで分かること
+
+- `async` 関数と戻り値の Promise の関係
+- `await` で Promise の完了を待つ方法
+- `try` / `catch` で非同期処理の失敗を扱う方法
+- `fetch` でレスポンスを受け取り、JSON を読み取る流れ
+- 直列処理と `Promise.all` の使い分け
+
+## `async` 関数は Promise を返す
+
+関数の前に `async` を付けると、その関数は必ず Promise を返します。  
+関数内で通常の値を `return` した場合、その値で成功する Promise として呼び出し元へ渡されます。
+
+```js
+async function getStatus() {
+  return 'OPEN';
+}
+
+getStatus().then((status) => {
+  console.log(status);
+});
+```
+
+実行結果です。
+
+```text
+OPEN
+```
+
+この例の `getStatus()` は、`Promise.resolve("OPEN")` と同じように扱えます。  
+`async` を付けても、呼び出したその場で文字列が直接返るわけではありません。
+
+<QuizChoice
+title="async 関数の戻り値"
+options={[
+{ id: 'a', label: '文字列 "READY" が直接返る' },
+{ id: 'b', label: '"READY" で成功する Promise が返る' },
+{ id: 'c', label: '必ず undefined が返る' },
+]}
+answer="b"
+explanation="async 関数が通常の値を return すると、その値で成功する Promise が返ります。"
+
+>
+
+  <div>次の <code>getState()</code> が返すものはどれですか。</div>
+  <pre className="language-js"><code>{`async function getState() {
+  return "READY";
+}`}</code></pre>
+</QuizChoice>
+
+## `await` で Promise の結果を受け取る
+
+`await` は、Promise が成功または失敗の状態になるまで、その `async` 関数の続きを待たせます。  
+成功すると、Promise が持つ結果を取り出せます。
+
+前のページの `then` と、`await` の対応を先に見てみましょう。  
+どちらも、同じ `loadOrder`（注文データを返す Promise を返す関数）の成功結果を受け取ります。
+
+```js
+function loadOrder() {
+  return Promise.resolve({
+    id: 'ORD-1',
+    status: 'OPEN',
+  });
+}
+
+// then で受け取る
+loadOrder().then((order) => {
+  console.log(order.id); // ORD-1
+});
+
+// await で受け取る（async 関数の中で使う）
+async function printOrder() {
+  const order = await loadOrder();
+  console.log(`${order.id}: ${order.status}`); // ORD-1: OPEN
+}
+
+printOrder();
+```
+
+`await` では結果を変数 `order` に入れ、その次の行へ進む形で読めます。
+
+実行結果の例です（`then` 側と `await` 側の両方が動くため、ふた行出ます）。
+
+```text
+ORD-1
+ORD-1: OPEN
+```
+
+`await` で止まるのは `printOrder` 関数の続きです。  
+JavaScript 全体が停止するわけではなく、呼び出し元は先へ進めます。  
+Promise の準備が整うと、イベントループの仕組みによって関数の続きが再開されます。
+
+```js
+async function showOrder() {
+  console.log('2: 読み込み開始');
+  const order = await Promise.resolve({ id: 'ORD-1' });
+  console.log(`4: ${order.id}`);
+}
+
+console.log('1: 呼び出し前');
+showOrder();
+console.log('3: 呼び出し後');
+```
+
+実行結果です。
+
+```text
+1: 呼び出し前
+2: 読み込み開始
+3: 呼び出し後
+4: ORD-1
+```
+
+:::tip[await が待たせる範囲]
+
+`await` は JavaScript 全体ではなく、その `async` 関数の続きを待たせます。
+
+:::
+
+## `try` / `catch` で失敗を扱う
+
+`await` している Promise が失敗すると、その場所で例外が発生したように扱われます。  
+同期処理と同じ形の `try` / `catch` で、失敗を受け止められます。
+
+```js
+function loadOrder(orderId) {
+  if (!orderId) {
+    return Promise.reject(new Error('注文 ID が必要です'));
+  }
+
+  return Promise.resolve({ id: orderId });
+}
+
+async function printOrder(orderId) {
+  try {
+    const order = await loadOrder(orderId);
+    console.log(order.id);
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+printOrder('');
+```
+
+実行結果です。
+
+```text
+注文 ID が必要です
+```
+
+`try` の中では成功時の流れを上から下へ書き、`catch` に失敗時の処理をまとめられます。  
+エラーをその関数で処理できない場合は、無理に握りつぶさず、呼び出し元へ失敗を伝える設計も必要です。
+
+<QuizChoice
+title="await した Promise の失敗"
+options={[
+{ id: 'a', label: 'catch ブロックへ進む' },
+{ id: 'b', label: 'message に Promise オブジェクトが入る' },
+{ id: 'c', label: '失敗は無視される' },
+]}
+answer="a"
+explanation="await した Promise が失敗すると例外として扱われ、対応する catch ブロックへ進みます。"
+
+>
+
+  <div>次のコードで <code>Promise.reject(...)</code> が実行されたあと、どこへ進みますか。</div>
+  <pre className="language-js"><code>{`async function run() {
+  try {
+    const message = await Promise.reject(new Error("失敗"));
+    console.log(message);
+  } catch (error) {
+    console.log(error.message);
+  }
+}`}</code></pre>
+</QuizChoice>
+
+## `fetch` でデータを取得する
+
+ブラウザや近年の Node.js では、HTTP 通信に `fetch` を使えます。  
+`fetch(url)` は、HTTP レスポンスを表す `Response` オブジェクトで成功する Promise を返します。
+
+```js
+async function getJson(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`HTTP エラー: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+async function printRequestUrl() {
+  try {
+    // 実際の開発では、利用する HTTP API の URL に置き換える
+    const data = await getJson('https://httpbin.org/get');
+    console.log(data.url);
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+printRequestUrl();
+```
+
+通信に成功した場合の出力例です。
+
+```text
+https://httpbin.org/get
+```
+
+ここでは 2 段階の待機があります。
+
+1. `await fetch(url)` でレスポンスの到着を待つ
+2. `await response.json()` でレスポンス本文を読み取り、JSON を JavaScript の値へ変換する
+
+`fetch` は、`404 Not Found` や `500 Internal Server Error` のレスポンスを受け取っても、通常は Promise を失敗させません。  
+そのため、`response.ok` を確認し、成功とみなせない HTTP ステータスなら自分でエラーを投げます。  
+一方、通信できなかった場合や URL が不正な場合は、`fetch` 自体が失敗します。
+
+<details>
+<summary>通信なしで流れを試す</summary>
+
+ネットワークへ接続できない環境では、Promise を返す小さな関数で同じ流れを確認できます。
+
+```js
+function getJson() {
+  return Promise.resolve({
+    id: 'ORD-1',
+    status: 'OPEN',
+  });
+}
+
+async function printOrder() {
+  const order = await getJson();
+  console.log(`${order.id}: ${order.status}`);
+}
+
+printOrder();
+```
+
+実行結果です。
+
+```text
+ORD-1: OPEN
+```
+
+</details>
+
+## 独立した処理は `Promise.all` で待つ
+
+次の処理が前の結果を必要とするなら、順番に `await` します。
+
+```js
+const user = await loadUser();
+const orders = await loadOrders(user.id);
+```
+
+`loadOrders` には `user.id` が必要なので、この 2 つは直列に進める必要があります。
+
+一方、互いの結果を使わない処理を順番に `await` すると、片方が終わるまで次を始められません。
+
+```js
+const user = await loadUser();
+const settings = await loadSettings();
+```
+
+独立した処理は、先に両方を開始して `Promise.all` でまとめて待てます。
+
+```js
+const [user, settings] = await Promise.all([loadUser(), loadSettings()]);
+
+console.log(user.name);
+console.log(settings.theme);
+```
+
+すべて成功すると、渡した順番どおりに結果を受け取ります。  
+どれかひとつが失敗すると `Promise.all` 全体が失敗するため、必要に応じて `try` / `catch` で扱います。
+
+:::tip[直列か並行かの判断]
+
+前の結果が必要なら順番に `await` し、互いに独立しているなら `Promise.all` でまとめて待ちます。
+
+:::
+
+## よくあるつまずき
+
+### `await` を付け忘れる
+
+`await` を付けないと、変数に入るのは完了後の値ではなく Promise です。
+
+```js
+async function printOrder() {
+  const order = loadOrder(); // await がない
+  console.log(order.id); // Promise に id はない
+}
+```
+
+結果を使う場所では、Promise を返す関数かどうかを確認します。
+
+```js
+async function printOrder() {
+  const order = await loadOrder();
+  console.log(order.id);
+}
+```
+
+ほかにも、次の点でつまずきやすくなります。
+
+- `async` 関数から通常の値が直接返ると思い、呼び出し側で Promise として扱わない
+- `await` が JavaScript 全体を停止させると思う
+- `fetch` が返す `Response` と、`response.json()` が返すデータを同じものだと考える
+- `response.ok` を確認せず、404 や 500 のレスポンスを成功として処理する
+- 独立した通信をひとつずつ待ち、不要な待ち時間を増やす
+
+<QuizChoice
+title="独立した処理の待ち方"
+options={[
+{ id: 'a', label: 'ひとつ目を await してから、ふたつ目を呼び出す' },
+{ id: 'b', label: '両方を Promise.all に渡して await する' },
+{ id: 'c', label: 'await を使わず、結果が来る前に処理を終える' },
+]}
+answer="b"
+explanation="互いに依存しない処理は同時に開始し、Promise.all で両方の完了を待てます。"
+
+>
+
+  <div><code>loadUser()</code> と <code>loadSettings()</code> が互いの結果を必要としない場合、適した待ち方はどれですか。</div>
+</QuizChoice>
+
+## まとめ / 次に学ぶとよいこと
+
+- `async` 関数は必ず Promise を返す
+- `await` は Promise の状態が決まるまで、その関数の続きを待たせる
+- Promise の失敗は `try` / `catch` で扱える
+- `fetch` ではレスポンスを待ち、`response.json()` で本文を読み取る
+- 依存する処理は直列に、独立した処理は `Promise.all` でまとめて待つ
+
+次は [Map と Set](./map-set) で、キーと値の対応や、重複しない値の集まりを扱います。

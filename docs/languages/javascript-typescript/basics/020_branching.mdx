@@ -1,0 +1,261 @@
+---
+sidebar_position: 4
+---
+
+# 条件分岐
+
+注文の金額や状態が違えば、必要な処理も変わります。  
+すべてのデータを同じ道へ流すのではなく、条件に応じて道を選ぶ仕組みが **条件分岐** です。
+
+[変数と計算](./variables-and-calculation) で扱った比較の結果を、ここでは処理の選択に使います。
+
+## このページで分かること
+
+- `if` / `else` と `else if` で処理を選ぶ方法
+- 三項演算子で二つの値から選ぶ方法
+- `switch` で決まった候補ごとに分ける方法
+- `&&` / `||` / `!` で条件を組み合わせる方法
+
+## `if` / `else` で二つの道を選ぶ
+
+「1000 円以上ならまとめ買い、それ以外なら通常」と分けてみます。
+
+```js
+const amount = 1200;
+
+if (amount >= 1000) {
+  console.log('bulk');
+} else {
+  console.log('normal');
+}
+```
+
+```text
+bulk
+```
+
+処理は次の順に進みます。
+
+1. `amount >= 1000` を評価する
+2. `true` なら `if` の `{ ... }` を実行する
+3. `false` なら `else` の `{ ... }` を実行する
+
+`else` は、「条件に当てはまらないとき」の処理が不要なら省略できます。
+
+```js
+if (amount >= 1000) {
+  console.log('bulk');
+}
+```
+
+:::tip[if の読み方]
+
+丸括弧の中が条件、波括弧の中が条件に当てはまったときの処理です。
+
+:::
+
+<QuizChoice
+title="if の出力"
+options={[
+{id: 'a', label: 'bulk'},
+{id: 'b', label: 'normal'},
+{id: 'c', label: '何も表示されない'},
+]}
+answer="b"
+explanation="amount は 800 なので、amount &gt;= 1000 は false です。else 側が実行されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。<pre className="language-js"><code>{`const amount = 800;
+if (amount >= 1000) {
+  console.log("bulk");
+} else {
+  console.log("normal");
+}`}</code></pre></div>
+</QuizChoice>
+
+## `else if` で枝を増やす
+
+候補が三つ以上あるときは、`else if` で条件を追加できます。
+
+```js
+const amount = 500;
+
+if (amount >= 1000) {
+  console.log('bulk');
+} else if (amount >= 100) {
+  console.log('normal');
+} else {
+  console.log('small');
+}
+```
+
+上から順に条件を調べ、**最初に `true` になった枝だけ** を実行します。  
+この例では `amount >= 100` が最初に当てはまるため、`normal` と表示されます。
+
+条件の順番には意味があります。  
+先に `amount >= 100` と書くと、1200 もそこで当てはまり、`amount >= 1000` の枝へ進めません。
+
+## 三項演算子で値を選ぶ
+
+条件によって二つの値から一つを選ぶだけなら、三項演算子で短く書けます。
+
+```js
+const amount = 1200;
+const label = amount >= 1000 ? 'bulk' : 'normal';
+
+console.log(label); // bulk
+```
+
+`条件 ? true のときの値 : false のときの値` と読みます。
+
+```js
+let label;
+if (amount >= 1000) {
+  label = 'bulk';
+} else {
+  label = 'normal';
+}
+```
+
+上の `if` / `else` と同じ値を選んでいます。  
+三項演算子を何段も重ねると読みづらくなるため、短い二択に使うのが目安です。
+
+<QuizChoice
+title="三項演算子"
+options={[
+{id: 'a', label: 'active'},
+{id: 'b', label: 'inactive'},
+{id: 'c', label: 'true'},
+]}
+answer="a"
+explanation="enabled は true なので、? の直後にある &quot;active&quot; が選ばれます。"
+
+>
+
+ <div>次の <code>label</code> に入る値はどれですか。<pre className="language-js"><code>{`const enabled = true;
+const label = enabled ? "active" : "inactive";`}</code></pre></div>
+</QuizChoice>
+
+## `switch` で決まった候補から選ぶ
+
+注文状態のように、決まった候補のどれと一致するかで分けるなら `switch` が使えます。
+
+```js
+const status = 'PAID';
+
+switch (status) {
+  case 'OPEN':
+    console.log('edit');
+    break;
+  case 'PAID':
+    console.log('ship');
+    break;
+  case 'CLOSED':
+    console.log('archive');
+    break;
+  default:
+    console.log('unknown');
+    break;
+}
+```
+
+```text
+ship
+```
+
+- `switch (status)` で比べる値を決める
+- 一致する `case` から処理を始める
+- `break` で `switch` を抜ける
+- どの `case` にも一致しなければ `default` を実行する
+
+:::warning[break を忘れない]
+
+`break` が無いと、一致した `case` の次の `case` も続けて実行されます。  
+意図的に続ける場合を除き、各枝の末尾に `break` を置きます。
+
+:::
+
+```js
+const code = 1;
+
+switch (code) {
+  case 1:
+    console.log('one');
+  case 2:
+    console.log('two');
+    break;
+}
+```
+
+この例では `one` と `two` の両方が表示されます。  
+候補の一致ではなく、「1000 以上」のような範囲で分けるなら `if` の方が読みやすくなります。
+
+## 条件を組み合わせる
+
+複数の条件を一緒に判断するときは、論理演算子を使います。
+
+| 演算子     | 意味                          |
+| ---------- | ----------------------------- |
+| `a && b`   | 両方が `true` なら `true`     |
+| `a \|\| b` | どちらかが `true` なら `true` |
+| `!a`       | `true` と `false` を反転する  |
+
+```js
+const amount = 1200;
+const member = true;
+
+if (amount >= 1000 && member) {
+  console.log('member-bulk');
+}
+
+const closed = false;
+if (!closed) {
+  console.log('accepting');
+}
+```
+
+条件が長くなったら、意味の分かる名前を付けると読みやすくなります。
+
+```js
+const isBulkMember = amount >= 1000 && member;
+
+if (isBulkMember) {
+  console.log('member-bulk');
+}
+```
+
+<QuizChoice
+title="条件の組み合わせ"
+options={[
+{id: 'a', label: 'true'},
+{id: 'b', label: 'false'},
+{id: 'c', label: '条件によって両方になる'},
+]}
+answer="b"
+explanation="&& は両方が true のときだけ true です。member が false なので、全体は false です。"
+
+>
+
+ <div>次の条件の結果はどれですか。<pre className="language-js"><code>{`const amount = 1200;
+const member = false;
+const result = amount >= 1000 && member;`}</code></pre></div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 比較する場所で `=` を使う（厳密な等価比較は `===`）
+- `else if` の広い条件を先に置き、後ろの枝へ進めなくする
+- 三項演算子を重ねて、条件と結果の対応を読みにくくする
+- `switch` の `break` を忘れ、次の `case` まで実行する
+- `&&` と `||` を取り違える
+
+## まとめ / 次に学ぶとよいこと
+
+- `if` / `else` は条件が `true` か `false` かで道を選ぶ
+- `else if` は上から調べ、最初に当てはまった枝だけを実行する
+- 三項演算子は短い二択の値選びに向く
+- `switch` は決まった候補との一致に向き、通常は `break` が必要
+- `&&` / `||` / `!` で条件を組み合わせられる
+
+次は [繰り返し](./loops) で、同じ処理を回数や条件に応じて繰り返します。

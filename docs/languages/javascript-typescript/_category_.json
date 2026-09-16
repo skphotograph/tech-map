@@ -1,0 +1,8 @@
+{
+  "label": "JavaScript / TypeScript",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "languages/javascript-typescript/index"
+  }
+}

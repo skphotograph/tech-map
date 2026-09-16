@@ -1,0 +1,277 @@
+---
+sidebar_position: 8
+---
+
+# 配列
+
+注文が 1 件なら、ひとつの変数で足ります。  
+10 件、100 件と増えたときに `order1`、`order2` と変数を増やしていては、数えることも順番に処理することも大変です。  
+JavaScript の **配列** を使うと、複数の値を順番付きの一覧として扱えます。
+
+このページでは、配列の作成と更新から、現場でよく読む `map` / `filter` / `find` までを扱います。
+
+## このページで分かること
+
+- 配列を作り、添字と `length` で要素を読む
+- `push` / `pop` で末尾を更新する
+- `for...of` で要素を順番に読む
+- `map` / `filter` / `find` を目的で選ぶ
+
+## 配列は「順番付きの一覧」
+
+配列は、値を決まった順番で並べたものです。  
+角括弧 `[]` の中に、要素をカンマで区切って書きます。
+
+```js
+const statuses = ['OPEN', 'PAID', 'SHIPPED'];
+```
+
+配列の位置を表す番号を **添字（インデックス）** と呼びます。  
+JavaScript の添字は `0` から始まります。
+
+```js
+console.log(statuses[0]); // OPEN
+console.log(statuses[1]); // PAID
+console.log(statuses[2]); // SHIPPED
+```
+
+先頭が `0`、2 番目が `1` です。  
+存在しない位置を読むと、エラーではなく `undefined` になります。
+
+```js
+console.log(statuses[3]); // undefined
+```
+
+要素数は `length` で分かります。
+
+```js
+console.log(statuses.length); // 3
+```
+
+最後の要素の添字は、要素数より 1 小さい `length - 1` です。
+
+```js
+console.log(statuses[statuses.length - 1]); // SHIPPED
+```
+
+:::tip[添字と要素数]
+
+要素数は `length`、有効な添字は `0` から `length - 1` までです。
+
+:::
+
+<QuizChoice
+title="配列の添字"
+options={[
+{ id: 'a', label: 'OPEN' },
+{ id: 'b', label: 'PAID' },
+{ id: 'c', label: 'SHIPPED' },
+]}
+answer="b"
+explanation="配列の添字は 0 から始まるため、statuses[1] は 2 番目の PAID です。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const statuses = ["OPEN", "PAID", "SHIPPED"];
+console.log(statuses[1]);`}</code></pre>
+</QuizChoice>
+
+## `push` と `pop` で末尾を更新する
+
+一覧の末尾へ要素を追加するには `push`、末尾から取り出して削除するには `pop` を使います。
+
+```js
+const orderIds = ['ORD-1001', 'ORD-1002'];
+
+const newLength = orderIds.push('ORD-1003');
+
+console.log(orderIds); // [ 'ORD-1001', 'ORD-1002', 'ORD-1003' ]
+console.log(newLength); // 3
+```
+
+`push` は元の配列を更新し、更新後の要素数を返します。
+
+```js
+const lastId = orderIds.pop();
+
+console.log(lastId); // ORD-1003
+console.log(orderIds); // [ 'ORD-1001', 'ORD-1002' ]
+```
+
+`pop` は元の配列から最後の要素を削除し、その要素を返します。  
+空の配列で `pop` すると、返り値は `undefined` です。
+
+`const` で宣言した配列でも、`push` や `pop` で中身を変更できます。  
+[オブジェクト](./objects) と同様に、`const` が防ぐのは変数そのものへの再代入です。
+
+## `for...of` で順番に読む
+
+すべての要素を先頭から処理したいときは、`for...of` が読みやすい書き方です。
+
+```js
+const orderIds = ['ORD-1001', 'ORD-1002', 'ORD-1003'];
+
+for (const orderId of orderIds) {
+  console.log(orderId);
+}
+```
+
+実行結果です。
+
+```text
+ORD-1001
+ORD-1002
+ORD-1003
+```
+
+`orderId` には、繰り返すたびに配列の要素がひとつずつ入ります。  
+添字そのものが必要でなければ、`for...of` を使うと「一覧の各要素を読む」という意図が伝わります。
+
+<QuizChoice
+title="push と length"
+options={[
+{ id: 'a', label: '2' },
+{ id: 'b', label: '3' },
+{ id: 'c', label: 'ORD-1003' },
+]}
+answer="b"
+explanation="push で要素がひとつ追加され、配列の要素数は 3 になります。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const orderIds = ["ORD-1001", "ORD-1002"];
+orderIds.push("ORD-1003");
+console.log(orderIds.length);`}</code></pre>
+</QuizChoice>
+
+## `map` は各要素を変換する
+
+配列の各要素を別の値へ変え、同じ要素数の新しい配列を作るときは `map` を使います。  
+たとえば、注文オブジェクトの一覧から注文番号だけを取り出せます。
+
+```js
+const orders = [
+  { id: 'ORD-1001', status: 'OPEN' },
+  { id: 'ORD-1002', status: 'PAID' },
+  { id: 'ORD-1003', status: 'OPEN' },
+];
+
+const orderIds = orders.map((order) => order.id);
+
+console.log(orderIds);
+// [ 'ORD-1001', 'ORD-1002', 'ORD-1003' ]
+```
+
+`map` に渡す関数は、各要素を受け取り、変換後の値を返します。  
+ここでは `order` を受け取り、`order.id` を返しています。
+
+`map` は元の配列を変更せず、新しい配列を返します。
+
+```js
+console.log(orders[0]);
+// { id: 'ORD-1001', status: 'OPEN' }
+```
+
+## `filter` は条件に合う要素へ絞る
+
+条件に合う要素だけを集めた新しい配列が欲しいときは `filter` を使います。
+
+```js
+const openOrders = orders.filter((order) => order.status === 'OPEN');
+
+console.log(openOrders);
+// [
+//   { id: 'ORD-1001', status: 'OPEN' },
+//   { id: 'ORD-1003', status: 'OPEN' }
+// ]
+```
+
+渡した関数が `true` を返す要素だけが、新しい配列に残ります。  
+該当する要素がなければ、空の配列 `[]` が返ります。
+
+## `find` は最初に一致した要素を探す
+
+条件に合う要素をひとつ探したいときは `find` を使います。  
+先頭から調べ、最初に一致した要素を返します。
+
+```js
+const paidOrder = orders.find((order) => order.status === 'PAID');
+
+console.log(paidOrder);
+// { id: 'ORD-1002', status: 'PAID' }
+```
+
+一致する要素がなければ、`undefined` が返ります。
+
+```js
+const canceledOrder = orders.find((order) => order.status === 'CANCELED');
+
+console.log(canceledOrder); // undefined
+```
+
+3 つの目的を並べると、選びやすくなります。
+
+| 欲しい結果                 | メソッド | 結果                           |
+| -------------------------- | -------- | ------------------------------ |
+| 全要素を別の形にする       | `map`    | 同じ要素数の新しい配列         |
+| 条件に合う要素だけ残す     | `filter` | 0 件以上の新しい配列           |
+| 条件に合う要素をひとつ探す | `find`   | 最初の要素、または `undefined` |
+
+:::tip[名前より目的で選ぶ]
+
+変換は `map`、絞り込みは `filter`、先頭の一致をひとつ探すなら `find` です。
+
+:::
+
+<QuizChoice
+title="配列メソッドの選択"
+options={[
+{ id: 'a', label: 'map' },
+{ id: 'b', label: 'filter' },
+{ id: 'c', label: 'find' },
+]}
+answer="b"
+explanation="条件に合うすべての要素を新しい配列として得たいので、filter を使います。"
+
+>
+
+  <div><code>status</code> が <code>OPEN</code> の注文を、すべて新しい配列に集めるメソッドはどれですか。</div>
+</QuizChoice>
+
+<QuizChoice
+title="map の結果"
+options={[
+{ id: 'a', label: "[2, 4, 6]" },
+{ id: 'b', label: "[1, 2, 3]" },
+{ id: 'c', label: "6" },
+]}
+answer="a"
+explanation="map は各要素に関数を適用した新しい配列を返します。元の numbers は変更されません。"
+
+>
+
+  <div>次のコードで <code>doubled</code> の値はどれですか。</div>
+  <pre className="language-js"><code>{`const numbers = [1, 2, 3];
+const doubled = numbers.map((number) => number * 2);`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 先頭の添字を `1` だと思い、ひとつ後ろの要素を読む
+- 最後の要素を `array[array.length]` で読もうとする
+- `push` の返り値を追加した要素だと思う
+- `find` の結果が見つからない場合の `undefined` を考慮しない
+- `map` の戻り値を受け取らず、元の配列が変わると思い込む
+- ひとつ探せばよい場面で `filter` を使い、配列と単一要素を混同する
+
+## まとめ / 次に学ぶとよいこと
+
+- 配列は順番付きの一覧で、添字は `0` から始まる
+- `length` は要素数、`push` / `pop` は末尾を更新する
+- 全要素を読むだけなら `for...of` が意図を表しやすい
+- `map` は変換、`filter` は絞り込み、`find` は先頭一致に使う
+- `map` と `filter` は、元の配列とは別の新しい配列を返す
+
+次は [モジュール](./modules) で、関数や値をファイルに分けて再利用します。

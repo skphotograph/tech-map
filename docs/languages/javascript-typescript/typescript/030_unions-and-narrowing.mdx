@@ -1,0 +1,228 @@
+---
+sidebar_position: 5
+---
+
+# ユニオン型と絞り込み
+
+検索欄には文字列を渡す一方、注文番号なら数値でも受け取りたい。  
+このように値が複数の型を取り得るとき、`any` に逃げると、それぞれの型で使える操作まで分からなくなります。
+
+**ユニオン型** を使うと候補を明示し、条件分岐の中で安全に型を絞れます。
+
+## このページで分かること
+
+- `string | number` のようなユニオン型
+- `typeof`、`in`、等価比較を使った型の絞り込み
+- 状態ごとに必要なデータを表す判別可能なユニオン
+- すべての候補で共通しない操作を、確認せずに使えない理由
+
+## `|` で複数の型を表す
+
+縦線 `|` で型をつなぐと、「いずれかの型」を表せます。
+
+```ts
+function formatId(id: string | number): string {
+  return String(id);
+}
+
+formatId('ORD-1001');
+formatId(1001);
+```
+
+`id` は `string` または `number` です。  
+ただし、どちらか分からないまま、片方にしかないメソッドは呼べません。
+
+```ts
+function normalizeId(id: string | number): string {
+  return id.toUpperCase(); // 型エラー
+}
+```
+
+`toUpperCase()` は文字列のメソッドであり、数値にはありません。  
+TypeScript は、数値が渡された場合に起きる実行時エラーを防ぐため、この操作を止めます。
+
+## `typeof` で型を絞る
+
+`if` と `typeof` で確認すると、分岐の内側では候補が絞られます。  
+この仕組みを **型の絞り込み**、または **ナローイング** と呼びます。
+
+```ts
+function normalizeId(id: string | number): string {
+  if (typeof id === 'string') {
+    return id.toUpperCase();
+  }
+
+  return `ORD-${id}`;
+}
+
+console.log(normalizeId('ord-1001')); // ORD-1001
+console.log(normalizeId(1002)); // ORD-1002
+```
+
+`if` の中では `id` が `string`、その分岐を通らなかったあとは `number` と判断されます。  
+候補ごとに正しい操作を選べるため、`any` を使う必要はありません。
+
+<QuizChoice
+title="typeof による絞り込み"
+options={[
+{ id: 'a', label: 'SHIP' },
+{ id: 'b', label: '4' },
+{ id: 'c', label: '型エラー' },
+]}
+answer="a"
+explanation="typeof value === 'string' の分岐内では value が string に絞られるため、toUpperCase() を呼び出せます。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-ts"><code>{`function format(value: string | number): string {
+  if (typeof value === "string") {
+    return value.toUpperCase();
+  }
+  return String(value);
+}
+
+console.log(format("ship"));`}</code></pre>
+</QuizChoice>
+
+## `in` でプロパティの有無を確認する
+
+オブジェクトの候補が複数ある場合は、`in` 演算子でプロパティの有無を確認できます。
+
+```ts
+type EmailContact = {
+  email: string;
+};
+
+type PhoneContact = {
+  phone: string;
+};
+
+function printContact(contact: EmailContact | PhoneContact): void {
+  if ('email' in contact) {
+    console.log(contact.email);
+  } else {
+    console.log(contact.phone);
+  }
+}
+```
+
+`'email' in contact` が真の分岐では `EmailContact`、それ以外では `PhoneContact` に絞られます。
+
+## 等価比較で候補を絞る
+
+特定の値との比較でも型を絞れます。  
+値がない場合を `null` で表す例を見てみましょう。
+
+```ts
+function printUserName(userName: string | null): void {
+  if (userName === null) {
+    console.log('名前は未登録です');
+    return;
+  }
+
+  console.log(userName.toUpperCase());
+}
+```
+
+`userName === null` の分岐で処理を終えているため、そのあとの `userName` は `string` です。  
+`===` を使った明示的な比較は、どの値を除外したのかも読み手に伝わります。
+
+<QuizChoice
+title="null を除いたあとの型"
+options={[
+{ id: 'a', label: 'string' },
+{ id: 'b', label: 'null' },
+{ id: 'c', label: 'any' },
+]}
+answer="a"
+explanation="null の場合は return で関数を抜けるため、そのあとの value は string に絞られます。"
+
+>
+
+  <div><code>console.log</code> の行で、<code>value</code> はどの型に絞られていますか。</div>
+  <pre className="language-ts"><code>{`function print(value: string | null): void {
+  if (value === null) {
+    return;
+  }
+  console.log(value.toUpperCase());
+}`}</code></pre>
+</QuizChoice>
+
+## 状態を判別できるユニオン
+
+注文の状態によって、必要なデータが変わることがあります。  
+発送前には予定日、発送済みなら追跡番号が必要、という関係を型で表してみます。
+
+```ts
+type PendingOrder = {
+  status: 'PENDING';
+  scheduledDate: string;
+};
+
+type ShippedOrder = {
+  status: 'SHIPPED';
+  trackingNumber: string;
+};
+
+type OrderStatus = PendingOrder | ShippedOrder;
+```
+
+両方の型にある `status` が、どちらの型かを見分ける目印です。  
+このような型を **判別可能なユニオン** と呼びます。
+
+```ts
+function describeOrder(order: OrderStatus): string {
+  if (order.status === 'PENDING') {
+    return `発送予定: ${order.scheduledDate}`;
+  }
+
+  return `追跡番号: ${order.trackingNumber}`;
+}
+```
+
+`status === 'PENDING'` の分岐では `PendingOrder` と分かるため、`scheduledDate` を使えます。  
+残りの分岐では `ShippedOrder` と分かり、`trackingNumber` を使えます。
+
+次のような矛盾したデータは代入できません。
+
+```ts
+const order: OrderStatus = {
+  status: 'SHIPPED',
+  scheduledDate: '2026-09-20',
+  // SHIPPED には trackingNumber が必要なため型エラー
+};
+```
+
+:::tip[状態とデータを組にする]
+
+状態を表すプロパティを共通の目印にすると、「この状態なら、このデータがある」という関係を TypeScript が確認できます。
+
+:::
+
+<QuizChoice
+title="状態による絞り込み"
+options={[
+{ id: 'a', label: 'scheduledDate' },
+{ id: 'b', label: 'trackingNumber' },
+{ id: 'c', label: 'どちらも使えない' },
+]}
+answer="b"
+explanation="status が SHIPPED なら order は ShippedOrder に絞られ、trackingNumber を安全に使えます。"
+
+>
+
+  <div><code>order.status === "SHIPPED"</code> の分岐で安全に使えるプロパティはどれですか。</div>
+  <pre className="language-ts"><code>{`type OrderStatus =
+  | { status: "PENDING"; scheduledDate: string }
+  | { status: "SHIPPED"; trackingNumber: string };`}</code></pre>
+</QuizChoice>
+
+## まとめ
+
+- `string | number` は、文字列または数値を表す
+- ユニオン型の値は、候補を絞ってから型ごとの操作を行う
+- `typeof`、`in`、`===` を使った `if` で型を絞れる
+- 共通の状態プロパティを持つ判別可能なユニオンは、状態と必要なデータを結び付ける
+
+次は [ジェネリクス](./generics) で、具体的な型を保ちながら処理を再利用する方法を学びます。

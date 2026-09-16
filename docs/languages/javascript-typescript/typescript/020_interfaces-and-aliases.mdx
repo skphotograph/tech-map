@@ -1,0 +1,233 @@
+---
+sidebar_position: 4
+---
+
+# interface と type alias
+
+注文を扱う関数ごとに `{ id: string; status: string; total: number }` と書いていると、項目を追加したときの修正箇所が増えていきます。  
+オブジェクトの形に名前を付けると、「このデータには何が必要か」を一か所で共有できます。
+
+TypeScript では、`interface` と `type` を使って型に名前を付けられます。
+
+## このページで分かること
+
+- `interface` でオブジェクトの形を表す方法
+- `type` で型に別名を付ける方法
+- 任意プロパティ `?` と `readonly`
+- `interface` と `type` の実務的な使い分け
+
+## `interface` でオブジェクトの形を決める
+
+`interface` は、オブジェクトが持つプロパティ名と、その型を表します。
+
+```ts
+interface Order {
+  id: string;
+  status: string;
+  total: number;
+}
+
+const order: Order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  total: 1200,
+};
+```
+
+`Order` は実際の値を作るものではなく、オブジェクトの形を表す型です。  
+必要なプロパティが足りない場合や、値の型が違う場合は型エラーになります。
+
+```ts
+const order: Order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  // total がないため型エラー
+};
+```
+
+関数の引数にも使えます。
+
+```ts
+function printOrder(order: Order): void {
+  console.log(`${order.id}: ${order.total}円`);
+}
+```
+
+関数を読む人は、`Order` の定義を見れば、渡すべきデータの形を確認できます。
+
+<QuizChoice
+title="interface に合う値"
+options={[
+{ id: 'a', label: '{ id: "ORD-1001", total: 1200 }' },
+{ id: 'b', label: '{ id: 1001, total: 1200 }' },
+{ id: 'c', label: '{ id: "ORD-1001", total: "1200" }' },
+]}
+answer="a"
+explanation="id は string、total は number が必要です。両方の条件を満たすのは選択肢 A です。"
+
+>
+
+  <div>次の <code>Order</code> 型に代入できるオブジェクトはどれですか。</div>
+  <pre className="language-ts"><code>{`interface Order {
+  id: string;
+  total: number;
+}`}</code></pre>
+</QuizChoice>
+
+## `type` で型に名前を付ける
+
+`type` は **型エイリアス** と呼ばれ、型に別名を付けます。  
+オブジェクトの形も表せます。
+
+```ts
+type Order = {
+  id: string;
+  status: string;
+  total: number;
+};
+```
+
+この `Order` は、先ほどの `interface Order` と同じように変数や関数の型として使えます。
+
+```ts
+const order: Order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  total: 1200,
+};
+```
+
+`type` は、オブジェクト以外の型にも名前を付けられます。  
+たとえば、決められた文字列だけを許す型は次のように書けます。
+
+```ts
+type OrderStatus = 'OPEN' | 'CLOSED';
+```
+
+`|` で複数候補を表す **ユニオン型** に名前を付けるときは、`type` を使います。  
+この例の `OrderStatus` には、文字列 `'OPEN'` または `'CLOSED'` だけを代入できます。
+
+## 任意のプロパティには `?`
+
+備考のように、ある注文には存在し、別の注文には存在しないプロパティがあります。  
+プロパティ名のあとに `?` を付けると、そのプロパティを任意にできます。
+
+```ts
+interface Order {
+  id: string;
+  total: number;
+  note?: string;
+}
+
+const orderWithNote: Order = {
+  id: 'ORD-1001',
+  total: 1200,
+  note: '置き配を希望',
+};
+
+const orderWithoutNote: Order = {
+  id: 'ORD-1002',
+  total: 800,
+};
+```
+
+`note` は存在しない可能性があるため、使う前に確認します。
+
+```ts
+function printNote(order: Order): void {
+  if (order.note !== undefined) {
+    console.log(order.note);
+  }
+}
+```
+
+必要なプロパティまで `?` にすると、不完全なデータを許してしまいます。  
+「なくても正しい項目」だけを任意にするのがポイントです。
+
+<QuizFill
+title="任意プロパティ"
+answer="?"
+explanation="プロパティ名のあとに ? を付けると、そのプロパティを省略できる型になります。"
+
+>
+
+  <div><code>note</code> を省略可能にするため、空欄に入る記号を入力してください。</div>
+  <pre className="language-ts"><code>{`interface Order {
+  id: string;
+  note__: string;
+}`}</code></pre>
+</QuizFill>
+
+## 書き換えさせないプロパティは `readonly`
+
+注文 ID のように、作成後に変えないプロパティには `readonly` を付けられます。
+
+```ts
+interface Order {
+  readonly id: string;
+  status: string;
+}
+
+const order: Order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+};
+
+order.status = 'CLOSED'; // 変更できる
+order.id = 'ORD-2001'; // 型エラー
+```
+
+`readonly` は、TypeScript の型チェックで代入を防ぎます。  
+JavaScript へ変換したあとの実行時に、オブジェクトを自動で凍結する機能ではありません。
+
+<details>
+<summary>入れ子のオブジェクトと readonly</summary>
+
+`readonly` が直接防ぐのは、そのプロパティへの再代入です。  
+プロパティの中に別のオブジェクトがある場合、その内側まで自動で読み取り専用にはなりません。
+
+```ts
+interface Order {
+  readonly shipping: {
+    city: string;
+  };
+}
+
+const order: Order = {
+  shipping: { city: 'Yokohama' },
+};
+
+order.shipping.city = 'Tokyo'; // 内側の city は変更できる
+```
+
+内側も変更させたくない場合は、内側のプロパティにも `readonly` を付けます。
+
+</details>
+
+## `interface` と `type` のどちらを使うか
+
+オブジェクトの形を表すだけなら、どちらも実用的です。  
+チームですでに決まりがある場合は、その方針に合わせるとコードを読みやすくできます。
+
+迷ったときは、次の基準から始められます。
+
+- オブジェクトの形を表すなら `interface`
+- ユニオン型など、オブジェクト以外も組み合わせるなら `type`
+
+どちらか一方だけが常に正しいわけではありません。  
+型の目的が名前から伝わり、同じコード内で使い方がそろっていることが大切です。
+
+:::tip[形に名前を付ける目的]
+
+`interface` や `type` は型注釈を短くするだけでなく、データに必要な項目を関数どうしで共有するために使います。
+
+:::
+
+## まとめ
+
+- `interface` はオブジェクトのプロパティ名と型を表せる
+- `type` でもオブジェクトの形を表せ、ユニオン型にも名前を付けられる
+- `?` は省略可能なプロパティ、`readonly` は再代入させないプロパティを表す
+- オブジェクトなら両方使えるため、チームの方針と型の用途で選ぶ
+
+次は [ユニオン型と絞り込み](./unions-and-narrowing) で、複数候補の型を安全に扱います。

@@ -1,0 +1,276 @@
+---
+sidebar_position: 7
+---
+
+# オブジェクト
+
+注文番号は `ORD-1001`、状態は `OPEN`、担当者は `Aiko`。  
+ばらばらの変数で持つと、どの値が同じ注文のものか見失いやすくなります。  
+JavaScript の **オブジェクト** を使うと、関係する値に名前を付け、ひとまとまりとして扱えます。
+
+このページでは、プロパティの読み書きから、メソッドと分割代入までを押さえます。
+
+## このページで分かること
+
+- オブジェクトリテラルで関連する値をまとめる
+- `.` と `["キー"]` でプロパティへアクセスする
+- オブジェクトの中にオブジェクトや関数を持たせる
+- `const` とプロパティの書き換えの関係を見分ける
+- 分割代入で必要な値を取り出す
+
+## オブジェクトは「名前付きの欄を持つカード」
+
+オブジェクトは、関連する値を **プロパティ** という名前付きの欄にまとめたものです。  
+注文カードに「注文番号」「状態」という欄があり、それぞれに値が書かれていると考えると読みやすくなります。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+};
+```
+
+`{ ... }` でオブジェクトを作る書き方を **オブジェクトリテラル** と呼びます。  
+`id` と `status` がプロパティ名、その右側がプロパティの値です。
+
+```js
+console.log(order.id); // ORD-1001
+console.log(order.status); // OPEN
+```
+
+`.` の左側にオブジェクト、右側にプロパティ名を書きます。  
+普段はこの **ドット記法** が短く、読みやすい書き方です。
+
+プロパティ名を文字列で指定したいときは、角括弧を使います。
+
+```js
+console.log(order['id']); // ORD-1001
+
+const key = 'status';
+console.log(order[key]); // OPEN
+```
+
+`order.key` は `key` という名前のプロパティを探します。  
+変数 `key` の中身をプロパティ名として使う場合は、`order[key]` と書くのがポイントです。
+
+:::tip[使い分け]
+
+名前がコードを書く時点で決まっているなら `order.id`、変数から名前を選ぶなら `order[key]` を使います。
+
+:::
+
+<QuizChoice
+title="プロパティへのアクセス"
+options={[
+{ id: 'a', label: 'OPEN' },
+{ id: 'b', label: 'status' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="a"
+explanation="角括弧の中にある変数 key の値は status です。order.status の値である OPEN が表示されます。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const order = {
+  id: "ORD-1001",
+  status: "OPEN",
+};
+
+const key = "status";
+console.log(order[key]);`}</code></pre>
+</QuizChoice>
+
+## オブジェクトの中にオブジェクトを入れる
+
+プロパティの値には、文字列や数値だけでなく、別のオブジェクトも置けます。  
+注文と配送先のように、ひとまとまりの中にさらにまとまりがある場合に使います。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  shippingAddress: {
+    city: 'Yokohama',
+    postalCode: '220-0001',
+  },
+};
+
+console.log(order.shippingAddress.city); // Yokohama
+```
+
+外側から順に `.` でたどります。  
+深く重ねすぎると読み書きが難しくなるため、まずはデータの関係が自然に見える範囲でまとめましょう。
+
+## メソッドはオブジェクトが持つ関数
+
+[関数](./functions) もプロパティの値にできます。  
+オブジェクトが持つ関数は **メソッド** と呼ばれます。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+  close() {
+    this.status = 'CLOSED';
+  },
+};
+
+order.close();
+console.log(order.status); // CLOSED
+```
+
+`order.close()` は、「`order` が持つ `close` を、`order` に対する操作として呼び出す」と読めます。  
+`close() { ... }` の形で定義したメソッドを `order.close()` と呼ぶと、メソッド内の `this` は `.` の左側にある `order` を指します。  
+そのため、この例の `this.status = "CLOSED"` は `order.status = "CLOSED"` と同じ対象を書き換えます。
+
+:::tip[`this` を追う手順]
+
+このページのメソッドでは、呼び出しの `.` の左側を確認します。`order.close()` なら、`this` は `order` です。
+
+:::
+
+<QuizChoice
+title="メソッドによる更新"
+options={[
+{ id: 'a', label: 'OPEN' },
+{ id: 'b', label: 'CLOSED' },
+{ id: 'c', label: 'close' },
+]}
+answer="b"
+explanation="order.close() の中で this は order を指し、this.status が CLOSED に書き換わります。"
+
+>
+
+  <div>次のコードの最後に表示される値はどれですか。</div>
+  <pre className="language-js"><code>{`const order = {
+  status: "OPEN",
+  close() {
+    this.status = "CLOSED";
+  },
+};
+
+order.close();
+console.log(order.status);`}</code></pre>
+</QuizChoice>
+
+## `const` でもプロパティは書き換えられる
+
+`const` で宣言した変数には、別の値を代入し直せません。  
+ただし、その変数が指しているオブジェクトのプロパティは書き換えられます。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+};
+
+order.status = 'CLOSED'; // プロパティの書き換えはできる
+console.log(order.status); // CLOSED
+
+order = { id: 'ORD-2001', status: 'OPEN' }; // TypeError
+```
+
+上のふたつは、変えている対象が異なります。
+
+- `order.status = "CLOSED"` は、同じオブジェクトの欄を書き換える
+- `order = ...` は、変数 `order` に別のオブジェクトを代入し直す
+
+`const` が固定するのは **変数 `order` の代入先** です。  
+オブジェクトの中身まで自動的に変更禁止になるわけではありません。
+
+:::tip[`const` の読み方]
+
+「中身がすべて不変」ではなく、「この変数には別の値を代入し直さない」と捉えます。
+
+:::
+
+## 分割代入で必要な欄を取り出す
+
+何度も `order.id` と書く代わりに、必要なプロパティを同名の変数へ取り出せます。  
+これを **オブジェクトの分割代入** と呼びます。
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+};
+
+const { id, status } = order;
+
+console.log(id); // ORD-1001
+console.log(status); // OPEN
+```
+
+`const { id } = order` は、`order.id` を変数 `id` に取り出す書き方です。  
+関数へ渡されたオブジェクトから必要な値だけ読む場面でも、よく使われます。
+
+```js
+function printOrder(order) {
+  const { id, status } = order;
+  console.log(`${id}: ${status}`);
+}
+
+printOrder({ id: 'ORD-1001', status: 'OPEN' });
+// ORD-1001: OPEN
+```
+
+<QuizChoice
+title="const とオブジェクト"
+options={[
+{ id: 'a', label: 'プロパティの書き換えでエラーになる' },
+{ id: 'b', label: 'CLOSED と表示される' },
+{ id: 'c', label: 'OPEN と表示される' },
+]}
+answer="b"
+explanation="const は変数への再代入を防ぎますが、オブジェクトのプロパティは書き換えられます。"
+
+>
+
+  <div>次のコードの結果はどれですか。</div>
+  <pre className="language-js"><code>{`const order = {
+  status: "OPEN",
+};
+
+order.status = "CLOSED";
+const { status } = order;
+console.log(status);`}</code></pre>
+</QuizChoice>
+
+<details>
+<summary>プロパティ名の一覧を得る `Object.keys`</summary>
+
+`Object.keys` は、オブジェクトに通常の書き方で追加したプロパティ名を、順番付きの一覧として返します。  
+（一覧の詳しい扱い方は次の [配列](./arrays) で扱います。）
+
+```js
+const order = {
+  id: 'ORD-1001',
+  status: 'OPEN',
+};
+
+const keys = Object.keys(order);
+console.log(keys); // [ 'id', 'status' ]
+```
+
+どんな項目が入っているかを調べるときに使えます。
+
+</details>
+
+## よくあるつまずき
+
+- 変数に入ったプロパティ名を `order.key` で読もうとする
+- 存在しないプロパティを読んだ結果の `undefined` を、そのまま使う
+- `const` ならオブジェクトの中身も変更できないと思い込む
+- メソッドを `order.close` と書いただけで、呼び出したつもりになる
+- 深い入れ子を一度に作り、どの階層を読んでいるか分からなくなる
+
+## まとめ / 次に学ぶとよいこと
+
+- オブジェクトは、関連する値を名前付きのプロパティにまとめる
+- 固定名は `order.id`、変数で選ぶ名前は `order[key]` で読む
+- オブジェクトが持つ関数をメソッドと呼び、`this` はここでは「このオブジェクト」と読む
+- `const` でもプロパティは更新できるが、変数そのものへの再代入はできない
+- `const { id } = order` で必要なプロパティを取り出せる
+
+次は [配列](./arrays) で、複数の値を順番付きで扱います。

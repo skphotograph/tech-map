@@ -1,0 +1,464 @@
+---
+sidebar_position: 18
+---
+
+# 現代的な構文
+
+ほかの人が書いた JavaScript を開くと、`const { name } = user` や `options.timeout ?? 3000` のような記号が続き、処理そのものより読み方に時間がかかることがあります。  
+分割代入、スプレッド構文、オプショナルチェーン、Null 合体演算子は、現在の JavaScript で日常的に使われる道具です。
+
+このページでは、長いコードを短くすることではなく、データの取り出し方や既定値の意図を明確にすることを目指します。
+
+前のページでは、Set を配列へ変換する `[...tags]` を使いました。  
+ここでは同じ `...` を含め、既存コードで頻繁に出会う構文を用途ごとに整理します。
+
+## このページで分かること
+
+- オブジェクトと配列の分割代入
+- スプレッド構文で配列やオブジェクトを展開する方法
+- レスト構文で残りの値をまとめる方法
+- オプショナルチェーン `?.` で安全にプロパティを読む方法
+- Null 合体演算子 `??` と論理和 `||` の違い
+
+## オブジェクトの分割代入
+
+オブジェクトから複数のプロパティを取り出すとき、ひとつずつ変数へ代入できます。
+
+```js
+const user = {
+  id: 'USER-1',
+  name: 'Aiko',
+  role: 'admin',
+};
+
+const id = user.id;
+const name = user.name;
+
+console.log(`${id}: ${name}`);
+```
+
+**分割代入**を使うと、必要なプロパティ名を左辺に並べて取り出せます。
+
+```js
+const user = {
+  id: 'USER-1',
+  name: 'Aiko',
+  role: 'admin',
+};
+
+const { id, name } = user;
+
+console.log(`${id}: ${name}`);
+```
+
+実行結果です。
+
+```text
+USER-1: Aiko
+```
+
+左辺の変数名は、基本的にプロパティ名と同じです。  
+別の変数名を使う場合は、`プロパティ名: 変数名` と書きます。
+
+```js
+const { name: userName } = user;
+
+console.log(userName); // Aiko
+```
+
+プロパティが存在しない場合に備えて、既定値も指定できます。
+
+```js
+const settings = {
+  theme: 'dark',
+};
+
+const { theme, language = 'ja' } = settings;
+
+console.log(theme); // dark
+console.log(language); // ja
+```
+
+既定値が使われるのは、取り出した値が `undefined` の場合です。
+
+<QuizChoice
+title="オブジェクトの分割代入"
+options={[
+{ id: 'a', label: 'Aiko' },
+{ id: 'b', label: 'USER-1' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="a"
+explanation="name プロパティを userName という変数名で取り出しているため、Aiko が出力されます。"
+
+>
+
+  <div>次のコードが出力する値はどれですか。</div>
+  <pre className="language-js"><code>{`const user = {
+  id: "USER-1",
+  name: "Aiko",
+};
+
+const { name: userName } = user;
+console.log(userName);`}</code></pre>
+</QuizChoice>
+
+## 配列の分割代入
+
+配列の分割代入では、位置に沿って値を取り出します。
+
+```js
+const coordinates = [35.68, 139.76];
+const [latitude, longitude] = coordinates;
+
+console.log(latitude); // 35.68
+console.log(longitude); // 139.76
+```
+
+オブジェクトではプロパティ名が対応を決めましたが、配列では並び順が対応を決めます。  
+途中の値が不要なら、空欄にして飛ばせます。
+
+```js
+const colors = ['red', 'green', 'blue'];
+const [first, , third] = colors;
+
+console.log(first); // red
+console.log(third); // blue
+```
+
+関数が配列を返す場合も、結果に名前を付けながら受け取れます。
+
+```js
+function getRange() {
+  return [10, 20];
+}
+
+const [min, max] = getRange();
+console.log(`${min} - ${max}`);
+```
+
+実行結果です。
+
+```text
+10 - 20
+```
+
+## スプレッド構文で値を展開する
+
+`...` を配列やオブジェクトの中で使うと、要素やプロパティをその場所へ展開できます。  
+この使い方を **スプレッド構文** と呼びます。
+
+### 配列を展開する
+
+配列を結合した新しい配列を作れます。
+
+```js
+const basicRoles = ['viewer', 'editor'];
+const allRoles = [...basicRoles, 'admin'];
+
+console.log(allRoles);
+```
+
+実行結果です。
+
+```text
+[ 'viewer', 'editor', 'admin' ]
+```
+
+`[...basicRoles]` は新しい配列です。  
+ただし、配列の中にオブジェクトがある場合、そのオブジェクトまで複製されるわけではありません。
+
+### オブジェクトを展開する
+
+既存のオブジェクトをもとに、一部のプロパティを変えた新しいオブジェクトを作れます。
+
+```js
+const user = {
+  id: 'USER-1',
+  name: 'Aiko',
+  status: 'inactive',
+};
+
+const activeUser = {
+  ...user,
+  status: 'active',
+};
+
+console.log(activeUser);
+```
+
+実行結果です。
+
+```text
+{ id: 'USER-1', name: 'Aiko', status: 'active' }
+```
+
+同じプロパティが複数回現れた場合は、後ろにある値が使われます。  
+この例では `...user` のあとに `status` を置いたため、`'active'` で上書きされます。
+
+:::tip[展開する順番]
+
+スプレッド構文で同じプロパティが重なった場合、後ろに書いた値が残ります。
+
+:::
+
+<QuizChoice
+title="オブジェクトの展開順序"
+options={[
+{ id: 'a', label: 'draft' },
+{ id: 'b', label: 'published' },
+{ id: 'c', label: '両方の値が配列になる' },
+]}
+answer="b"
+explanation="同じ status プロパティでは後ろに書いた値が使われるため、published になります。"
+
+>
+
+  <div>次のコードで <code>updated.status</code> はどの値になりますか。</div>
+  <pre className="language-js"><code>{`const article = {
+  id: 1,
+  status: "draft",
+};
+
+const updated = {
+...article,
+status: "published",
+};`}</code></pre>
+</QuizChoice>
+
+## レスト構文で残りをまとめる
+
+同じ `...` を分割代入や関数の引数で使うと、残りの値をひとつにまとめます。  
+この使い方を **レスト構文** と呼びます。
+
+配列では、取り出していない残りの要素を配列にできます。
+
+```js
+const scores = [80, 75, 90, 85];
+const [first, ...remaining] = scores;
+
+console.log(first); // 80
+console.log(remaining); // [75, 90, 85]
+```
+
+オブジェクトでは、取り出していないプロパティを新しいオブジェクトにまとめます。
+
+```js
+const user = {
+  id: 'USER-1',
+  name: 'Aiko',
+  passwordHash: 'hidden-value',
+};
+
+const { passwordHash, ...publicUser } = user;
+
+console.log(publicUser);
+```
+
+実行結果です。
+
+```text
+{ id: 'USER-1', name: 'Aiko' }
+```
+
+関数の仮引数に使うと、渡された残りの引数を配列として受け取れます。
+
+```js
+function sum(...numbers) {
+  let total = 0;
+  for (const number of numbers) {
+    total += number;
+  }
+  return total;
+}
+
+console.log(sum(10, 20, 30)); // 60
+```
+
+スプレッドは「広げる」、レストは「残りをまとめる」と考えると、同じ `...` を読み分けやすくなります。
+
+<QuizFill
+title="残りの要素を受け取る"
+answer="..."
+explanation="分割代入で残りの要素を配列へまとめるには、変数名の前に ... を付けます。"
+
+>
+
+  <div>空欄に入る記号を書いてください。</div>
+  <pre className="language-js"><code>{`const values = [1, 2, 3];
+const [first, ___rest] = values;`}</code></pre>
+</QuizFill>
+
+## オプショナルチェーン `?.`
+
+HTTP API の結果などでは、途中のプロパティが存在しないことがあります。
+
+```js
+const user = {
+  name: 'Aiko',
+};
+
+console.log(user.profile.address.city);
+```
+
+この例では `profile` が `undefined` なので、その先の `address` を読もうとしてエラーになります。  
+**オプショナルチェーン** `?.` を使うと、左側が `null` または `undefined` なら、その先を読まずに `undefined` を返します。
+
+```js
+const user = {
+  name: 'Aiko',
+};
+
+const city = user.profile?.address?.city;
+
+console.log(city); // undefined
+```
+
+プロパティがある場合は、通常どおり値を取得します。
+
+```js
+const user = {
+  profile: {
+    address: {
+      city: 'Tokyo',
+    },
+  },
+};
+
+console.log(user.profile?.address?.city); // Tokyo
+```
+
+`?.` は「存在しなくてもよい」と設計された箇所に使います。  
+本来必須のデータに無差別に付けると、データ不備を見逃して原因を追いにくくなることがあります。
+
+:::tip[オプショナルチェーンの役割]
+
+`?.` は左側が `null` または `undefined` のときだけ処理を止め、`undefined` を返します。
+
+:::
+
+## Null 合体演算子 `??`
+
+値が `null` または `undefined` の場合に既定値を使うには、**Null 合体演算子** `??` を使えます。
+
+```js
+const user = {
+  nickname: null,
+};
+
+const displayName = user.nickname ?? '名前未設定';
+
+console.log(displayName); // 名前未設定
+```
+
+オプショナルチェーンと組み合わせることもできます。
+
+```js
+const user = {};
+const city = user.profile?.address?.city ?? '住所未設定';
+
+console.log(city); // 住所未設定
+```
+
+### `??` と `||` の違い
+
+`||` は、左側が falsy な値なら右側を返します。  
+falsy には `false`、`0`、空文字列 `''`、`null`、`undefined`、`NaN` が含まれます。
+
+`??` が右側を返すのは、左側が `null` または `undefined` の場合だけです。
+
+```js
+const quantity = 0;
+const input = '';
+
+console.log(quantity || 10); // 10
+console.log(quantity ?? 10); // 0
+
+console.log(input || '未入力'); // 未入力
+console.log(input ?? '未入力'); // ''
+```
+
+`0` や空文字列を有効な入力として残したいなら、`??` が意図に合います。  
+一方、「空文字列も未入力として扱う」のように、すべての falsy な値を既定値へ置き換えたい場合は `||` を使えます。
+
+<QuizChoice
+title="0 を残す既定値"
+options={[
+{ id: 'a', label: '10' },
+{ id: 'b', label: '0' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="b"
+explanation="?? は左側が null または undefined の場合だけ右側を使うため、0 はそのまま残ります。"
+
+>
+
+  <div>次のコードが出力する値はどれですか。</div>
+  <pre className="language-js"><code>{`const retryCount = 0;
+const count = retryCount ?? 10;
+
+console.log(count);`}</code></pre>
+</QuizChoice>
+
+## 日々のコードで組み合わせる
+
+これらの構文は、ひとつずつ使うだけでなく、データを受け取って整える場面で組み合わせます。
+
+```js
+function createSummary(order) {
+  const { id, customer, items = [] } = order;
+
+  const customerName = customer?.name ?? 'ゲスト';
+  const itemNames = items.map(({ name }) => name);
+
+  return {
+    id,
+    customerName,
+    itemNames: [...itemNames],
+  };
+}
+
+const summary = createSummary({
+  id: 'ORD-1',
+  customer: null,
+  items: [
+    { name: 'book', price: 1200 },
+    { name: 'pen', price: 200 },
+  ],
+});
+
+console.log(summary);
+```
+
+実行結果です。
+
+```text
+{
+  id: 'ORD-1',
+  customerName: 'ゲスト',
+  itemNames: [ 'book', 'pen' ]
+}
+```
+
+分割代入で必要な値を取り出し、`?.` で存在しない可能性を扱い、`??` で既定値を決めています。  
+構文を増やすこと自体が目的ではありません。  
+何を取り出し、何を残し、どの値を欠損として扱うかが読み手に伝わる形を選びます。
+
+## よくあるつまずき
+
+- 配列の分割代入をプロパティ名で決まるものと考え、位置の対応を見落とす
+- オブジェクトのスプレッドで、後ろのプロパティが前を上書きする順序を間違える
+- スプレッド構文が入れ子のオブジェクトまで複製すると考える
+- `?.` を必須データにも付け、データ不備を `undefined` として見逃す
+- `||` で既定値を設定し、有効な `0` や空文字列まで置き換える
+- `??` が `false` や `0` も欠損として扱うと思う
+
+## まとめ / 次に学ぶとよいこと
+
+- 分割代入は、オブジェクトではプロパティ名、配列では位置に沿って値を取り出す
+- スプレッド構文は値を展開し、レスト構文は残りをまとめる
+- オブジェクトの展開では、後ろに書いたプロパティが優先される
+- `?.` は左側が `null` または `undefined` なら、その先を読まずに `undefined` を返す
+- `??` は `null` と `undefined` だけを欠損として扱い、`0` や空文字列を残す
+
+次は [TypeScript](../typescript/) へ進み、JavaScript の値へ型を付けて、間違いを実行前に見つけやすくする方法を学びます。

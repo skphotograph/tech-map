@@ -1,0 +1,202 @@
+---
+sidebar_position: 3
+---
+
+# 基本の型
+
+TypeScript を使い始めると、すべての変数に型を書きたくなるかもしれません。  
+けれども、型は多ければよいわけではありません。必要な場所には明示し、値から分かる場所は TypeScript に任せると、読みやすさと安全性を両立できます。
+
+## このページで分かること
+
+- `string`、`number`、`boolean` の型注釈
+- 配列と、値を返さない関数の型
+- 値から型を判断する型推論
+- `any` を避け、外部から来た不明な値を `unknown` で受ける考え方
+
+## 型注釈を書く
+
+変数名のあとに `: 型` を書く部分を **型注釈** と呼びます。
+
+```ts
+const userName: string = 'Aiko';
+const itemCount: number = 3;
+const isPaid: boolean = true;
+```
+
+基本となる型は次のとおりです。
+
+| 型        | 表す値     | 例                 |
+| --------- | ---------- | ------------------ |
+| `string`  | 文字列     | `'Aiko'`, `'OPEN'` |
+| `number`  | 整数と小数 | `3`, `19.8`        |
+| `boolean` | 真か偽か   | `true`, `false`    |
+
+JavaScript と同じく、TypeScript の `number` は整数と小数を分けません。  
+型と異なる値を代入すると、コンパイル時に指摘されます。
+
+```ts
+let itemCount: number = 3;
+itemCount = 'three'; // 型エラー
+```
+
+関数では、引数のあとに引数の型、丸括弧のあとに戻り値の型を書けます。
+
+```ts
+function calculateTotal(price: number, quantity: number): number {
+  return price * quantity;
+}
+```
+
+型注釈は「この関数へ何を渡し、何が返るか」という約束になります。
+
+<QuizChoice
+title="関数の型"
+options={[
+{ id: 'a', label: '文字列の "600"' },
+{ id: 'b', label: '数値の 600' },
+{ id: 'c', label: '真偽値の true' },
+]}
+answer="b"
+explanation="price と quantity は number で、掛け算の結果も戻り値の型どおり number になります。"
+
+>
+
+  <div>次の関数が返す値はどれですか。</div>
+  <pre className="language-ts"><code>{`function calculateTotal(
+  price: number,
+  quantity: number
+): number {
+  return price * quantity;
+}
+
+calculateTotal(200, 3);`}</code></pre>
+</QuizChoice>
+
+## 配列には要素の型を書く
+
+文字列の配列は `string[]`、数値の配列は `number[]` と書きます。
+
+```ts
+const userNames: string[] = ['Aiko', 'Ren'];
+const prices: number[] = [120, 350, 500];
+```
+
+`string[]` は「`string` が並ぶ配列」という意味です。  
+別の型の値を追加しようとすると、型エラーになります。
+
+```ts
+const statuses: string[] = ['OPEN', 'CLOSED'];
+statuses.push(100); // 型エラー
+```
+
+`Array<string>` という書き方も同じ意味です。
+
+```ts
+const userNames: Array<string> = ['Aiko', 'Ren'];
+```
+
+この節では、短く読める `string[]` を主に使います。
+
+## 値を返さない関数は `void`
+
+ログを表示するだけの関数など、呼び出し元へ値を返さない関数の戻り値には `void` を使います。
+
+```ts
+function printOrderId(orderId: string): void {
+  console.log(orderId);
+}
+```
+
+`void` は「処理をしない」という意味ではありません。  
+処理は実行するものの、呼び出し元が利用する戻り値はない、という意味です。
+
+<QuizFill
+title="戻り値の型"
+answer="void"
+explanation="console.log で表示するだけで値を返さない関数なので、戻り値の型は void です。"
+
+>
+
+  <div>空欄に入る型を入力してください。</div>
+  <pre className="language-ts"><code>{`function notify(message: string): _____ {
+  console.log(message);
+}`}</code></pre>
+</QuizFill>
+
+## 型推論を活かす
+
+TypeScript は、代入された値から型を判断できます。これを **型推論** と呼びます。
+
+```ts
+const userName = 'Aiko'; // string と推論
+const itemCount = 3; // number と推論
+const isPaid = true; // boolean と推論
+```
+
+この場合、右辺を見れば型が明確なので、型注釈を書かなくても型チェックは働きます。
+
+```ts
+let itemCount = 3;
+itemCount = 'three'; // 型エラー
+```
+
+`itemCount` は最初の `3` から `number` と推論されています。  
+型注釈を省略しても、どんな値でも入る変数になったわけではありません。
+
+:::tip[注釈を書く目安]
+
+関数の引数や、外部へ公開する関数の戻り値には型を書くと約束が伝わります。  
+初期値だけで型が明らかなローカル変数は、型推論に任せると読みやすくなります。
+
+:::
+
+## `any` は型チェックを止める
+
+`any` を使うと、その値に対する型チェックがほぼ働かなくなります。
+
+```ts
+let value: any = 'Aiko';
+value = 100;
+value.notExistingMethod(); // 型エラーにならない
+```
+
+一時的に既存コードを移行するときの逃げ道にはなりますが、間違いも通すため、通常のデータ型として広げないことが大切です。
+
+HTTP で外部サービスから受け取った JSON など、まだ中身が分からない値には `unknown` を使えます。
+
+```ts
+function printValue(value: unknown): void {
+  if (typeof value === 'string') {
+    console.log(value.toUpperCase());
+  }
+}
+```
+
+`unknown` は、型を確認するまで文字列用の操作などを許しません。  
+上の例では `typeof value === "string"` を確認した範囲だけ、`value` を文字列として安全に扱えます。
+
+<QuizChoice
+title="不明な値の受け取り方"
+options={[
+{ id: 'a', label: 'any を使い、確認せずに操作する' },
+{ id: 'b', label: 'unknown を使い、型を確認してから操作する' },
+{ id: 'c', label: 'すべて string として受け取る' },
+]}
+answer="b"
+explanation="unknown は型を確認するまで操作を制限するため、内容が不明な値を安全に扱いやすくなります。"
+
+>
+
+  <div>外部から来た内容不明の値を受け取る方法として、適切なものはどれですか。</div>
+</QuizChoice>
+
+## まとめ
+
+- 型注釈は変数名や引数名のあとに `: string` のように書く
+- 配列は `string[]` のように要素の型を表す
+- 値を返さない関数の戻り値には `void` を使う
+- 値から型が明らかな場所では、型推論を活かせる
+- `any` は型チェックを弱めるため避け、内容不明の値には `unknown` を検討する
+
+次は [interface と type alias](./interfaces-and-aliases) で、オブジェクトの形に名前を付けます。

@@ -1,0 +1,160 @@
+---
+sidebar_position: 2
+---
+
+# npm と package.json
+
+プロジェクトを受け取ったとき、最初に実行するファイルだけを見ても、必要な Node.js の設定や起動方法までは分かりません。  
+そのプロジェクトの名札と操作案内をまとめるのが `package.json` です。
+
+前の TypeScript の節では、`typescript` をプロジェクトへ導入して `npx tsc` を実行しました。  
+ここでは、その導入情報と実行手順をチームで共有する仕組みとして npm を整理します。
+
+## このページで分かること
+
+- npm とパッケージの関係
+- `package.json` を作る方法
+- `name`、`version`、`type`、`scripts` の役割
+- npm script を実行する方法
+
+## npm とパッケージ
+
+**パッケージ**は、再利用できるコードやツールを配布する単位です。  
+**npm** は、パッケージを公開するレジストリと、それを操作するコマンドラインツールを中心とした仕組みです。
+
+**レジストリ**は、公開されたパッケージと各バージョンを保管し、名前で取得できる配布場所です。  
+ターミナルで使う `npm` コマンドは、レジストリから必要なパッケージを取得し、プロジェクトの設定へ記録します。同じ「npm」という名前が配布の仕組み全体とコマンドの両方に使われますが、コマンド例ではターミナルの道具を指します。
+
+利用者としては、まず次の役割を押さえれば十分です。
+
+- 必要なパッケージをプロジェクトへ追加する
+- プロジェクトが必要とするパッケージをまとめてインストールする
+- `scripts` に登録された共通コマンドを実行する
+
+## `package.json` を作る
+
+`order-sample` という名前の空のディレクトリへ移動し、次のコマンドを実行します。
+
+```bash
+npm init -y
+```
+
+成功すると `package.json` が作られます。  
+代表的な内容は次のとおりです。
+
+```json title="package.json"
+{
+  "name": "order-sample",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "ISC"
+}
+```
+
+コマンドの出力には作成したファイルのパスと内容が表示されます。  
+まず `name` と `version` が意図した値かを確認します。  
+`-y` は質問への回答を既定値で埋める指定なので、作成後にプロジェクトへ合わせて編集します。
+
+## よく使う項目
+
+学習用プロジェクトを次のように整えます。
+
+```json title="package.json"
+{
+  "name": "order-sample",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  }
+}
+```
+
+- `name`：パッケージやプロジェクトを識別する名前
+- `version`：`1.0.0` のように表すパッケージの版
+- `private`：`true` なら、誤って npm レジストリへ公開するのを防ぐ
+- `type`：`"module"` なら `.js` を ES モジュールとして扱う
+- `scripts`：プロジェクトで共通利用するコマンド
+
+`"type": "module"` を指定すると、[モジュール](../basics/modules) で学んだ `import` と `export` を Node.js の `.js` ファイルで使えます。
+
+:::tip[package.json はプロジェクトの契約書]
+
+必要な設定と実行方法を `package.json` に残すことで、別の開発者や CI も同じ入口から作業できます。
+
+:::
+
+<QuizChoice
+title="ES モジュールの設定"
+options={[
+{ id: 'a', label: '"type": "module"' },
+{ id: 'b', label: '"version": "module"' },
+{ id: 'c', label: '"scripts": "module"' },
+]}
+answer="a"
+explanation="Node.js で .js を ES モジュールとして扱う設定は type: module です。"
+
+>
+
+ <div><code>package.json</code> で <code>import</code> / <code>export</code> を使うための項目はどれですか。</div>
+</QuizChoice>
+
+## npm script を実行する
+
+`src/main.js` を用意します。
+
+```js title="src/main.js"
+console.log('アプリケーションを開始しました');
+```
+
+`package.json` の `start` を実行します。
+
+```bash
+npm run start
+```
+
+実行結果です。
+
+```text
+> order-sample@1.0.0 start
+> node src/main.js
+
+アプリケーションを開始しました
+```
+
+先頭の 2 行は npm が実行するパッケージ、script 名、実際のコマンドです。  
+最後の行がアプリケーションの出力です。
+
+`start` のような一部の名前は `npm start` とも書けますが、どの script にも使える `npm run <名前>` を基本にすると読み方を統一できます。
+
+## `npx` でパッケージのコマンドを実行する
+
+`npx` は、npm パッケージが提供するコマンドを実行する入口です。  
+プロジェクトにインストール済みのツールを指定すると、そのプロジェクトのバージョンを使えます。
+
+```bash
+npx prettier --check .
+```
+
+ただし、未インストールのパッケージは取得して実行する場合があります。  
+名前の似た不正なパッケージを実行しないよう、既存プロジェクトでは `scripts` や公式手順に記載されたコマンドを優先します。
+
+## よくあるつまずき
+
+- `package.json` を JavaScript と同じ書式だと思い、コメントや末尾のカンマを書く
+- `"type": "module"` がない状態で ES モジュールの構文を実行する
+- `scripts` の名前だけ共有し、実際の手順を `package.json` に残さない
+- 公開しないアプリケーションで `"private": true` を付け忘れる
+
+## まとめ / 次に学ぶとよいこと
+
+- `package.json` はプロジェクト情報、設定、コマンドを共有する
+- `"type": "module"` は `.js` を ES モジュールとして扱う指定
+- `npm run <名前>` は `scripts` に登録したコマンドを実行する
+- `npx` はパッケージが提供するコマンドを実行する
+
+次は [依存関係と scripts](./dependencies-and-scripts) で、パッケージを追加し、実行時と開発時の依存を分けます。

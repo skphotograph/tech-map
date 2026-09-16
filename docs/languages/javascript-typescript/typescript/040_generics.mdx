@@ -1,0 +1,224 @@
+---
+sidebar_position: 6
+---
+
+# ジェネリクス
+
+文字列を受け取って同じ文字列を返す関数と、数値を受け取って同じ数値を返す関数。  
+処理は同じなのに型だけが違う関数を増やすと、修正も利用方法の確認も二重になります。
+
+**ジェネリクス** を使うと、利用するときに決まる型を型パラメータで受け取り、型の情報を保ったまま処理を再利用できます。
+
+## このページで分かること
+
+- 型パラメータ `<T>` の役割
+- 引数と戻り値の型を結び付ける方法
+- 配列やデータの入れ物でジェネリクスを使う方法
+- `extends` で利用できる型を制限する方法
+
+## 型を保ったまま同じ値を返す
+
+まず、受け取った値をそのまま返す `identity` 関数を考えます。
+
+```ts
+function identity(value: unknown): unknown {
+  return value;
+}
+
+const userName = identity('Aiko');
+```
+
+`unknown` ならさまざまな値を受け取れますが、戻り値も `unknown` です。  
+引数が文字列だったという情報を、呼び出し元で使えません。
+
+ジェネリクスでは、関数名のあとに型パラメータ `<T>` を書きます。
+
+```ts
+function identity<T>(value: T): T {
+  return value;
+}
+
+const userName = identity('Aiko'); // string
+const itemCount = identity(3); // number
+```
+
+`T` は、関数を呼び出したときに決まる型の置き場所です。  
+引数が `string` なら、引数の `T` と戻り値の `T` がどちらも `string` になります。
+
+```ts
+const userName = identity<string>('Aiko');
+```
+
+このように型を明示することもできますが、多くの場合は引数から推論されるため、`identity('Aiko')` で十分です。
+
+:::tip[ジェネリクスの役割]
+
+ジェネリクスは「何でもよい型」にするものではありません。  
+呼び出しごとの具体的な型を受け取り、引数・戻り値・プロパティの関係を保つ仕組みです。
+
+:::
+
+<QuizChoice
+title="戻り値の型"
+options={[
+{ id: 'a', label: 'string' },
+{ id: 'b', label: 'number' },
+{ id: 'c', label: 'unknown' },
+]}
+answer="b"
+explanation="引数 100 から T は number と推論されます。戻り値も同じ T なので number です。"
+
+>
+
+  <div><code>result</code> の型はどれですか。</div>
+  <pre className="language-ts"><code>{`function identity<T>(value: T): T {
+  return value;
+}
+
+const result = identity(100);`}</code></pre>
+</QuizChoice>
+
+## 配列の要素型を受け取る
+
+配列の先頭を返す関数にも型パラメータを使えます。
+
+```ts
+function first<T>(items: T[]): T | undefined {
+  return items[0];
+}
+
+const firstName = first(['Aiko', 'Ren']); // string | undefined
+const firstPrice = first([120, 350]); // number | undefined
+```
+
+配列が空なら `items[0]` は `undefined` になるため、戻り値は `T | undefined` です。  
+ここでは `T` が、配列の要素と戻り値を結び付けています。
+
+```ts
+const firstName = first(['Aiko', 'Ren']);
+
+if (firstName !== undefined) {
+  console.log(firstName.toUpperCase());
+}
+```
+
+文字列の配列を渡したので、`undefined` を除けば `firstName` は `string` と分かります。
+
+<QuizChoice
+title="空の可能性を表す型"
+options={[
+{ id: 'a', label: 'T' },
+{ id: 'b', label: 'T | undefined' },
+{ id: 'c', label: 'any' },
+]}
+answer="b"
+explanation="配列が空なら先頭要素は undefined です。要素がある場合の T と合わせて T | undefined と表します。"
+
+>
+
+  <div>空の配列も受け取る <code>first</code> 関数の戻り値として適切な型はどれですか。</div>
+</QuizChoice>
+
+## データの入れ物を再利用する
+
+ジェネリクスは、オブジェクトの型にも使えます。  
+HTTP API の処理結果を表す入れ物を考えてみましょう。
+
+```ts
+type Result<T> = {
+  data: T;
+  receivedAt: string;
+};
+
+type User = {
+  id: string;
+  name: string;
+};
+
+const userResult: Result<User> = {
+  data: {
+    id: 'USR-1001',
+    name: 'Aiko',
+  },
+  receivedAt: '2026-09-16T03:00:00Z',
+};
+```
+
+`Result<User>` では `data` が `User` になり、`Result<string[]>` なら `data` は文字列の配列になります。  
+入れ物の共通部分を一度だけ定義し、中身の型を利用側で決められます。
+
+## `extends` で必要な性質を指定する
+
+型パラメータのままでは、`T` がどのプロパティを持つか分かりません。
+
+```ts
+function getId<T>(value: T): string {
+  return value.id; // 型エラー
+}
+```
+
+`id` を使いたいなら、受け取る型に必要な条件を付けます。
+
+```ts
+type HasId = {
+  id: string;
+};
+
+function getId<T extends HasId>(value: T): string {
+  return value.id;
+}
+
+const id = getId({
+  id: 'ORD-1001',
+  total: 1200,
+});
+```
+
+`T extends HasId` は、`T` が少なくとも `string` 型の `id` を持つという制約です。  
+追加のプロパティは保たれるため、注文でも利用者でも、`id` を持つ型に同じ関数を使えます。
+
+```ts
+getId({ name: 'Aiko' }); // id がないため型エラー
+```
+
+<QuizFill
+title="型パラメータの制約"
+answer="extends"
+explanation="T extends HasId と書くと、T は HasId の条件を満たす型に制限されます。"
+
+>
+
+  <div><code>T</code> に <code>HasId</code> の条件を付けるため、空欄に入るキーワードを入力してください。</div>
+  <pre className="language-ts"><code>{`function getId<T ______ HasId>(value: T): string {
+  return value.id;
+}`}</code></pre>
+</QuizFill>
+
+## ジェネリクスを使いすぎない
+
+型の関係を保ったまま、同じ処理を複数の型へ使いたいときにジェネリクスは役立ちます。  
+一方、一種類の注文だけを扱う関数なら、`Order` と具体的に書いたほうが目的が伝わります。
+
+```ts
+type Order = {
+  id: string;
+  total: number;
+};
+
+function calculateOrderTotal(order: Order): number {
+  return order.total;
+}
+```
+
+「いつか別の型にも使うかもしれない」という理由だけで型パラメータを増やすと、読む側が追う名前も増えます。  
+まず具体的な型で書き、同じ構造の重複が見えてからジェネリクスを検討すると扱いやすくなります。
+
+## まとめ
+
+- `<T>` は、利用時に決まる型を受け取る型パラメータ
+- 引数と戻り値に同じ `T` を使うと、型の関係を保てる
+- `T[]` や `Result<T>` により、要素や中身の型だけを差し替えられる
+- `T extends HasId` のように、利用できる型へ条件を付けられる
+- 一種類の具体的な型で足りる処理には、無理にジェネリクスを使わない
+
+次は [tsconfig と開発の流れ](./tsconfig-and-workflow) で、型チェックから JavaScript の実行までをつなげます。

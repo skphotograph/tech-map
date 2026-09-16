@@ -1,0 +1,203 @@
+---
+sidebar_position: 5
+---
+
+# プロジェクトの分け方
+
+ファイルが増えるたびに `utils.js` へ処理を足していくと、やがて画面表示、金額計算、HTTP 通信が同居します。  
+名前は「便利なもの置き場」でも、変更する側には地図がありません。  
+プロジェクト構成は、ファイル数ではなく変更する理由を見つけやすくするために整えます。
+
+## このページで分かること
+
+- `src/` と `test/` を置く基本的な構成
+- UI、業務ロジック、外部接続を分ける考え方
+- 環境変数を設定へ渡す方法
+- 秘密情報をリポジトリへ入れないための基本
+
+## まずソースとテストを分ける
+
+小さな Node.js アプリケーションなら、次の構成から始められます。
+
+```text
+order-app/
+├── package.json
+├── package-lock.json
+├── src/
+│   ├── main.js
+│   ├── order-service.js
+│   └── order-api.js
+└── test/
+    └── order-service.test.js
+```
+
+- `src/`：アプリケーションのソースコード
+- `test/`：自動テスト
+- `main.js`：部品を組み合わせて起動する入口
+- `order-service.js`：注文に関する業務ルール
+- `order-api.js`：外部 HTTP API との通信
+
+この名前は絶対の規則ではありません。  
+どこが起動点で、どこにルールがあり、どこが外部と接続するかを、チームで予測できることが重要です。
+
+## 変更する理由で分ける
+
+たとえば、割引計算と HTTP 通信は別の理由で変わります。  
+割引ルールは業務上の変更で変わり、通信コードは HTTP API の URL や応答形式の変更で変わります。
+
+```js title="src/order-service.js"
+export function applyDiscount(total, member) {
+  return member ? total * 0.9 : total;
+}
+```
+
+```js title="src/order-api.js"
+export async function loadOrder(orderId, baseUrl) {
+  const response = await fetch(`${baseUrl}/orders/${orderId}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+分けると、割引計算のテストにネットワークは不要になります。  
+一方、細かな関数ごとにファイルを作ると移動ばかり増えるため、責務と変更理由が同じ処理はまとめて構いません。
+
+:::tip[ディレクトリ名より依存の向きを見る]
+
+業務ロジックから画面や HTTP の詳細を追い出し、外側の部品が業務ロジックを呼ぶ形にすると、再利用とテストがしやすくなります。
+
+:::
+
+## UI と業務ロジックを軽く分ける
+
+フロントエンドでも考え方は同じです。
+
+```text
+src/
+├── main.js
+├── ui/
+│   └── order-form.js
+├── domain/
+│   └── calculate-total.js
+└── api/
+    └── order-api.js
+```
+
+- `ui/`：表示と利用者の操作
+- `domain/`：金額計算や状態変更などの業務ルール
+- `api/`：HTTP リクエストとレスポンスの変換
+
+React などを使う場合は `components/` のような名前もよくありますが、名前だけで責務が決まるわけではありません。  
+画面部品に計算、通信、状態変更をすべて詰め込まず、独立して説明・テストできるロジックを分けます。
+
+<QuizChoice
+title="業務ロジックの置き場所"
+options={[
+{ id: 'a', label: 'domain/calculate-total.js' },
+{ id: 'b', label: 'ui/order-form.js' },
+{ id: 'c', label: 'api/order-api.js' },
+]}
+answer="a"
+explanation="表示や HTTP に依存しない合計計算は、業務ルールを表す domain のモジュールに置くと責務が明確です。"
+
+>
+
+ <div>表示にも HTTP にも依存しない合計金額の計算を置く場所として、最も役割が合うものはどれですか。</div>
+</QuizChoice>
+
+## 環境ごとに変わる値を外から渡す
+
+HTTP API の接続先は、開発環境と本番環境で異なることがあります。  
+コードへ固定せず、環境変数から受け取ります。
+
+```js title="src/config.js"
+const apiBaseUrl = process.env.API_BASE_URL;
+
+if (!apiBaseUrl) {
+  throw new Error('API_BASE_URL が設定されていません');
+}
+
+export const config = {
+  apiBaseUrl,
+};
+```
+
+Node.js では、たとえば次のように環境変数を渡して実行できます。
+
+```bash
+API_BASE_URL=https://api.example.com npm run start
+```
+
+この書き方は Linux や macOS のシェルで使えます。  
+Windows PowerShell では次のように設定します。
+
+```powershell
+$env:API_BASE_URL = "https://api.example.com"
+npm run start
+```
+
+起動できれば、登録された `start` script の出力が続きます。  
+値がない場合は、コードで用意した `API_BASE_URL が設定されていません` というエラーを確認できます。
+
+ブラウザ向けのビルドでは、環境変数の渡し方や公開される名前がビルドツールごとに異なります。  
+また、ビルド時に埋め込まれた値は利用者から見えるため、秘密情報を渡す場所にはできません。
+
+## 秘密情報をリポジトリへ入れない
+
+API キー、パスワード、アクセストークンは、ソースコードや `package.json` へ書きません。  
+環境変数や、実行環境が提供するシークレット管理機能から渡します。
+
+ローカル開発で `.env` ファイルを使うプロジェクトでは、実値を含む `.env` を `.gitignore` の対象にします。  
+必要な変数名だけを示す `.env.example` はコミットできます。
+
+```dotenv title=".env.example"
+API_BASE_URL=https://api.example.com
+API_TOKEN=replace-with-your-local-token
+```
+
+`.gitignore` の例です。
+
+```gitignore title=".gitignore"
+node_modules/
+.env
+```
+
+一度コミットした秘密情報は、ファイルを消すだけでは履歴からなくなりません。  
+漏えいした可能性がある場合は、値を無効化・再発行したうえで、管理者やプロジェクトの手順に従って対応します。
+
+## 構成を育てる判断
+
+最初から多くの層やディレクトリを用意する必要はありません。  
+次の兆候が出たら分割を検討します。
+
+- ひとつのファイルが画面、ルール、通信という複数の理由で変更される
+- テストのために画面やネットワークまで準備する必要がある
+- 同じ業務ルールを複数の入口から使いたい
+- 設定値を変えるためにソースコードの編集が必要になる
+
+構成は一度決めて終わりではなく、変更のまとまりが見えてから調整します。
+
+## よくあるつまずき
+
+- 何でも `utils.js` へ集め、責務を名前から判断できなくする
+- フレームワークの見本をそのまま増やし、プロジェクト規模に合わない層を作る
+- UI、業務ルール、HTTP 通信をひとつの関数へ混ぜる
+- 接続先や認証情報をソースコードへ直接書く
+- `.env` を除外しただけで、すでにコミットした秘密情報も消えたと考える
+
+## まとめ
+
+- `src/` と `test/` を分け、起動点を見つけやすくする
+- UI、業務ロジック、外部接続は異なる変更理由を持つ
+- ディレクトリ名より、責務と依存の向きを重視する
+- 環境ごとに変わる値は外から渡し、秘密情報はコミットしない
+- 必要になる前から構成を増やさず、変更のまとまりに応じて育てる
+
+ここまでで、JavaScript アプリケーションの実行環境、HTTP 通信、テスト、構成の基本がつながりました。  
+実際のプロジェクトでは、利用するスタックの公式ドキュメントとチームの規約をこの地図に重ねて読み進めてください。
+
+次は [JavaScript / TypeScript の章トップ](../) に戻り、学んだ範囲と次に深めたい分野を確認できます。

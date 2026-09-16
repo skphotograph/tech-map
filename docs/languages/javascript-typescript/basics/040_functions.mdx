@@ -1,0 +1,287 @@
+---
+sidebar_position: 6
+---
+
+# 関数
+
+同じ計算を何か所にもコピーすると、変更時に一つだけ直し忘れることがあります。  
+まとまった処理に名前を付け、必要な場所から呼び出せるようにしたものが **関数** です。
+
+前のページのループは、その場に書いた処理を繰り返す仕組みでした。  
+同じ処理を別のループや条件分岐からも使いたいときは、関数にして呼び出すと重複を減らせます。
+
+## このページで分かること
+
+- 関数を定義して呼び出す方法
+- 引数と戻り値の役割
+- 戻り値が無い関数と早期 `return`
+- アロー関数という現代的な書き方
+
+## 関数は「名前の付いた手順」
+
+二つの数を足す手順に `add` という名前を付けます。
+
+```js
+function add(a, b) {
+  return a + b;
+}
+
+const total = add(2, 3);
+console.log(total); // 5
+```
+
+| 部分           | 役割                           |
+| -------------- | ------------------------------ |
+| `function`     | 関数を定義する印               |
+| `add`          | 関数の名前                     |
+| `(a, b)`       | 関数が受け取る値の置き場所     |
+| `{ ... }`      | 呼び出されたときに実行する処理 |
+| `return a + b` | 結果を呼び出し元へ返す         |
+| `add(2, 3)`    | 関数を呼び出す                 |
+
+関数を定義しただけでは、本体は実行されません。  
+`add(2, 3)` のように呼び出して、初めて波括弧の中が動きます。
+
+:::tip[関数の基本]
+
+関数は処理を定義し、`関数名(...)` で呼び出します。  
+`return` した値は、呼び出した場所で使えます。
+
+:::
+
+<QuizChoice
+title="関数の戻り値"
+options={[
+{id: 'a', label: '2'},
+{id: 'b', label: '3'},
+{id: 'c', label: '5'},
+]}
+answer="c"
+explanation="add(2, 3) は a + b、つまり 5 を return します。その値が total に入ります。"
+
+>
+
+ <div>次の <code>total</code> に入る値はどれですか。<pre className="language-js"><code>{`function add(a, b) {
+  return a + b;
+}
+const total = add(2, 3);`}</code></pre></div>
+</QuizChoice>
+
+## 仮引数と引数
+
+関数側の `a` と `b` は **仮引数（パラメータ）**、呼び出し側の `2` と `3` は **引数** です。
+
+```js
+function createLabel(orderId, status) {
+  return `${orderId}: ${status}`;
+}
+
+const label = createLabel(1001, 'PAID');
+console.log(label); // 1001: PAID
+```
+
+引数は左から順に仮引数へ渡されます。  
+この例では、`orderId` に `1001`、`status` に `"PAID"` が入ります。
+
+JavaScript は、引数の個数が定義と違っても呼び出し自体を許します。  
+足りない仮引数には `undefined` が入り、余分な引数は通常使われません。  
+意図しない結果を避けるため、呼び出し側と定義側の個数を揃えます。
+
+## `return` で結果を返す
+
+`return` には二つの働きがあります。
+
+1. 値を呼び出し元へ返す
+2. その時点で関数の実行を終える
+
+```js
+function calculatePrice(unitPrice, quantity) {
+  const subtotal = unitPrice * quantity;
+  return subtotal;
+  console.log('ここは実行されない');
+}
+```
+
+`return` より後ろの文は実行されません。  
+返された値は、変数への代入だけでなく、別の式や関数呼び出しにも使えます。
+
+```js
+console.log(calculatePrice(350, 2)); // 700
+```
+
+## 戻り値が無い関数
+
+表示や記録だけを行い、計算結果を返す必要がない関数もあります。
+
+```js
+function printStatus(status) {
+  console.log(`status: ${status}`);
+}
+
+printStatus('PAID');
+```
+
+```text
+status: PAID
+```
+
+JavaScript では、戻り値が無いことを示す `void` を関数宣言に書きません。  
+`return` を書かなかった関数を呼び出すと、呼び出し結果は `undefined` になります。
+
+```js
+const result = printStatus('PAID');
+console.log(result); // undefined
+```
+
+<QuizChoice
+title="return が無い関数"
+options={[
+{id: 'a', label: 'PAID'},
+{id: 'b', label: 'undefined'},
+{id: 'c', label: '関数を呼び出せない'},
+]}
+answer="b"
+explanation="return で値を返さない関数の呼び出し結果は undefined です。関数内の console.log は別に実行されます。"
+
+>
+
+ <div>次の <code>result</code> に入る値はどれですか。<pre className="language-js"><code>{`function report() {
+  console.log("PAID");
+}
+const result = report();`}</code></pre></div>
+</QuizChoice>
+
+## 早期 `return` で入口を整理する
+
+条件分岐が何段も重なると、主要な処理が奥へ押し込まれます。  
+処理できない条件を関数の入口で返す **早期 `return`** を使うと、流れを平らにできます。
+
+```js
+function getOrderLabel(amount) {
+  if (amount < 0) {
+    return 'invalid';
+  }
+
+  if (amount >= 1000) {
+    return 'bulk';
+  }
+
+  return 'normal';
+}
+
+console.log(getOrderLabel(1200)); // bulk
+console.log(getOrderLabel(-1)); // invalid
+```
+
+負の金額なら、その時点で `"invalid"` を返して関数を終えます。  
+後ろの処理は、有効な金額だけを考えればよくなります。
+
+値を返さず、その場で関数を終える `return;` も使えます。
+
+```js
+function printOrder(orderId) {
+  if (orderId === undefined) {
+    return;
+  }
+
+  console.log(`order-${orderId}`);
+}
+```
+
+## アロー関数
+
+JavaScript のコードでは、関数を値として `const` へ入れる **アロー関数** もよく見かけます。  
+短い処理をその場で定義するときに、`function` を繰り返さず簡潔に書けることが利点です。
+
+```js
+const add = (a, b) => {
+  return a + b;
+};
+
+console.log(add(2, 3)); // 5
+```
+
+処理が式一つだけなら、波括弧と `return` を省略できます。
+
+```js
+const add = (a, b) => a + b;
+const isLarge = (amount) => amount >= 1000;
+```
+
+`=>` の右側にある式の結果が、そのまま戻り値になります。  
+波括弧を付けた場合は、自動では返らないため `return` が必要です。
+
+```js
+const add = (a, b) => {
+  return a + b;
+};
+```
+
+どちらも呼び出せる関数を作るため、アロー関数が常に優れているわけではありません。  
+この教材では、処理に名前を付けて独立して再利用するなら `function`、短い関数を変数へ入れるならアロー関数、という基準から始めます。既存のコードでは周囲の書き方も確認し、同じ役割の関数で形式をそろえると読みやすくなります。
+
+<QuizChoice
+title="アロー関数の戻り値"
+options={[
+{id: 'a', label: '12'},
+{id: 'b', label: '20'},
+{id: 'c', label: 'undefined'},
+]}
+answer="b"
+explanation="波括弧のないアロー関数では、=> の右側の式がそのまま返ります。4 * 5 は 20 です。"
+
+>
+
+ <div>次のコードの出力はどれですか。<pre className="language-js"><code>{`const multiply = (a, b) => a * b;
+console.log(multiply(4, 5));`}</code></pre></div>
+</QuizChoice>
+
+## JavaScript の関数名と引数
+
+JavaScript では、引数の個数や種類だけを変えて、同じ名前の関数を複数定義する **シグネチャによるオーバーロード** はできません。
+
+```js
+function greet(name) {
+  return `hello, ${name}`;
+}
+
+function greet(name, times) {
+  return `hello, ${name} x${times}`;
+}
+
+console.log(greet('Aiko')); // hello, Aiko xundefined
+```
+
+後から書いた `greet` が前の定義を置き換えるため、引数一つ用の関数は選ばれません。  
+必要なら、仮引数に **既定値** を書いておく方法があります。  
+呼び出しで値が渡されなかったときだけ、その既定値が入ります。
+
+```js
+function greet(name, times = 1) {
+  return `hello, ${name} x${times}`;
+}
+
+console.log(greet('Aiko')); // hello, Aiko x1（times は既定値の 1）
+console.log(greet('Aiko', 2)); // hello, Aiko x2
+```
+
+引数の個数や意味が大きく違う処理は、無理に同じ名前へ押し込めず、別の関数名に分ける方が追いやすいこともあります。
+
+## よくあるつまずき
+
+- 関数を定義しただけで、呼び出していない
+- `return` より後ろにも処理が続くと思う
+- 戻り値が無い関数の結果を計算に使い、`undefined` になる
+- 波括弧付きのアロー関数で `return` を書き忘れる
+- 同じ名前の関数を引数違いで定義し、オーバーロードになると思う
+
+## まとめ / 次に学ぶとよいこと
+
+- 関数は処理に名前を付け、`関数名(...)` で呼び出す仕組み
+- 仮引数で値を受け取り、`return` で結果を返す
+- `return` が無い関数の呼び出し結果は `undefined`
+- 早期 `return` は処理できない条件を入口で終わらせる
+- 短い処理では `const add = (a, b) => a + b` のようなアロー関数も使われる
+- JavaScript は引数の違いによる関数のオーバーロードをしない
+
+次は [オブジェクト](./objects) で、関連するデータと処理をひとまとまりにします。

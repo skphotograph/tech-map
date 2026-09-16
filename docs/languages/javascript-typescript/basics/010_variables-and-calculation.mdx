@@ -1,0 +1,245 @@
+---
+sidebar_position: 3
+---
+
+# 変数と計算
+
+注文数や合計金額をコードへ直接書き続けると、値の意味が分からなくなり、変更にも弱くなります。  
+値に名前を付けて覚えておく仕組みが **変数** です。  
+ここでは、JavaScript で値を持ち、計算し、比べるところまで進めます。
+
+## このページで分かること
+
+- `const` と `let` の使い分け
+- JavaScript でよく使う値の種類
+- 四則演算、余り、更新の書き方
+- 比較した結果が `boolean` になること
+
+## 変数は「名前の付いた付箋」
+
+値に名前を付けると、その値が何を表すのかをコードに残せます。
+
+```js
+const price = 350;
+let quantity = 2;
+```
+
+`=` は「等しい」ではなく、右側の値を左側の名前へ入れる **代入** です。  
+上のコードは、`price` に `350`、`quantity` に `2` を入れています。
+
+変数を作るときは、主に `const` と `let` を使います。
+
+| 宣言    | 再代入   | 選ぶ目安                         |
+| ------- | -------- | -------------------------------- |
+| `const` | できない | 作ったあと、別の値を入れ直さない |
+| `let`   | できる   | カウンタなど、あとで値を入れ直す |
+
+```js
+const unitPrice = 350;
+let count = 2;
+
+count = 3;
+console.log(unitPrice * count); // 1050
+```
+
+まず `const` を選び、再代入が必要な変数だけ `let` にすると、「この名前が途中で別の値に変わるか」を宣言から判断できます。  
+読み手が値の変化を追う範囲も狭くなり、意図しない書き換えを減らせます。
+
+:::tip[宣言の選び方]
+
+別の値を入れ直さないなら `const`、入れ直すなら `let` を使います。
+
+:::
+
+<QuizChoice
+title="const と let"
+options={[
+{id: 'a', label: 'const'},
+{id: 'b', label: 'let'},
+{id: 'c', label: 'どちらも再代入できない'},
+]}
+answer="b"
+explanation="値をあとで入れ直す変数には let を使います。const へ再代入するとエラーになります。"
+
+>
+
+ <div>注文数を処理の途中で <code>2</code> から <code>3</code> へ入れ直します。適した宣言はどれですか。</div>
+</QuizChoice>
+
+<details>
+<summary>古いコードで見かける var</summary>
+
+`var` も変数を宣言できますが、`let` や `const` と有効範囲の規則が異なり、意図しない挙動を招きやすい書き方です。  
+新しく書くコードでは、基本的に `const` と `let` を使います。
+
+</details>
+
+## 値には種類がある
+
+JavaScript では、実行時の値そのものに種類があります。  
+変数を宣言するときに型名は書きませんが、値の種類がなくなるわけではありません。
+
+| 種類        | 意味                       | 例                  |
+| ----------- | -------------------------- | ------------------- |
+| `number`    | 数値                       | `10`, `3.5`, `-1`   |
+| `string`    | 文字列                     | `"order"`, `'user'` |
+| `boolean`   | 真偽                       | `true`, `false`     |
+| `undefined` | 値がまだ設定されていない   | `undefined`         |
+| `null`      | 値が無いことを意図して表す | `null`              |
+
+```js
+const amount = 1200;
+const status = 'paid';
+const available = true;
+let note;
+const assignee = null;
+
+console.log(typeof amount); // number
+console.log(typeof status); // string
+console.log(note); // undefined
+```
+
+`undefined` は、宣言したものの値を入れていない場合や、存在しないプロパティを読んだ場合など、**値が設定されていない結果**として JavaScript から現れます。  
+`null` は「担当者という欄はあるが、現在は担当者なし」のように、**値がないとプログラム側で明示するための値**です。  
+どちらも「値がない」場面に関係しますが、同じデータ項目で無計画に混ぜると判定が増えます。受け取るデータの仕様やチームの決まりに合わせ、何を `null` で表すかをそろえます。
+
+文字列へ値を埋め込むときは、バッククォート `` ` `` で囲む **テンプレートリテラル** が便利です。
+
+```js
+const orderId = 1001;
+console.log(`order-${orderId}`); // order-1001
+```
+
+文字列どうしを `+` でつなぐこともできます。  
+数値の足し算と同じ記号なので、どちらか一方が文字列だと「つなげる」向きに働く点に注意します。
+
+```js
+const label = 'order-' + 1001; // "order-1001"
+```
+
+## 数値を計算する
+
+JavaScript の基本的な算術演算子です。
+
+| 演算子 | 意味       | 例              |
+| ------ | ---------- | --------------- |
+| `+`    | 足す       | `3 + 2` → `5`   |
+| `-`    | 引く       | `3 - 2` → `1`   |
+| `*`    | 掛ける     | `3 * 2` → `6`   |
+| `/`    | 割る       | `7 / 2` → `3.5` |
+| `%`    | 割った余り | `7 % 2` → `1`   |
+
+```js
+const subtotal = 350 * 2;
+const change = 1000 - subtotal;
+const average = 7 / 2;
+const remainder = 7 % 2;
+
+console.log(subtotal); // 700
+console.log(change); // 300
+console.log(average); // 3.5
+console.log(remainder); // 1
+```
+
+JavaScript の `number` は整数と小数を同じ種類として扱います。  
+そのため、整数どうしに見える `7 / 2` も切り捨てられず、結果は `3.5` です。
+
+:::warning[金額の小数誤差]
+
+小数の計算では、`0.1 + 0.2` が厳密な `0.3` にならないことがあります。  
+金額では最小単位の整数で持つなど、誤差を避ける設計が必要です。
+
+:::
+
+<QuizChoice
+title="JavaScript の割り算"
+options={[
+{id: 'a', label: '3'},
+{id: 'b', label: '3.5'},
+{id: 'c', label: '計算できない'},
+]}
+answer="b"
+explanation="JavaScript の number は整数と小数を同じ種類として扱うため、7 / 2 は 3.5 です。"
+
+>
+
+ <div>次の式の結果はどれですか。<pre className="language-js"><code>{`const result = 7 / 2;`}</code></pre></div>
+</QuizChoice>
+
+## 値を更新する
+
+`let` で宣言した変数は、計算結果を入れ直せます。
+
+```js
+let count = 2;
+count = count + 1; // 3
+count += 2; // 5
+count++; // 6
+```
+
+| 書き方   | 意味        |
+| -------- | ----------- |
+| `x += 2` | `x = x + 2` |
+| `x -= 2` | `x = x - 2` |
+| `x *= 2` | `x = x * 2` |
+| `x /= 2` | `x = x / 2` |
+| `x++`    | `x = x + 1` |
+| `x--`    | `x = x - 1` |
+
+`const` で宣言した変数へ、このような再代入はできません。
+
+## 値を比較する
+
+比較の結果は `true` または `false`、つまり `boolean` になります。
+
+| 演算子              | 意味                 |
+| ------------------- | -------------------- |
+| `a === b`           | 値と種類が等しい     |
+| `a !== b`           | 値または種類が異なる |
+| `a < b` / `a > b`   | より小さい／大きい   |
+| `a <= b` / `a >= b` | 以下／以上           |
+
+```js
+const amount = 1200;
+const bulk = amount >= 1000;
+const paid = 'paid' === 'paid';
+
+console.log(bulk); // true
+console.log(paid); // true
+```
+
+JavaScript では、基本的に `==` ではなく `===` を使います。  
+`==` は値の種類を自動変換してから比べるため、`0 == false` が `true` になるなど、読み手の予想とずれることがあります。
+
+<QuizChoice
+title="厳密な比較"
+options={[
+{id: 'a', label: 'true'},
+{id: 'b', label: 'false'},
+{id: 'c', label: 'undefined'},
+]}
+answer="b"
+explanation="=== は値だけでなく種類も比較します。数値の 1 と文字列の &quot;1&quot; は異なります。"
+
+>
+
+ <div>次の比較結果はどれですか。<pre className="language-js"><code>{`const same = 1 === "1";`}</code></pre></div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 再代入する変数を `const` で宣言する
+- `=` を比較だと思う（`=` は代入、厳密な比較は `===`）
+- `7 / 2` が整数の `3` になると思う
+- 数値の `+` と文字列連結の `+` を混同する
+- `undefined` と `null` を同じ場面で無造作に使い分ける
+
+## まとめ / 次に学ぶとよいこと
+
+- 再代入しない値は `const`、再代入する値は `let` で宣言する
+- `=` は右側の値を左側へ入れる代入
+- 主な値の種類は `number`、`string`、`boolean`、`undefined`、`null`
+- JavaScript の `7 / 2` は `3.5` になり、余りは `%` で求める
+- 比較には基本的に `===` と `!==` を使う
+
+次は [条件分岐](./branching) で、比較した結果に応じて処理を選びます。

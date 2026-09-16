@@ -1,0 +1,248 @@
+---
+sidebar_position: 5
+---
+
+# 繰り返し
+
+注文を一件ずつ処理するコードを、件数分だけコピーするわけにはいきません。  
+同じ処理を回数や条件に応じて回す仕組みが **繰り返し（ループ）** です。
+
+[変数と計算](./variables-and-calculation) の `++` と、[条件分岐](./branching) の条件を組み合わせて使います。
+
+## このページで分かること
+
+- `for` で回数を決めて繰り返す方法
+- `while` で条件が成り立つ間だけ繰り返す方法
+- `for...of` で配列の値を順に取り出す方法
+- `break` / `continue` で流れを変える方法
+
+## `for` で決まった回数を繰り返す
+
+まず、0 から 2 までを順に表示します。
+
+```js
+for (let i = 0; i < 3; i++) {
+  console.log(i);
+}
+```
+
+```text
+0
+1
+2
+```
+
+`for` の丸括弧は、セミコロンで三つに分かれています。
+
+| 位置 | 例          | 役割                       |
+| ---- | ----------- | -------------------------- |
+| 開始 | `let i = 0` | 最初に一度だけ実行する     |
+| 条件 | `i < 3`     | 各周の前に、続けるか調べる |
+| 更新 | `i++`       | 各周の後に実行する         |
+
+処理の流れは次のとおりです。
+
+1. `i` を `0` にする
+2. `i < 3` が `true` なら本体を実行する
+3. `i++` で `i` を一つ増やす
+4. 条件をもう一度調べ、`false` になるまで繰り返す
+
+カウンタは 0 から始めるコードがよく使われます。  
+3 回なら `i < 3` と書くと、`i` は 0、1、2 と変化します。
+
+:::tip[for の基本形]
+
+`for (開始; 続ける条件; 更新)` の順です。  
+「何回か」が見えている処理に向いています。
+
+:::
+
+<QuizChoice
+title="for の実行回数"
+options={[
+{id: 'a', label: '2 回'},
+{id: 'b', label: '3 回'},
+{id: 'c', label: '4 回'},
+]}
+answer="b"
+explanation="i は 0、1、2 と変化し、その間 i &lt; 3 が true なので本体は 3 回実行されます。"
+
+>
+
+ <div>次の <code>console.log</code> は何回実行されますか。<pre className="language-js"><code>{`for (let i = 0; i < 3; i++) {
+  console.log(i);
+}`}</code></pre></div>
+</QuizChoice>
+
+合計値のように、ループの外で作った変数を更新することもあります。
+
+```js
+let sum = 0;
+
+for (let i = 1; i <= 3; i++) {
+  sum += i;
+}
+
+console.log(sum); // 6
+```
+
+## `while` で条件の間だけ繰り返す
+
+回数よりも「まだ処理を続けられるか」が中心なら、`while` が向いています。
+
+```js
+let remaining = 3;
+
+while (remaining > 0) {
+  console.log(remaining);
+  remaining--;
+}
+```
+
+```text
+3
+2
+1
+```
+
+`while` は最初に条件を調べます。  
+条件が最初から `false` なら、本体は一度も実行されません。
+
+:::warning[終わらないループ]
+
+条件がいつまでも `true` のままだと、ループは終わりません。  
+`while` の中で、条件に使う値が終了へ向かって変化するかを確認します。
+
+:::
+
+```js
+let remaining = 3;
+
+while (remaining > 0) {
+  console.log(remaining);
+  // remaining を減らしていないため、終わらない
+}
+```
+
+このようなループを実行してしまったら、ターミナルでは通常 `Ctrl + C` で停止できます。
+
+<details>
+<summary>do...while で一度は実行する</summary>
+
+`do...while` は、本体を実行したあとで条件を調べます。  
+そのため、条件が最初から `false` でも本体を一度は実行します。
+
+```js
+let count = 0;
+
+do {
+  console.log(count);
+  count++;
+} while (count < 1);
+```
+
+まずは、回数なら `for`、続ける条件なら `while` を基本にすると選びやすくなります。
+
+</details>
+
+## `for...of` で配列の値を順に取り出す
+
+複数の値を並べた **配列** から、一つずつ取り出すときは `for...of` が読みやすい書き方です。
+
+```js
+const statuses = ['OPEN', 'PAID', 'CLOSED'];
+
+for (const status of statuses) {
+  console.log(status);
+}
+```
+
+```text
+OPEN
+PAID
+CLOSED
+```
+
+`status` には、配列 `statuses` の値が先頭から一つずつ入ります。  
+添字やカウンタが不要なら、古典的な `for` より意図が伝わりやすくなります。
+
+:::tip[配列を順に読むなら]
+
+配列の値を先頭から使うだけなら、`for...of` を第一候補にします。
+
+:::
+
+<QuizChoice
+title="for...of の値"
+options={[
+{id: 'a', label: '0 と 1'},
+{id: 'b', label: 'OPEN と PAID'},
+{id: 'c', label: 'statuses が 2 回'},
+]}
+answer="b"
+explanation="for...of は配列の値を先頭から取り出します。status には OPEN、次に PAID が入ります。"
+
+>
+
+ <div>次のコードで表示される値はどれですか。<pre className="language-js"><code>{`const statuses = ["OPEN", "PAID"];
+for (const status of statuses) {
+  console.log(status);
+}`}</code></pre></div>
+</QuizChoice>
+
+## `break` と `continue` で流れを変える
+
+ループを途中で終えるには `break`、その周の残りだけを飛ばすには `continue` を使います。
+
+```js
+for (let i = 0; i < 5; i++) {
+  if (i === 2) {
+    continue;
+  }
+  if (i === 4) {
+    break;
+  }
+  console.log(i);
+}
+```
+
+```text
+0
+1
+3
+```
+
+- `i === 2` では `continue` により、その周の `console.log` を飛ばす
+- `i === 4` では `break` により、ループ全体を終える
+
+どちらも便利ですが、多用すると出口が増えて流れを追いづらくなります。  
+「目的の値が見つかったので終わる」「処理対象外なので次へ進む」のように、意図が明確な場面で使います。
+
+## ループの選び方
+
+| やりたいこと                 | 選びやすい構文 |
+| ---------------------------- | -------------- |
+| 決まった回数だけ処理する     | `for`          |
+| 条件が成り立つ間だけ処理する | `while`        |
+| 配列の値を順に処理する       | `for...of`     |
+
+どれでも書ける場面はあります。  
+開始・終了・対象が読み手に伝わりやすい形を選びます。
+
+## よくあるつまずき
+
+- `i < 3` と `i <= 3` を取り違え、実行回数が一つずれる
+- `while` の中で条件に使う値を更新せず、ループが終わらない
+- 配列の値が欲しいのに、必要のないカウンタを自分で管理する
+- `break` と `continue` を取り違える
+- ループ内で宣言した変数を、ループの外でも使えると思う
+
+## まとめ / 次に学ぶとよいこと
+
+- `for` は開始・条件・更新をまとめて書く
+- `while` は条件が `true` の間だけ繰り返す
+- 配列の値を順に使うなら `for...of` が読みやすい
+- `break` はループを終了し、`continue` は次の周へ進む
+- 終了条件と、その条件へ近づく更新を確認する
+
+次は [関数](./functions) で、まとまった処理に名前を付けて再利用します。

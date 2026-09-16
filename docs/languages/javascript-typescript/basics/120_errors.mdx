@@ -1,0 +1,230 @@
+---
+sidebar_position: 14
+---
+
+# 例外
+
+注文番号がないのに処理を続けると、もっと離れた場所で別のエラーが起きることがあります。  
+原因から遠い場所で壊れるほど、調査は難しくなります。  
+処理を続けられない時点で問題を明確に伝える仕組みが **例外** です。
+
+## このページで分かること
+
+- `throw new Error(...)` で例外を発生させる方法
+- `try` / `catch` / `finally` の役割
+- 例外が呼び出し元へ伝わる仕組み
+- エラーを握りつぶさず、適切に扱う考え方
+
+## `throw` で処理を止める
+
+関数が正常な結果を返せないときは、`throw` で例外を発生させられます。  
+一般的なエラーには `Error` オブジェクトを使い、何が問題だったかをメッセージへ書きます。
+
+```js
+function findOrder(orderId) {
+  if (!orderId) {
+    throw new Error('注文 ID が必要です');
+  }
+
+  return {
+    id: orderId,
+    status: 'OPEN',
+  };
+}
+
+const order = findOrder('');
+console.log(order); // この行は実行されない
+```
+
+`throw` が実行されると、その場で通常の処理を中断します。  
+上の例では `return` にも、その後の `console.log` にも進みません。
+
+文字列を直接 `throw` することも構文上は可能ですが、通常は `new Error(...)` を使います。  
+`Error` にはメッセージに加えて、問題が起きた場所を追うためのスタック情報が含まれるためです。
+
+:::tip[例外を投げるとき]
+
+処理を続けられない理由を `new Error("具体的なメッセージ")` で伝えます。
+
+:::
+
+<QuizChoice
+title="throw 後の処理"
+options={[
+{id: 'a', label: '"before" と "after" の両方'},
+{id: 'b', label: '"before" だけ'},
+{id: 'c', label: '"after" だけ'},
+]}
+answer="b"
+explanation={'throw が実行された時点で通常の処理は中断されるため、"after" は出力されません。'}
+
+>
+
+  <div>次のコードで、例外が発生する前に出力される文字列はどれですか。</div>
+  <pre className="language-js"><code>{`console.log("before");
+throw new Error("処理に失敗しました");
+console.log("after");`}</code></pre>
+</QuizChoice>
+
+## `try` と `catch` で例外を扱う
+
+失敗する可能性がある処理を `try` に書き、例外が起きたときの処理を `catch` に書きます。
+
+```js
+function parseQuantity(text) {
+  const quantity = Number(text);
+
+  if (Number.isNaN(quantity)) {
+    throw new Error('数量は数値で指定してください');
+  }
+
+  return quantity;
+}
+
+try {
+  const quantity = parseQuantity('five');
+  console.log(`数量: ${quantity}`);
+} catch (error) {
+  console.error(`入力を確認してください: ${error.message}`);
+}
+```
+
+実行結果の例です。
+
+```text
+入力を確認してください: 数量は数値で指定してください
+```
+
+`try` の途中で例外が発生すると、残りの処理を飛ばして `catch` へ移ります。  
+`catch (error)` の `error` には、投げられた `Error` オブジェクトが入ります。  
+利用者へ案内を出す、ログへ記録する、別の処理へ切り替えるなど、そこで判断できる回復処理を書きます。
+
+## `finally` は成否にかかわらず実行される
+
+`finally` は、例外が起きても起きなくても最後に実行されます。  
+処理中であることを示す表示を消すなど、必ず行いたい後片付けに使えます。
+
+```js
+function loadOrder() {
+  throw new Error('注文を読み込めませんでした');
+}
+
+console.log('読み込み開始');
+
+try {
+  const order = loadOrder();
+  console.log(order);
+} catch (error) {
+  console.error(error.message);
+} finally {
+  console.log('読み込み終了');
+}
+```
+
+実行結果の例です。
+
+```text
+読み込み開始
+注文を読み込めませんでした
+読み込み終了
+```
+
+`catch` は必要なときだけ書けます。  
+ただし、後片付けが目的なら `finally`、失敗からの回復が目的なら `catch` と、役割を分けると読みやすくなります。
+
+<QuizChoice
+title="finally の実行"
+options={[
+{id: 'a', label: '成功したときだけ実行される'},
+{id: 'b', label: '例外が起きたときだけ実行される'},
+{id: 'c', label: '成功でも失敗でも実行される'},
+]}
+answer="c"
+explanation="finally は try の成否にかかわらず実行されるため、共通の後片付けに使えます。"
+
+>
+
+  <div><code>finally</code> が実行されるタイミングはどれですか。</div>
+</QuizChoice>
+
+## 例外は捕まるまで呼び出し元へ伝わる
+
+関数の中で発生した例外をその関数が `catch` しなければ、例外は呼び出し元へ伝わります。  
+これは、呼び出しの積み重なりである **コールスタック** を上へ戻っていく動きです。
+
+```js
+function validateOrder(order) {
+  if (!order.id) {
+    throw new Error('注文 ID がありません');
+  }
+}
+
+function saveOrder(order) {
+  validateOrder(order);
+  console.log('保存しました');
+}
+
+function handleRequest() {
+  try {
+    saveOrder({ id: '' });
+  } catch (error) {
+    console.error(`保存失敗: ${error.message}`);
+  }
+}
+
+handleRequest();
+```
+
+`validateOrder` が投げた例外は、`saveOrder` を抜けて `handleRequest` の `catch` まで伝わります。  
+途中に `catch` がなければ、最終的には実行環境が未処理の例外として報告します。
+
+すべての関数で同じ例外を捕まえる必要はありません。  
+利用者への表示や再試行など、失敗をどう扱うか判断できる場所で `catch` します。
+
+## エラーを握りつぶさない
+
+空の `catch` は、問題が起きた事実まで消してしまいます。
+
+```js
+try {
+  saveOrder({ id: '' });
+} catch (error) {
+  // 何もしない
+}
+```
+
+このコードでは処理が成功していないのに、その理由がログにも呼び出し元にも残りません。  
+回復できない場合は記録したうえで再度 `throw` するか、そもそもその場所では `catch` せず、判断できる呼び出し元へ伝えます。
+
+```js
+try {
+  saveOrder({ id: '' });
+} catch (error) {
+  console.error('注文の保存に失敗しました', error);
+  throw error;
+}
+```
+
+:::warning[空の catch は避ける]
+
+例外を無視すると、失敗が成功したように見えます。  
+回復、記録、再送出のどれを行うかを明確にします。
+
+:::
+
+## よくあるつまずき
+
+- `throw` の後も同じブロックの処理が続くと思う
+- 何でも `catch` して、失敗を空の処理で握りつぶす
+- `error.message` だけを残し、調査に必要なスタック情報を失う
+- 回復方法を判断できない低い階層で、すべての例外を処理しようとする
+- `finally` に成功時だけ行う処理を書いてしまう
+
+## まとめ / 次に学ぶとよいこと
+
+- `throw new Error(...)` は通常の処理を止め、問題を呼び出し元へ伝える
+- `try` の例外は `catch` で扱い、`finally` は成否にかかわらず実行される
+- 例外は、捕まるまでコールスタックを上へ伝わる
+- 空の `catch` で失敗を隠さず、回復、記録、再送出を判断する
+
+次は [Promise](./promises) で、すぐには結果が返らない非同期処理の成功と失敗を扱います。

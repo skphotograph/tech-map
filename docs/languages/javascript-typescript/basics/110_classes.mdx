@@ -1,0 +1,189 @@
+---
+sidebar_position: 13
+---
+
+# クラス
+
+注文を表すコードが増えるにつれて、注文番号、金額、状態を別々の変数で持つのはつらくなります。  
+どのデータにどの操作が関係するのかも、少しずつ見えにくくなります。  
+そんなとき、関連するデータと操作をひとつのひな型にまとめるのが **クラス** です。
+
+## このページで分かること
+
+- `class` でひな型を定義する方法
+- `constructor` で生成時の値を受け取る方法
+- `new` でインスタンスを作り、メソッドを呼ぶ方法
+- `extends` と `super` によるクラスの継承
+
+## クラスはデータと操作のひな型
+
+注文を表す `Order` クラスを作ってみます。
+
+```js
+class Order {
+  constructor(id, amount) {
+    this.id = id;
+    this.amount = amount;
+    this.status = 'OPEN';
+  }
+
+  close() {
+    this.status = 'CLOSED';
+  }
+
+  describe() {
+    return `${this.id}: ${this.amount}円 (${this.status})`;
+  }
+}
+```
+
+`class Order { ... }` が注文のひな型です。  
+クラスの中には、生成時の準備を行う `constructor` と、注文に対する操作を表すメソッドを書けます。
+
+| 書き方                    | 役割                                |
+| ------------------------- | ----------------------------------- |
+| `constructor(id, amount)` | インスタンスを作るときに呼ばれる    |
+| `this.id`                 | いま操作しているインスタンスの `id` |
+| `close()`                 | 注文の状態を閉じるメソッド          |
+| `describe()`              | 注文の内容を文字列で返すメソッド    |
+
+`this` は、メソッドを呼び出した対象のインスタンスを指します。  
+`order.close()` なら、`close` の中の `this` は `order` です。
+
+:::tip[this の読み方]
+
+クラスのメソッド内にある `this` は、「いま操作しているこのインスタンス」と読むと整理しやすくなります。
+
+:::
+
+## `new` でインスタンスを作る
+
+クラスはひな型なので、定義しただけでは個別の注文はまだありません。  
+`new` を使うと、クラスをもとにした実体である **インスタンス** を作れます。
+
+```js
+const order = new Order('ORD-1', 3000);
+
+console.log(order.id); // "ORD-1"
+console.log(order.status); // "OPEN"
+console.log(order.describe()); // "ORD-1: 3000円 (OPEN)"
+
+order.close();
+console.log(order.status); // "CLOSED"
+```
+
+`new Order("ORD-1", 3000)` を実行すると、`constructor` が呼ばれます。  
+引数の `"ORD-1"` と `3000` がそれぞれ `id` と `amount` に入り、初期状態 `"OPEN"` も設定されます。
+
+別々に `new` したインスタンスは、それぞれの状態を持ちます。
+
+```js
+const firstOrder = new Order('ORD-1', 3000);
+const secondOrder = new Order('ORD-2', 5000);
+
+firstOrder.close();
+
+console.log(firstOrder.status); // "CLOSED"
+console.log(secondOrder.status); // "OPEN"
+```
+
+<QuizChoice
+title="インスタンスの状態"
+options={[
+{id: 'a', label: 'first と second の両方が "CLOSED"'},
+{id: 'b', label: 'first だけが "CLOSED"'},
+{id: 'c', label: 'second だけが "CLOSED"'},
+]}
+answer="b"
+explanation="first と second は別々に new したインスタンスです。first.close() は first の状態だけを変更します。"
+
+>
+
+  <div>次のコードを実行したあとの状態はどれですか。</div>
+  <pre className="language-js"><code>{`class Order {
+  constructor(id) {
+    this.id = id;
+    this.status = "OPEN";
+  }
+
+close() {
+this.status = "CLOSED";
+}
+}
+
+const first = new Order("ORD-1");
+const second = new Order("ORD-2");
+first.close();`}</code></pre>
+</QuizChoice>
+
+## `extends` で共通部分を引き継ぐ
+
+既存のクラスをもとに、データやメソッドを追加したクラスを作ることもできます。  
+これを **継承** と呼び、`extends` を使います。
+
+```js
+class Order {
+  constructor(id, amount) {
+    this.id = id;
+    this.amount = amount;
+  }
+
+  describe() {
+    return `${this.id}: ${this.amount}円`;
+  }
+}
+
+class ExpressOrder extends Order {
+  constructor(id, amount, deliveryDate) {
+    super(id, amount);
+    this.deliveryDate = deliveryDate;
+  }
+
+  describeDelivery() {
+    return `${this.deliveryDate} に配送`;
+  }
+}
+
+const order = new ExpressOrder('ORD-1', 3000, '2026-09-20');
+
+console.log(order.describe()); // "ORD-1: 3000円"
+console.log(order.describeDelivery()); // "2026-09-20 に配送"
+```
+
+`ExpressOrder extends Order` により、`ExpressOrder` は `Order` の機能を引き継ぎます。  
+派生したクラスの `constructor` では、`this` を使う前に `super(...)` を呼び、親クラスの `constructor` を実行します。
+
+継承は共通処理をまとめられる一方、階層が深いと動きを追いにくくなります。  
+まずは「明確な親子関係があるときの選択肢」として覚えておけば十分です。
+
+<QuizFill
+title="親クラスの constructor"
+answer="super"
+explanation="派生クラスの constructor では、super(...) で親クラスの constructor を呼びます。"
+
+>
+
+  <div>空欄に入る識別子を答えてください。</div>
+  <pre className="language-js"><code>{`class ExpressOrder extends Order {
+  constructor(id, amount) {
+    _____(id, amount);
+  }
+}`}</code></pre>
+</QuizFill>
+
+## よくあるつまずき
+
+- クラスを定義しただけで、インスタンスも作られたと思う
+- `new` を付けずにクラスを呼び出す
+- メソッド内で `this` を書かず、インスタンスのプロパティを参照できない
+- 派生クラスの `constructor` で、`super(...)` より先に `this` を使う
+- 共通点が少ないクラスまで継承で結び、関係を複雑にする
+
+## まとめ / 次に学ぶとよいこと
+
+- クラスは、関連するデータと操作をまとめたひな型
+- `constructor` はインスタンス生成時に呼ばれ、`this` へ初期値を設定する
+- `new` でインスタンスを作り、`instance.method()` の形で操作する
+- `extends` で親クラスの機能を引き継ぎ、`super(...)` で親の初期化を行う
+
+次は [例外](./errors) で、処理を続けられない問題を呼び出し元へ伝える方法を学びます。

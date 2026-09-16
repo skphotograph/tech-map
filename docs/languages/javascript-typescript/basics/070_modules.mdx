@@ -1,0 +1,262 @@
+---
+sidebar_position: 9
+---
+
+# モジュール
+
+同じ計算を複数のファイルへコピーすると、修正のたびにすべてを探して直すことになります。  
+ひとつ直し忘れれば、呼び出す場所によって結果が変わります。  
+JavaScript の **モジュール** を使うと、関数や値をファイルごとに分け、必要な場所から再利用できます。
+
+このページでは、Node.js で ES モジュールを動かし、`export` と `import` でファイルをつなぎます。
+
+前のページまでの配列や関数は、一つのファイル内で使っていました。  
+モジュールを使うと、たとえば配列を加工する関数を別ファイルへ置き、複数の処理から共有できます。
+
+## このページで分かること
+
+- ファイルを分ける目的
+- Node.js で ES モジュールを使う設定
+- 名前付きエクスポートとインポート
+- 相対パスと `.js` 拡張子の読み方
+- デフォルトエクスポートとの違い
+
+## ファイルを「責務」で分ける
+
+プログラムが育つと、計算、表示、データ取得など、異なる役割のコードがひとつのファイルに集まります。  
+長いファイルを切ること自体が目的ではありません。  
+**何を担当するコードか** が分かる単位に分けると、変更する場所と再利用する場所が見つけやすくなります。
+
+ここでは、金額を計算する関数を `calc.js`、その関数を使う処理を `main.js` に分けます。
+
+```text
+module-sample/
+├── package.json
+├── calc.js
+└── main.js
+```
+
+## Node.js で ES モジュールを使う準備
+
+この教材では、Node.js 20 以降と **ES モジュール（ESM）** を使います。  
+Node.js は `.js` を複数の方式で扱えるため、このディレクトリでは `import` / `export` の方式を使う、と設定で伝える必要があります。
+
+その設定を書く `package.json` は、Node.js プロジェクトの設定や実行コマンドをまとめる JSON ファイルです。  
+ここではパッケージ管理にはまだ使わず、学習用ディレクトリの直下に次の内容で新しく作成します。
+
+```json title="package.json"
+{
+  "type": "module"
+}
+```
+
+`"type": "module"` は、この `package.json` と同じディレクトリ以下の `.js` ファイルを ES モジュールとして扱う設定です。  
+これで、この例の `calc.js` と `main.js` で `export` と `import` を使えます。
+
+:::tip[このページの実行条件]
+
+`package.json` に `"type": "module"` を書き、通常の `.js` ファイルで進めます。
+
+:::
+
+## `export` で外へ公開する
+
+別のファイルから使ってよい関数や値には、`export` を付けます。
+
+```js title="calc.js"
+export function calculateTotal(price, quantity) {
+  return price * quantity;
+}
+
+export const taxRate = 0.1;
+```
+
+これは **名前付きエクスポート** です。  
+`calculateTotal` と `taxRate` という名前で、ファイルの外へ公開しています。
+
+`export` を付けていない関数や変数は、そのファイルの中だけで使えます。  
+外へ見せるものを選べるため、「このファイルを使う側に何を提供するか」が明確になります。
+
+## `import` で必要な名前を受け取る
+
+公開された関数や値は、使う側で `import` します。
+
+```js title="main.js"
+import { calculateTotal, taxRate } from './calc.js';
+
+const subtotal = calculateTotal(500, 3);
+const total = subtotal * (1 + taxRate);
+
+console.log(total); // 1650
+```
+
+ターミナルで `main.js` を実行します。
+
+```bash
+node main.js
+```
+
+実行結果です。
+
+```text
+1650
+```
+
+波括弧の中には、`calc.js` が名前付きエクスポートした名前を書きます。  
+名前が一致しないと読み込めません。
+
+```js
+import { calculateTotal } from './calc.js';
+```
+
+`"./calc.js"` は、現在の `main.js` から見たファイルの場所です。
+
+- `./` は現在のファイルと同じディレクトリから探す
+- `../` はひとつ上のディレクトリから探す
+- `calc.js` は読み込むファイル名
+
+Node.js の ES モジュールでローカルファイルを読み込むときは、通常 `.js` まで書きます。  
+`"./calc"` と省略せず、`"./calc.js"` と書く習慣にすると、実行環境の規則がコードから分かります。
+
+<QuizChoice
+title="名前付きインポート"
+options={[
+{ id: 'a', label: 'import calculateTotal from "./calc.js";' },
+{ id: 'b', label: 'import { calculateTotal } from "./calc.js";' },
+{ id: 'c', label: 'import { calculateTotal } from "calc.js";' },
+]}
+answer="b"
+explanation="名前付きエクスポートは波括弧で受け取り、同じディレクトリのローカルファイルは ./calc.js と指定します。"
+
+>
+
+  <div><code>calc.js</code> が <code>export function calculateTotal() {}</code> と公開した関数を、同じディレクトリから読み込む書き方はどれですか。</div>
+</QuizChoice>
+
+## 名前付きエクスポートを基本にする
+
+ひとつのファイルから複数の関数や値を公開できるのが、名前付きエクスポートです。  
+読み込む側でも元の名前が見えるため、どの機能を使っているか追いやすくなります。
+
+```js title="order.js"
+export function createOrder(id) {
+  return { id, status: 'OPEN' };
+}
+
+export function closeOrder(order) {
+  order.status = 'CLOSED';
+}
+```
+
+```js title="main.js"
+import { createOrder, closeOrder } from './order.js';
+
+const order = createOrder('ORD-1001');
+closeOrder(order);
+
+console.log(order.status); // CLOSED
+```
+
+この教材では、まず **名前付きエクスポートを基本の習慣** にします。  
+名前をそろえて受け渡すため、検索や自動補完が働きやすく、公開されている機能も読み取りやすいからです。
+
+読み込む側だけ別名にしたい場合は、`as` を使えます。
+
+```js
+import { calculateTotal as calcTotal } from './calc.js';
+
+console.log(calcTotal(500, 3)); // 1500
+```
+
+別名は、異なるモジュールから同じ名前を読み込む場合などに使います。  
+理由がなければ、公開された名前をそのまま使う方が追いやすくなります。
+
+## デフォルトエクスポート
+
+ES モジュールには、ファイルから代表ひとつを公開する **デフォルトエクスポート** もあります。
+
+```js title="formatter.js"
+export default function formatOrderId(id) {
+  return `[${id}]`;
+}
+```
+
+読み込む側では、波括弧を付けません。
+
+```js title="main.js"
+import formatOrderId from './formatter.js';
+
+console.log(formatOrderId('ORD-1001')); // [ORD-1001]
+```
+
+デフォルトエクスポートは、読み込む側が好きな名前を付けられます。
+
+```js
+import formatId from './formatter.js';
+```
+
+便利な一方、ファイルをまたいで名前が変わると検索しにくくなることがあります。  
+チームの規約がなければ、まず名前付きエクスポートを選び、デフォルトエクスポートは既存コードやライブラリで出会ったときに区別できれば十分です。
+
+| 種類       | 公開                              | 読み込み                         |
+| ---------- | --------------------------------- | -------------------------------- |
+| 名前付き   | `export function fn() {}`         | `import { fn } from "./file.js"` |
+| デフォルト | `export default function fn() {}` | `import fn from "./file.js"`     |
+
+<QuizChoice
+title="export と import の対応"
+options={[
+{ id: 'a', label: '1500' },
+{ id: 'b', label: '500' },
+{ id: 'c', label: '名前が一致しないため実行できない' },
+]}
+answer="a"
+explanation="calculateTotal は名前付きで公開・読み込みされ、500 × 3 の結果 1500 を返します。"
+
+>
+
+  <div>同じディレクトリに次の 2 ファイルがあります。<code>node main.js</code> の出力はどれですか。</div>
+  <pre className="language-js"><code>{`// calc.js
+export function calculateTotal(price, quantity) {
+  return price * quantity;
+}
+
+// main.js
+import { calculateTotal } from "./calc.js";
+console.log(calculateTotal(500, 3));`}</code></pre>
+</QuizChoice>
+
+<details>
+<summary>循環依存を避ける</summary>
+
+`a.js` が `b.js` を読み、同時に `b.js` が `a.js` を読む関係を **循環依存** と呼びます。
+
+```text
+a.js → b.js
+ ↑       ↓
+ └───────┘
+```
+
+ES モジュールには循環依存を扱う仕組みがありますが、初期化の順序によっては、期待した値をまだ利用できないことがあります。  
+ふたつのファイルが互いを必要としたら、共通部分を第三のモジュールへ分けられないか検討します。
+
+</details>
+
+## よくあるつまずき
+
+- `package.json` の `"type": "module"` を用意せずに `import` を使う
+- ローカルファイルのパスから `./` や `.js` を省略する
+- 名前付きエクスポートを、波括弧なしでインポートする
+- `export` 側と `import` 側の名前を食い違わせる
+- ファイルを細かく分けること自体が目的になり、役割がかえって見えにくくなる
+- ふたつのモジュールが互いを読み込む循環依存を作る
+
+## まとめ / 次に学ぶとよいこと
+
+- モジュールは、役割ごとにコードを分けて再利用する仕組み
+- Node.js の学習では、`package.json` の `"type": "module"` を使う
+- 名前付きエクスポートは `export` し、`import { name }` で受け取る
+- ローカルファイルは `./calc.js` のように相対パスと拡張子を書く
+- まず名前付きエクスポートを基本にし、デフォルトエクスポートとの構文の違いを見分ける
+
+次は [実行の仕組み](./execution-model) で、関数と「あとで動く処理」がどの順番で実行されるかを見ていきます。

@@ -1,0 +1,329 @@
+---
+sidebar_position: 17
+---
+
+# Map と Set
+
+配列から重複を取り除くために、追加するたび `includes` で確認する。  
+オブジェクトへ値を入れたものの、登録件数を知るために毎回キーの配列を作る。  
+このような場面では、用途に合った入れ物を選ぶとコードの目的がはっきりします。
+
+重複しない値を扱う **Set** と、キーと値の対応を扱う **Map** を見ていきましょう。
+
+## このページで分かること
+
+- 配列と Set の違い
+- Set の `add` / `has` / `delete`
+- オブジェクトと Map の違い
+- Map の `set` / `get` / `has` / `delete`
+- 配列、Set、オブジェクト、Map の実務的な選び方
+
+## Set は重複しない値の集まり
+
+配列には同じ値を何度でも入れられます。
+
+```js
+const tags = ['api', 'web', 'api'];
+
+console.log(tags); // ['api', 'web', 'api']
+```
+
+**Set** は、同じ値をひとつだけ保持する、複数の値の入れ物です。  
+このような入れ物をまとめて **コレクション** と呼ぶことがあります。`new Set(...)` に配列を渡すと、重複を除いて登録します。
+
+```js
+const tags = new Set(['api', 'web', 'api']);
+
+console.log(tags.size); // 2
+console.log([...tags]); // ['api', 'web']
+```
+
+実行結果です。
+
+```text
+2
+[ 'api', 'web' ]
+```
+
+`size` は、Set に入っている値の個数です。  
+Set は追加された順序を保って反復できるため、スプレッド構文 `[...tags]` で配列へ変換すると、この例では `'api'`、`'web'` の順になります。
+
+## Set の基本操作
+
+Set では、追加に `add`、存在確認に `has`、削除に `delete` を使います。
+
+```js
+const selectedIds = new Set();
+
+selectedIds.add('USER-1');
+selectedIds.add('USER-2');
+selectedIds.add('USER-1');
+
+console.log(selectedIds.has('USER-1')); // true
+console.log(selectedIds.size); // 2
+
+selectedIds.delete('USER-1');
+console.log(selectedIds.has('USER-1')); // false
+```
+
+実行結果です。
+
+```text
+true
+2
+false
+```
+
+同じ値をもう一度 `add` しても、要素数は増えません。  
+`has` と `delete` は、対象の値そのものを渡して使います。
+
+:::tip[Set を選ぶ合図]
+
+「同じ値を 1 回だけ持ちたい」「その値が含まれるか確認したい」という目的なら、Set が意図を直接表します。
+
+:::
+
+<QuizChoice
+title="Set の要素数"
+options={[
+{ id: 'a', label: '1' },
+{ id: 'b', label: '2' },
+{ id: 'c', label: '3' },
+]}
+answer="b"
+explanation="Set は同じ値を重複して保持しないため、api と web の 2 要素です。"
+
+>
+
+  <div>次のコードが出力する値はどれですか。</div>
+  <pre className="language-js"><code>{`const skills = new Set();
+skills.add("api");
+skills.add("web");
+skills.add("api");
+
+console.log(skills.size);`}</code></pre>
+</QuizChoice>
+
+## 配列と Set を使い分ける
+
+配列と Set は、どちらも複数の値を扱えますが、得意な目的が異なります。
+
+| 選ぶもの | 向いている目的                                                     |
+| -------- | ------------------------------------------------------------------ |
+| 配列     | 順番や添字を使う、同じ値を複数回持つ、`map` や `filter` で加工する |
+| Set      | 重複を許さない、値が含まれるかを確認する                           |
+
+たとえば、注文を並び順どおり表示するなら配列が向いています。  
+一方、画面で選択済みの ID や、付与済みの権限名を管理するなら Set が目的に合います。
+
+配列から重複を除いた新しい配列を作る処理にも Set を使えます。
+
+```js
+const categories = ['book', 'tool', 'book', 'food'];
+const uniqueCategories = [...new Set(categories)];
+
+console.log(uniqueCategories);
+```
+
+実行結果です。
+
+```text
+[ 'book', 'tool', 'food' ]
+```
+
+ただし、重複した回数そのものに意味がある場合は Set に変換してはいけません。  
+たとえば投票結果や購入個数では、同じ値が複数あることもデータの一部です。
+
+## Map はキーと値の対応を持つ
+
+オブジェクトは、ひとまとまりのデータをプロパティで表すのが得意です。
+
+```js
+const user = {
+  id: 'USER-1',
+  name: 'Aiko',
+};
+```
+
+一方、キーが増減する辞書や対応表を作るには **Map** が使えます。  
+`set(key, value)` で登録し、`get(key)` で値を取得します。
+
+```js
+const userNames = new Map();
+
+userNames.set('USER-1', 'Aiko');
+userNames.set('USER-2', 'Ren');
+
+console.log(userNames.get('USER-1')); // Aiko
+console.log(userNames.size); // 2
+```
+
+実行結果です。
+
+```text
+Aiko
+2
+```
+
+Map には、次の特徴があります。
+
+- 文字列だけでなく、数値やオブジェクトなどもキーにできる
+- `size` で登録件数を取得できる
+- 追加された順序でキーと値を反復できる
+- コレクションを操作する `set`、`get`、`has`、`delete` がそろっている
+
+## Map の基本操作
+
+登録、取得、存在確認、削除をひとつの例で確認します。
+
+```js
+const prices = new Map();
+
+prices.set('book', 1200);
+prices.set('pen', 200);
+
+console.log(prices.get('book')); // 1200
+console.log(prices.has('pen')); // true
+
+prices.delete('pen');
+console.log(prices.has('pen')); // false
+```
+
+実行結果です。
+
+```text
+1200
+true
+false
+```
+
+存在しないキーを `get` すると `undefined` が返ります。  
+値として `undefined` を保存する可能性がある場合は、登録されているかを `has` で確認すると区別できます。
+
+Map は配列から初期化することもできます。  
+内側の配列は `[キー, 値]` の組です。
+
+```js
+const statusLabels = new Map([
+  ['OPEN', '受付中'],
+  ['SHIPPED', '発送済み'],
+]);
+
+console.log(statusLabels.get('SHIPPED'));
+```
+
+実行結果です。
+
+```text
+発送済み
+```
+
+<QuizChoice
+title="Map の値を取得する"
+options={[
+{ id: 'a', label: 'statusLabels["OPEN"]' },
+{ id: 'b', label: 'statusLabels.get("OPEN")' },
+{ id: 'c', label: 'statusLabels.add("OPEN")' },
+]}
+answer="b"
+explanation="Map に対応する値を取得するときは get(key) を使います。"
+
+>
+
+  <div>次の Map から <code>受付中</code> を取得する式はどれですか。</div>
+  <pre className="language-js"><code>{`const statusLabels = new Map([
+  ["OPEN", "受付中"],
+  ["CLOSED", "完了"],
+]);`}</code></pre>
+</QuizChoice>
+
+## Map はオブジェクトもキーにできる
+
+オブジェクトのプロパティ名は、基本的に文字列または Symbol です。  
+Map では、オブジェクトそのものをキーとして使えます。
+
+```js
+const userA = { id: 'USER-1' };
+const userB = { id: 'USER-2' };
+
+const lastLoginByUser = new Map();
+lastLoginByUser.set(userA, '2026-09-15');
+lastLoginByUser.set(userB, '2026-09-16');
+
+console.log(lastLoginByUser.get(userA));
+```
+
+実行結果です。
+
+```text
+2026-09-15
+```
+
+取り出すときは、登録時と同じオブジェクトをキーにします。  
+内容が同じでも、別に作ったオブジェクトは別のキーです。
+
+```js
+console.log(lastLoginByUser.get({ id: 'USER-1' })); // undefined
+```
+
+これは、オブジェクトが同じ内容かではなく、同じ参照かどうかで判定されるためです。
+
+<QuizChoice
+title="オブジェクトを Map のキーにする"
+options={[
+{ id: 'a', label: 'admin' },
+{ id: 'b', label: 'undefined' },
+{ id: 'c', label: 'エラーになる' },
+]}
+answer="b"
+explanation="あとから作った { id: 1 } は、登録時の key とは別のオブジェクトなので値を取得できません。"
+
+>
+
+  <div>次のコードが出力する値はどれですか。</div>
+  <pre className="language-js"><code>{`const key = { id: 1 };
+const roles = new Map();
+roles.set(key, "admin");
+
+console.log(roles.get({ id: 1 }));`}</code></pre>
+</QuizChoice>
+
+## オブジェクトと Map を使い分ける
+
+選択の基準は、「データの形」を表したいのか、「キーと値の集まり」を操作したいのかです。
+
+| 選ぶもの     | 向いている目的                                       |
+| ------------ | ---------------------------------------------------- |
+| オブジェクト | `user.name` のように、決まった項目を持つデータを表す |
+| Map          | キーが動的に増減する対応表や辞書を扱う               |
+
+HTTP API から受け取ったユーザー情報のように、項目名が決まっているデータにはオブジェクトが自然です。  
+ユーザー ID ごとの一時的な状態や、オブジェクトごとの追加情報を管理するなら Map が役立ちます。
+
+JSON は Map や Set をそのまま表せません。  
+HTTP API との入出力など JSON へ変換するデータは、配列やオブジェクトの方が扱いやすい場合があります。
+
+:::tip[コレクションを選ぶ基準]
+
+順序付きの一覧は配列、重複しない値は Set、決まった項目のデータはオブジェクト、動的な対応表は Map を目安にします。
+
+:::
+
+## よくあるつまずき
+
+- 重複回数に意味があるデータを Set に入れ、情報を失う
+- Map の値を `map[key]` で取得しようとする
+- Map に存在しないキーの `get` が `undefined` を返すことを見落とす
+- Map のキーにしたオブジェクトと、内容が同じ別オブジェクトを同一だと考える
+- JSON に Map や Set をそのまま変換できると思う
+- どのデータも Map や Set に置き換え、配列やオブジェクトの読みやすさを失う
+
+## まとめ / 次に学ぶとよいこと
+
+- Set は重複しない値を保持し、`add` / `has` / `delete` で操作する
+- 配列は順序や重複を含む一覧、Set は一意な値の管理に向く
+- Map はキーと値を保持し、`set` / `get` / `has` / `delete` で操作する
+- Map は任意の型をキーにでき、`size` と追加順の反復を備える
+- オブジェクトは決まった項目のデータ、Map は動的な対応表に向く
+
+次は [現代的な構文](./modern-syntax) で、日々の JavaScript コードでよく使う簡潔な書き方を身につけます。

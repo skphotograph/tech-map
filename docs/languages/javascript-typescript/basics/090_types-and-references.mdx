@@ -1,0 +1,210 @@
+---
+sidebar_position: 11
+---
+
+# 型と参照
+
+「片方の変数だけ直したはずなのに、もう片方まで変わっている」。  
+JavaScript でオブジェクトや配列を扱い始めると、この現象に出会うことがあります。  
+変数への代入が、値そのものをコピーする場合と、同じデータを共有する場合があるためです。
+
+## このページで分かること
+
+- `typeof` で基本的な値の型を調べる方法
+- プリミティブが値としてコピーされる仕組み
+- オブジェクトと配列が参照を通じて共有される仕組み
+- スプレッド構文で浅いコピーを作る方法
+
+## `typeof` で型を確かめる
+
+JavaScript の値には型があります。  
+変数を宣言するときに型名は書きませんが、値の型がなくなるわけではありません。  
+`typeof` 演算子を使うと、値の基本的な型を文字列で確認できます。
+
+```js
+console.log(typeof 42); // "number"
+console.log(typeof 'OPEN'); // "string"
+console.log(typeof true); // "boolean"
+console.log(typeof undefined); // "undefined"
+```
+
+出力された `"number"` や `"string"` が、`typeof` で調べた結果です。  
+計算や条件分岐の前に値の型を確かめると、「数字のつもりが文字列だった」といった不具合を切り分けやすくなります。
+
+<details>
+<summary>ほかにもある型: bigint / symbol</summary>
+
+`typeof 10n` は `"bigint"`、`typeof Symbol("id")` は `"symbol"` になります。  
+大きな整数や、ほかの値と重ならない識別子向けの型ですが、このページのコピーと共有を理解するうえでは必須ではありません。
+
+</details>
+
+`null` とオブジェクトには注意が必要です。
+
+```js
+console.log(typeof { id: 'ORD-1' }); // "object"
+console.log(typeof [10, 20]); // "object"
+console.log(typeof null); // "object"
+```
+
+配列を確実に見分けるときは `Array.isArray(value)` を使います。  
+また、`typeof null` が `"object"` になるのは JavaScript に古くから残る仕様です。  
+`null` かどうかは `value === null` で調べます。
+
+<QuizChoice
+title="typeof の結果"
+options={[
+{id: 'a', label: '"array"'},
+{id: 'b', label: '"object"'},
+{id: 'c', label: '"list"'},
+]}
+answer="b"
+explanation={'JavaScript では配列に typeof を使うと "object" になります。配列かどうかは Array.isArray で確認できます。'}
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`console.log(typeof [1, 2, 3]);`}</code></pre>
+</QuizChoice>
+
+## プリミティブは値がコピーされる
+
+数値、文字列、真偽値、`undefined`、`null` などは **プリミティブ** と呼ばれます。  
+プリミティブを別の変数へ代入すると、その時点の値がコピーされます。
+
+```js
+let firstStatus = 'OPEN';
+let secondStatus = firstStatus;
+
+secondStatus = 'CLOSED';
+
+console.log(firstStatus); // "OPEN"
+console.log(secondStatus); // "CLOSED"
+```
+
+`secondStatus` を変更しても、`firstStatus` は変わりません。  
+ふたつの変数が、それぞれ独立した文字列の値を持っているためです。
+
+:::tip[プリミティブの代入]
+
+プリミティブを別の変数へ代入したあとは、それぞれを独立して扱えます。
+
+:::
+
+## オブジェクトと配列は参照を共有する
+
+オブジェクトを変数へ入れると、変数はオブジェクトそのものではなく、オブジェクトを指す **参照** を持ちます。  
+その変数を別の変数へ代入すると、オブジェクトの複製ではなく参照がコピーされます。
+
+```js
+const firstOrder = {
+  id: 'ORD-1',
+  status: 'OPEN',
+};
+
+const secondOrder = firstOrder;
+secondOrder.status = 'CLOSED';
+
+console.log(firstOrder.status); // "CLOSED"
+console.log(secondOrder.status); // "CLOSED"
+```
+
+`firstOrder` と `secondOrder` は、同じ注文オブジェクトを指しています。  
+そのため、`secondOrder` 経由で `status` を変更すると、`firstOrder` から見える値も変わります。
+
+配列も同じです。
+
+```js
+const firstItems = ['book'];
+const secondItems = firstItems;
+
+secondItems.push('pen');
+
+console.log(firstItems); // ["book", "pen"]
+```
+
+`const` は変数への再代入を防ぎますが、オブジェクトや配列の中身まで変更不可にするものではありません。  
+したがって、`const firstItems = ...` でも `push` は実行できます。
+
+<QuizChoice
+title="参照を共有したオブジェクト"
+options={[
+{id: 'a', label: '"OPEN"'},
+{id: 'b', label: '"CLOSED"'},
+{id: 'c', label: '実行時エラー'},
+]}
+answer="b"
+explanation="copy と order は同じオブジェクトを参照しているため、copy.status の変更は order.status からも見えます。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`const order = { status: "OPEN" };
+const copy = order;
+copy.status = "CLOSED";
+
+console.log(order.status);`}</code></pre>
+</QuizChoice>
+
+## スプレッド構文で浅いコピーを作る
+
+変更を共有したくないときは、スプレッド構文 `...` で新しいオブジェクトや配列を作れます。
+
+```js
+const originalOrder = {
+  id: 'ORD-1',
+  status: 'OPEN',
+};
+
+const copiedOrder = { ...originalOrder };
+copiedOrder.status = 'CLOSED';
+
+console.log(originalOrder.status); // "OPEN"
+console.log(copiedOrder.status); // "CLOSED"
+```
+
+配列では `[...]` の中に展開します。
+
+```js
+const originalItems = ['book'];
+const copiedItems = [...originalItems];
+
+copiedItems.push('pen');
+
+console.log(originalItems); // ["book"]
+console.log(copiedItems); // ["book", "pen"]
+```
+
+ただし、これは **浅いコピー** です。  
+外側は新しくなりますが、内側にあるオブジェクトは共有されたままです。
+
+```js
+const original = {
+  customer: { name: 'Aiko' },
+};
+
+const copied = { ...original };
+copied.customer.name = 'Ren';
+
+console.log(original.customer.name); // "Ren"
+```
+
+入れ子まで分けたい場合は、必要な階層もコピーします。  
+まずは「スプレッド構文は外側の一段をコピーする」と覚えておくと、思わぬ共有を避けやすくなります。
+
+## よくあるつまずき
+
+- `typeof` だけで配列と通常のオブジェクトを区別しようとする
+- `typeof null` が `"null"` になると思い込む
+- オブジェクトを代入すると、内容も複製されると思い込む
+- `const` にするとオブジェクトの中身も変更できないと考える
+- 浅いコピーで、入れ子のオブジェクトまで独立したと思い込む
+
+## まとめ / 次に学ぶとよいこと
+
+- `typeof` で値の基本的な型を確認できる
+- プリミティブは代入時に値がコピーされる
+- オブジェクトと配列は、代入すると同じ参照を共有する
+- `{ ...obj }` と `[...arr]` で外側の浅いコピーを作れる
+
+次は [等価と比較](./equality-and-coercion) で、値が同じかどうかを安全に判定する方法を学びます。

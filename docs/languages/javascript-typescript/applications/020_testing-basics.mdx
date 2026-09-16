@@ -1,0 +1,173 @@
+---
+sidebar_position: 4
+---
+
+# テストの入口
+
+金額計算を直したら、割引なしの注文まで安くなっていた。  
+変更した場所以外への影響は、画面を一度操作しただけでは見落とします。  
+自動テストは、入力に対して期待する結果をコードに残し、変更後も繰り返し確かめる仕組みです。
+
+## このページで分かること
+
+- 自動テストが変更を支える理由
+- Node.js 標準の `node:test` でテストを書く方法
+- `assert.equal` で期待値と実際の値を比べる方法
+- 成功と失敗の出力を読む方法
+
+## テストは期待する振る舞いを固定する
+
+小さなテストは、主に 3 つの要素で考えます。
+
+1. 入力や事前条件を用意する
+2. テスト対象を実行する
+3. 実際の結果が期待値と一致するか確かめる
+
+「この入力なら、この結果になる」という例を実行可能な形で残すことで、将来の変更が既存の振る舞いを壊したときに気付きやすくなります。
+
+## Node.js 標準機能で最初のテストを書く
+
+Node.js 20 以降には、テストを実行する `node:test` と、値を検証する `node:assert` が組み込まれています。  
+追加パッケージなしで始められます。
+
+まずテスト対象を作ります。
+
+```js title="src/calculate-total.js"
+export function calculateTotal(price, quantity) {
+  return price * quantity;
+}
+```
+
+次にテストを書きます。
+
+```js title="test/calculate-total.test.js"
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { calculateTotal } from '../src/calculate-total.js';
+
+test('単価と個数から合計金額を計算する', () => {
+  const actual = calculateTotal(500, 3);
+  const expected = 1500;
+
+  assert.equal(actual, expected);
+});
+```
+
+`package.json` に実行コマンドを登録します。
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
+```
+
+テストを実行します。
+
+```bash
+npm run test
+```
+
+成功時には、テスト名と集計が表示されます。
+
+```text
+✔ 単価と個数から合計金額を計算する
+ℹ tests 1
+ℹ pass 1
+ℹ fail 0
+```
+
+`pass 1` は成功したテスト数、`fail 0` は失敗したテストがないことを表します。  
+実行時間など、ほかの行も表示される場合があります。
+
+:::tip[テスト名に振る舞いを書く]
+
+関数名だけでなく、「どの条件で何が起きるか」が分かる名前にすると、失敗時に守るべき振る舞いを見つけやすくなります。
+
+:::
+
+<QuizChoice
+title="等値の検証"
+options={[
+{ id: 'a', label: 'assert.equal(actual, expected)' },
+{ id: 'b', label: 'console.log(actual)' },
+{ id: 'c', label: 'return expected' },
+]}
+answer="a"
+explanation="assert.equal は実際の値と期待値を比較し、一致しなければテストを失敗させます。"
+
+>
+
+ <div>実際の値と期待値が等しいことを検証するコードはどれですか。</div>
+</QuizChoice>
+
+## 境界の例を増やす
+
+通常の例だけでなく、仕様の端になる入力もテストします。
+
+```js title="test/calculate-total.test.js"
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { calculateTotal } from '../src/calculate-total.js';
+
+test('単価と個数から合計金額を計算する', () => {
+  assert.equal(calculateTotal(500, 3), 1500);
+});
+
+test('個数が 0 なら合計金額は 0 になる', () => {
+  assert.equal(calculateTotal(500, 0), 0);
+});
+```
+
+どの例を増やすかは、実装の行数ではなく仕様から考えます。  
+最小値、上限、空の入力、エラー条件など、振る舞いが切り替わる境界が候補です。
+
+## 失敗した出力を読む
+
+期待値を誤って `1600` にすると、テストは失敗します。
+
+```text
+✖ 単価と個数から合計金額を計算する
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1500 !== 1600
+
+ℹ pass 0
+ℹ fail 1
+```
+
+この例では `1500` が実際の値、`1600` が期待値です。  
+失敗したテスト名、差分、スタックトレースから、期待が誤っているのか実装が誤っているのかを調べます。  
+テストを通すためだけに期待値を書き換えず、仕様を確認することが大切です。
+
+## テストしやすいコード
+
+金額計算のように、入力を受け取って結果を返す関数は、画面や通信を起動せずに試せます。  
+一方、計算と `fetch` と画面更新がひとつの関数に混ざると、準備するものが増え、失敗原因も分かりにくくなります。
+
+まず業務ルールを小さな関数へ分け、その振る舞いをテストします。  
+HTTP や画面との接続は、別の種類のテストで確認します。
+
+Jest、Vitest、Mocha など、プロジェクトによって別のテストランナーを使うこともあります。  
+構文や機能は異なっても、入力を用意し、実行し、期待値と比較する考え方は共通です。
+
+## よくあるつまずき
+
+- 実装の内部手順だけを検証し、利用者から見た振る舞いを確認しない
+- 成功例だけを書き、境界やエラー条件を試さない
+- 通信や画面操作をすべて混ぜ、どこで失敗したか分からなくする
+- 失敗理由を調べず、テストが通る値へ期待値を変更する
+- ローカルではテストするが、共有する `npm run test` を用意しない
+
+## まとめ / 次に学ぶとよいこと
+
+- 自動テストは、期待する振る舞いを変更後も繰り返し確認する
+- `node:test` と `node:assert/strict` なら追加依存なしで始められる
+- テストは準備、実行、検証の流れで考える
+- 通常の例に加え、振る舞いが変わる境界を確認する
+- 業務ロジックを外部入出力から分けるとテストしやすい
+
+次は [プロジェクトの分け方](./project-shape) で、UI、業務ロジック、外部接続を見つけやすい構成に整理します。
