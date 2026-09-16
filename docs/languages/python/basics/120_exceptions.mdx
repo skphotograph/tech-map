@@ -1,0 +1,260 @@
+---
+sidebar_position: 14
+---
+
+# 例外
+
+数値へ変換できない文字列、存在しない辞書のキー、開けないファイル。  
+処理を続けられない状況は、戻り値だけでは見落とされることがあります。  
+Python では **例外** を使って、通常の処理とは別の流れで異常を伝えます。  
+
+## このページで分かること
+
+- `raise` で例外を発生させる方法
+- `try` / `except` で特定の例外を処理する方法
+- `else` と `finally` の役割
+- 捕捉されなかった例外が呼び出し元へ伝わる仕組み
+
+## `raise` で処理できない状況を伝える
+
+関数が受け付けられない値を受け取ったときは、`raise` で例外を発生させられます。  
+
+```python
+def calculate_total(price, quantity):
+    if quantity < 0:
+        raise ValueError("quantity must be zero or greater")
+
+    return price * quantity
+
+
+total = calculate_total(500, 3)
+print(total)  # 1500
+```
+
+`ValueError` は、値の型は受け付けられるものの、内容が不適切な場合に使う組み込み例外です。  
+数量が負数なら計算結果を返さず、その場で通常の処理を中断します。  
+
+```python
+calculate_total(500, -1)
+```
+
+実行すると、代表的には次のように表示されます。  
+
+```text
+Traceback (most recent call last):
+  ...
+ValueError: quantity must be zero or greater
+```
+
+最後の行を見ると、例外の種類が `ValueError`、メッセージが `quantity must be zero or greater` だと分かります。  
+メッセージには、何が条件に反していたのかを具体的に書くと、原因を追いやすくなります。  
+
+独自の異常を表す入口として `Exception` を直接発生させることもできます。  
+
+```python
+raise Exception("order processing failed")
+```
+
+ただし、組み込みの `ValueError` や `KeyError` などで意味を十分に表せるなら、具体的な種類を選ぶほうが呼び出し側で扱いやすくなります。  
+
+<QuizChoice
+title="不適切な値を伝える"
+options={[
+{id: 'a', label: 'raise ValueError("quantity must be zero or greater")'},
+{id: 'b', label: 'return ValueError'},
+{id: 'c', label: 'print("ValueError")'},
+]}
+answer="a"
+explanation="不適切な値を例外として伝えるには、raise に例外オブジェクトを指定します。"
+
+>
+
+ <div>負の数量を受け取ったとき、<code>ValueError</code> を発生させるコードはどれですか。</div>
+</QuizChoice>
+
+## `try` / `except` で例外を処理する
+
+発生する可能性が分かっており、その場で回復できる例外は `try` / `except` で処理します。  
+
+```python
+text = "three"
+
+try:
+    quantity = int(text)
+except ValueError:
+    print("数量は整数で入力してください")
+```
+
+`try` ブロックで `ValueError` が発生すると、残りの処理を飛ばして対応する `except` ブロックへ移ります。  
+例外が発生しなければ、`except` ブロックは実行されません。  
+
+例外の内容を使いたい場合は、`as` で名前を付けます。  
+
+```python
+try:
+    quantity = int("three")
+except ValueError as error:
+    print(f"変換できませんでした: {error}")
+```
+
+`try` に入れる範囲は、例外が起こり得る処理へ絞ります。  
+範囲が広すぎると、想定していない場所の `ValueError` まで同じ対応で隠してしまいます。  
+
+:::tip[具体的な例外を捕捉する]
+
+回復方法が決まっている例外だけを、`except ValueError:` のように種類を指定して捕捉します。  
+
+:::
+
+<QuizChoice
+title="例外を捕捉したあとの処理"
+options={[
+{id: 'a', label: '数量: 3'},
+{id: 'b', label: '数量は整数で入力してください'},
+{id: 'c', label: '何も表示されない'},
+]}
+answer="b"
+explanation="整数へ変換できない文字列を int に渡したため ValueError が発生し、対応する except ブロックが実行されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`try:
+    quantity = int("three")
+    print(f"数量: {quantity}")
+except ValueError:
+    print("数量は整数で入力してください")`}</code></pre>
+</QuizChoice>
+
+## `else` と `finally`
+
+`else` ブロックは、`try` で例外が発生しなかった場合だけ実行されます。  
+例外が起きる可能性のない後続処理を `else` へ分けると、`try` の範囲を狭く保てます。  
+
+```python
+text = "3"
+
+try:
+    quantity = int(text)
+except ValueError:
+    print("数量は整数で入力してください")
+else:
+    print(f"数量: {quantity}")  # 数量: 3
+```
+
+`finally` ブロックは、例外の有無にかかわらず最後に実行されます。  
+一時的に確保した資源の解放など、成功しても失敗しても必要な後始末に使います。  
+
+```python
+print("処理を開始します")
+
+try:
+    quantity = int("three")
+except ValueError:
+    print("変換に失敗しました")
+finally:
+    print("処理を終了します")
+```
+
+出力は次のようになります。  
+
+```text
+処理を開始します
+変換に失敗しました
+処理を終了します
+```
+
+`finally` は必ず実行したい処理に使いますが、ファイル操作では `with` 文を使うと終了処理を任せられることもあります。  
+
+## 捕捉しない例外は呼び出し元へ伝わる
+
+関数内で発生した例外がその関数で捕捉されなければ、関数を呼び出した側へ伝わります。  
+この動きを、例外が **伝播する** といいます。  
+
+```python
+def parse_quantity(text):
+    return int(text)
+
+
+def create_order(text):
+    quantity = parse_quantity(text)
+    return {"quantity": quantity}
+
+
+try:
+    order = create_order("three")
+except ValueError:
+    print("注文の数量を確認してください")
+```
+
+`ValueError` は `parse_quantity` で発生し、`create_order` を通って、一番外側の `except` まで伝わります。  
+各関数で同じ例外を捕捉する必要はありません。  
+利用者への再入力依頼やログ記録など、意味のある対応ができる場所で捕捉します。  
+
+<QuizChoice
+title="例外の伝播"
+options={[
+{id: 'a', label: 'parse_quantity の中だけで消える'},
+{id: 'b', label: 'create_order を呼び出した側まで伝わる'},
+{id: 'c', label: '自動的に None へ変換される'},
+]}
+answer="b"
+explanation="関数内で捕捉されなかった例外は、その関数を呼び出した側へ伝播します。"
+
+>
+
+ <div><code>parse_quantity</code> で発生し、どの関数でも捕捉されなかった例外はどうなりますか。</div>
+</QuizChoice>
+
+## `except:` だけで捕捉しない
+
+例外の種類を書かない `except:` は、通常の処理エラーだけでなく、`Ctrl + C` による中断やプログラムの終了要求まで捕捉します。  
+利用者が止めたのに処理が続いたり、原因が異なる障害を同じ値へ置き換えたりして問題を見えなくするため、通常は避けます。  
+
+```python
+# 避けたい例
+try:
+    quantity = int(text)
+except:
+    quantity = 0
+```
+
+少なくとも、想定している例外を具体的に指定します。  
+
+```python
+try:
+    quantity = int(text)
+except ValueError:
+    quantity = 0
+```
+
+この例なら、整数へ変換できない場合だけを処理し、ほかの不具合は例外として見える状態に保てます。  
+
+複数の例外を同じ方法で回復できる場合は、タプルで指定できます。  
+
+```python
+try:
+    value = order["quantity"]
+    quantity = int(value)
+except (KeyError, ValueError):
+    print("数量を確認してください")
+```
+
+## よくあるつまずき
+
+- エラーメッセージを `print` するだけで、失敗後も処理を続けてしまう
+- `try` の範囲を広くし、想定外の例外まで同じ対応で隠す
+- `except:` であらゆる例外を捕捉する
+- 回復できない例外を捕捉し、何もせず無視する
+- `finally` に成功時だけ実行したい処理を書く
+
+## まとめ / 次に学ぶとよいこと
+
+- `raise` で、処理を続けられない状況を例外として伝えられる
+- 値の内容が不適切な場合は `ValueError` を使える
+- `try` / `except` では、回復できる具体的な例外を捕捉する
+- `else` は成功時、`finally` は例外の有無にかかわらず実行される
+- 捕捉されなかった例外は呼び出し元へ伝播する
+
+例外による失敗時の流れを整理できたら、通常時の一覧処理へ戻ります。  
+次は [内包表記とイテラブル](./comprehensions-and-iterables) で、繰り返し可能な値を変換する書き方を学びます。  

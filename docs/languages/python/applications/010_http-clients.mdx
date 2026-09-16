@@ -1,0 +1,114 @@
+---
+sidebar_position: 3
+---
+
+# HTTP クライアント
+
+外部 API は、成功だけを前提にすると応答を待ち続けたり、エラー本文を正常データとして扱ったりします。  
+時間の上限と失敗の分類まで含めて通信を設計します。  
+
+## このページで分かること
+
+- GET リクエストと JSON の扱い
+- ステータスコードを確認する理由
+- タイムアウトの必要性
+- 通信エラーを境界で扱う方法
+
+## API から JSON を取得する
+
+例では `httpx` を使います。  
+[venv と pip](../tooling/venv-and-pip) の手順で仮想環境を有効にしてから導入します。  
+
+```bash
+python -m pip install httpx
+```
+
+成功時は末尾付近に `Successfully installed ...`、すでに導入済みなら `Requirement already satisfied` と表示されます。  
+
+```python
+import httpx
+
+response = httpx.get(
+    "https://api.github.com/repos/python/cpython",
+    headers={"Accept": "application/vnd.github+json"},
+    timeout=5.0,
+)
+response.raise_for_status()
+data = response.json()
+print(data["name"])
+```
+
+代表的な出力は `cpython` です。  
+`timeout` は無制限に待たないための上限、`raise_for_status()` は 4xx・5xx を例外として扱うための確認です。  
+`response.json()` は JSON 形式の本文を、辞書やリストなどの Python の値へ変換します。  
+変換できても必要なキーや値の型が保証されるわけではないため、外部 API の仕様に沿って確認してから使います。  
+
+クエリ文字列は手で連結せず、`params={"q": "language:python"}` のように渡すとエンコードをライブラリへ任せられます。  
+
+<QuizChoice
+title="待ち時間の設計"
+options={[
+{ id: 'a', label: '用途に合うタイムアウトを指定する' },
+{ id: 'b', label: '無制限に応答を待つ' },
+{ id: 'c', label: '失敗時は必ず空の辞書にする' },
+]}
+answer="a"
+explanation="外部サービスの遅延や停止で処理が待ち続けないよう、タイムアウトを指定します。"
+
+>
+
+ <div>外部 API 呼び出しの適切な設計はどれですか。</div>
+</QuizChoice>
+
+## 失敗を分類する
+
+HTTP の失敗には、大きく二種類あります。  
+サーバーから応答が届いて 404 や 500 になった **ステータスエラー** と、タイムアウトや接続不能で有効な応答まで届かなかった **通信エラー** です。  
+前者では対象データやサーバー側の状態を、後者では待ち時間やネットワークを中心に扱うため、分けて捕捉します。  
+
+```python
+import httpx
+
+def fetch_user(user_id: str) -> dict[str, object]:
+    try:
+        response = httpx.get(
+            f"https://api.example.com/users/{user_id}",
+            timeout=5.0,
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.TimeoutException as error:
+        raise RuntimeError("user API timed out") from error
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code == 404:
+            raise LookupError(user_id) from error
+        raise RuntimeError("user API returned an error") from error
+    except httpx.RequestError as error:
+        raise RuntimeError("user API is unreachable") from error
+```
+
+404、タイムアウト、接続不能を分けると、呼び出し側は「見つからない」と伝える、時間を置いて再試行する、障害として記録するといった対応を選べます。  
+再試行すると同じ処理が重複する場合もあるため、API の仕様で安全に再試行できると確認した操作だけを対象にします。  
+
+:::warning[秘密情報と外部入力]
+
+API キーをソースへ直接書かず、環境の秘密管理から渡します。JSON も必要なキーと値の型を検証し、レスポンス全体を無条件にログへ出さないでください。  
+
+:::
+
+## よくあるつまずき
+
+- タイムアウトを指定せず、外部サービスの停止中に処理を待ち続ける
+- `raise_for_status()` より先に本文を正常データとして扱う
+- タイムアウト、404、接続不能をすべて同じ空データへ変え、原因を失う
+- 失敗する可能性のある更新処理を、仕様を確認せず自動で再試行する
+- JSON のキーと型を確認せず、外部 API の変更で想定外の例外を起こす
+
+## まとめ
+
+- HTTP 呼び出しにはタイムアウトを指定する
+- ステータスを確認してから本文を処理する
+- パラメータはクライアント機能で組み立てる
+- 通信失敗をアプリケーションが判断できる形へ変換する
+
+次は [テストの基本](./testing-basics) で、通信から分けた処理を確認します。  

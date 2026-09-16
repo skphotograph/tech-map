@@ -1,0 +1,303 @@
+---
+sidebar_position: 5
+---
+
+# 繰り返し
+
+複数の注文を処理するとき、同じコードを件数分だけコピーすると、件数の変更や修正に弱くなります。  
+一連の値や条件に合わせて同じ処理を動かす仕組みが **繰り返し（ループ）** です。  
+
+## このページで分かること
+
+- `for` で値を順番に処理する方法
+- `range` で決まった回数を繰り返す方法
+- `while` で条件が成り立つ間だけ繰り返す方法
+- `break` / `continue` でループの流れを変える方法
+
+## `for` で値を順番に取り出す
+
+複数の値を並べたものを **シーケンス** と呼びます。  
+文字列やリストなどがシーケンスで、`for` を使うと値を先頭から一つずつ取り出せます。  
+
+```python
+statuses = ["OPEN", "PAID", "CLOSED"]
+
+for status in statuses:
+    print(status)
+```
+
+```text
+OPEN
+PAID
+CLOSED
+```
+
+`for status in statuses:` は、「`statuses` から一つ取り出し、`status` という名前で使う」と読めます。  
+インデントされた `print` が値ごとに一回ずつ実行されます。  
+
+Python の `for` は、カウンタの初期値や更新式を書く構文ではありません。  
+「何から値を取り出すか」を `in` の右側へ書くため、処理対象が読み取りやすくなります。  
+
+:::tip[for の読み方]
+
+`for 要素 in シーケンス:` と書き、各要素に対する処理をインデントします。  
+
+:::
+
+<QuizChoice
+title="for で取り出す値"
+options={[
+{id: 'a', label: '0、1'},
+{id: 'b', label: 'OPEN、PAID'},
+{id: 'c', label: 'statuses、statuses'},
+]}
+answer="b"
+explanation="for はリストの要素を先頭から取り出します。status には OPEN、次に PAID が入ります。"
+
+>
+
+ <div>次のコードが順に表示する値はどれですか。<pre className="language-python"><code>{`statuses = ["OPEN", "PAID"]
+for status in statuses:
+    print(status)`}</code></pre></div>
+</QuizChoice>
+
+## `range` で回数を作る
+
+決まった回数だけ繰り返すときは、`range` で整数の並びを作ります。  
+
+```python
+for i in range(3):
+    print(i)
+```
+
+```text
+0
+1
+2
+```
+
+`range(3)` は、`0` から始まり、`3` の直前までの整数を順に提供します。  
+そのため、ループ本体は 3 回実行され、`i` は `0`、`1`、`2` と変化します。  
+
+開始値も指定できます。  
+
+```python
+for number in range(1, 4):
+    print(number)
+```
+
+```text
+1
+2
+3
+```
+
+`range(開始, 終了)` でも、終了の値そのものは含みません。  
+`range(1, 4)` は `1` から `3` までです。  
+
+合計を作る場合は、ループの外で用意した名前を更新できます。  
+
+```python
+total = 0
+
+for number in range(1, 4):
+    total += number
+
+print(total)
+```
+
+```text
+6
+```
+
+<QuizChoice
+title="range の実行回数"
+options={[
+{id: 'a', label: '2 回'},
+{id: 'b', label: '3 回'},
+{id: 'c', label: '4 回'},
+]}
+answer="b"
+explanation="range(3) が提供する値は 0、1、2 なので、ループ本体は 3 回実行されます。"
+
+>
+
+ <div>次の <code>print</code> は何回実行されますか。<pre className="language-python"><code>{`for i in range(3):
+    print(i)`}</code></pre></div>
+</QuizChoice>
+
+<details>
+<summary>range の刻み幅を変える</summary>
+
+`range(開始, 終了, 刻み幅)` と書くと、値が増減する幅を指定できます。  
+
+```python
+for number in range(2, 7, 2):
+    print(number)
+```
+
+```text
+2
+4
+6
+```
+
+負の刻み幅を指定すれば、値を減らせます。  
+
+```python
+for number in range(3, 0, -1):
+    print(number)
+```
+
+```text
+3
+2
+1
+```
+
+終了値を含まない規則は、刻み幅を変えても同じです。  
+
+</details>
+
+## `while` で条件の間だけ繰り返す
+
+回数よりも「まだ処理を続けられるか」が中心なら、`while` が向いています。  
+
+```python
+remaining = 3
+
+while remaining > 0:
+    print(remaining)
+    remaining -= 1
+```
+
+```text
+3
+2
+1
+```
+
+`while` は各周の前に条件を評価し、`True` の間だけインデントされた処理を実行します。  
+条件が最初から `False` なら、本体は一度も実行されません。  
+
+上の例では、各周で `remaining` を一つ減らしています。  
+やがて `remaining > 0` が `False` になるため、ループが終了します。  
+
+:::warning[終わらないループ]
+
+`while` の条件がいつまでも `True` のままだと、ループは終了しません。  
+本体で、条件に使う値が終了へ近づくように変化しているか確認します。  
+
+:::
+
+```python
+remaining = 3
+
+while remaining > 0:
+    print(remaining)
+```
+
+この例は `remaining` を更新しないため、`3` を表示し続けます。  
+誤って終わらないループを実行した場合、ターミナルでは通常 `Ctrl + C` で停止できます。  
+
+<QuizChoice
+title="while の終了条件"
+options={[
+{id: 'a', label: '3、2、1 を表示して終了する'},
+{id: 'b', label: '3 を一度表示して終了する'},
+{id: 'c', label: '3 を表示し続ける'},
+]}
+answer="c"
+explanation="remaining の値が変わらないため、remaining &gt; 0 は常に True のままです。"
+
+>
+
+ <div>次のコードを実行するとどうなりますか。<pre className="language-python"><code>{`remaining = 3
+while remaining > 0:
+    print(remaining)`}</code></pre></div>
+</QuizChoice>
+
+## `break` と `continue` で流れを変える
+
+ループを途中で終えるには `break`、その周の残りだけを飛ばして次の周へ進むには `continue` を使います。  
+
+```python
+for number in range(5):
+    if number == 2:
+        continue
+    if number == 4:
+        break
+    print(number)
+```
+
+```text
+0
+1
+3
+```
+
+- `number == 2` では `continue` により、その周の `print` を飛ばす
+- `number == 4` では `break` により、ループ全体を終了する
+
+`break` は、目的の値が見つかったため探索を終える場面でも使えます。  
+
+```python
+order_ids = [1001, 1002, 1003]
+
+for order_id in order_ids:
+    if order_id == 1002:
+        print("found")
+        break
+```
+
+```text
+found
+```
+
+`break` や `continue` を多用すると、処理がどこへ進むか追いにくくなります。  
+「見つかったので終わる」「処理対象外なので次へ進む」のように、意図が明確な場面で使います。  
+
+<QuizChoice
+title="continue の役割"
+options={[
+{id: 'a', label: 'ループ全体を終了する'},
+{id: 'b', label: 'その周の残りを飛ばして次へ進む'},
+{id: 'c', label: '条件を常に True にする'},
+]}
+answer="b"
+explanation="continue は現在の周の残りを実行せず、次の要素の処理へ進みます。"
+
+>
+
+ <div><code>continue</code> の説明として正しいものはどれですか。</div>
+</QuizChoice>
+
+## ループの選び方
+
+| やりたいこと                 | 選びやすい構文   |
+| ---------------------------- | ---------------- |
+| シーケンスの値を順に処理する | `for`            |
+| 決まった回数だけ処理する     | `for` と `range` |
+| 条件が成り立つ間だけ処理する | `while`          |
+
+同じ処理を複数の構文で書ける場合もあります。  
+対象の並びがあるなら `for`、終了条件を中心に考えるなら `while` とすると、意図が伝わりやすくなります。  
+
+## よくあるつまずき
+
+- `range(3)` に `3` も含まれると思う
+- `for` や `while` の行末にコロン `:` を書き忘れる
+- ループ本体をインデントしない、または本体でない行までインデントする
+- `while` の条件に使う値を更新せず、ループが終わらなくなる
+- `break` と `continue` の役割を取り違える
+- シーケンスの値が欲しいだけなのに、不要なカウンタを自分で管理する
+
+## まとめ / 次に学ぶとよいこと
+
+- `for 要素 in シーケンス:` で値を先頭から順に処理する
+- `range(n)` は `0` から `n - 1` までを提供する
+- `while` は条件が `True` の間だけ繰り返す
+- `break` はループを終了し、`continue` は次の周へ進む
+- `while` では、条件が終了へ向かって変化するか確認する
+
+次は [関数](./functions) で、まとまった処理に名前を付けて再利用します。  

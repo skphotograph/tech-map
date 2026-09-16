@@ -1,0 +1,208 @@
+---
+sidebar_position: 2
+---
+
+# 最初のプログラム
+
+コードを眺めているだけでは、実行環境の問題と書いたコードの問題を切り分けられません。  
+まずは一行のプログラムを動かし、「書く → 実行する → 結果を確かめる」という開発の最小単位を体験しましょう。  
+
+## このページで分かること
+
+- Python 3.11 以降を使えるか確認する方法
+- Python ファイルを作って実行する方法
+- `print` の役割と、ファイルが実行される順序
+- Python でインデントが持つ意味
+
+## なぜ最初に「動かす」か
+
+短いコードを先に動かしておくと、Python の準備が整っているかを確かめられます。  
+この試運転が成功していれば、後のページでエラーが出たときに、環境ではなくコードを中心に調べられます。  
+
+Python は、保存したソースコードを Python の処理系に渡して実行します。  
+この教材では **Python 3.11 以降** を使います。  
+
+## Python のバージョンを確認する
+
+Python を起動するコマンドは、環境によって異なります。  
+Windows では `python`、macOS や Linux では `python3` が使われることがよくあります。  
+
+まず、次のコマンドを試します。  
+
+```bash
+python --version
+```
+
+成功すると、使える Python のバージョンが表示されます。  
+
+```text
+Python 3.12.7
+```
+
+先頭の `3.12` がバージョンです。  
+`Python 3.11` 以上なら、この教材の例を実行できます。  
+
+`python` が見つからない場合は、次を試します。  
+
+```bash
+python3 --version
+```
+
+```text
+Python 3.12.7
+```
+
+この教材では、説明を揃えるために以降のコマンドを `python` と書きます。  
+自分の環境で `python3` だけが動く場合は、すべて `python3` に読み替えてください。  
+
+:::tip[確認する場所]
+
+`python --version` または `python3 --version` で、`Python 3.11` 以上が表示されることを確認します。  
+
+:::
+
+## `hello.py` を書く
+
+作業用のディレクトリに、次の内容で `hello.py` を保存します。  
+
+```python
+print("hello")
+```
+
+`print(...)` は、丸括弧の中に渡した値を画面へ出力する関数です。  
+`"hello"` は文字列で、ダブルクォートの代わりにシングルクォートを使って `'hello'` と書くこともできます。  
+
+Python では、決まった名前のクラスや `main` メソッドを用意する必要はありません。  
+実行したファイルの先頭から、文が順番に処理されます。  
+
+## プログラムを実行する
+
+ターミナルで `hello.py` を保存したディレクトリへ移動し、次を実行します。  
+
+```bash
+python hello.py
+```
+
+成功すると、次の一行が表示されます。  
+
+```text
+hello
+```
+
+このコマンドは「`python` で `hello.py` を実行する」と読みます。  
+ファイル名は、拡張子 `.py` まで含めて指定します。  
+
+<QuizChoice
+title="Python ファイルの実行"
+options={[
+{id: 'a', label: 'python hello.py'},
+{id: 'b', label: 'python hello'},
+{id: 'c', label: 'hello.py python'},
+]}
+answer="a"
+explanation="python の後ろに、拡張子 .py を含むファイル名を指定します。"
+
+>
+
+ <div><code>hello.py</code> を実行するコマンドはどれですか。</div>
+</QuizChoice>
+
+## ファイルは上から順に動く
+
+出力を二行に増やすと、実行順を確認できます。  
+
+```python
+print("start")
+print("finish")
+```
+
+```text
+start
+finish
+```
+
+上の `print` が先に、下の `print` が後に実行されます。  
+この上から下への流れを、条件分岐や繰り返しによって変えていきます。  
+
+## インデントもコードの一部
+
+Python では、行の先頭に置く空白を **インデント** と呼びます。  
+インデントは見た目を整えるだけではなく、複数の文を一つの処理のまとまりにする構文です。  
+
+最初のプログラムでは、`print` の前に空白を入れる必要はありません。  
+
+```python
+print("hello")
+```
+
+理由のないインデントを先頭へ入れると、`IndentationError` になることがあります。  
+条件分岐や繰り返しで処理のまとまりを表すときは、通常、行頭へ半角スペース 4 個のインデントを置きます。  
+
+:::warning[空白を見落とさない]
+
+Python ではインデントが処理の範囲を決めます。  
+コピーしたコードが動かないときは、行頭の空白も確認してください。  
+
+:::
+
+<QuizChoice
+title="実行される順序"
+options={[
+{id: 'a', label: 'finish、start の順'},
+{id: 'b', label: 'start、finish の順'},
+{id: 'c', label: 'どちらか一方だけ'},
+]}
+answer="b"
+explanation="Python ファイルは、基本的に先頭から下へ順番に実行されます。"
+
+>
+
+ <div>次のコードを実行したときの表示順はどれですか。<pre className="language-python"><code>{`print("start")
+print("finish")`}</code></pre></div>
+</QuizChoice>
+
+<details>
+<summary>python コマンドが見つからないとき</summary>
+
+`python: command not found` や「'python' は認識されていません」と表示された場合は、Python が未インストールか、コマンドを探すための PATH が設定されていない可能性があります。  
+[Python 公式サイト](https://www.python.org/downloads/) など、利用環境に合った方法で Python 3.11 以降をインストールし、ターミナルを開き直してから確認してください。  
+
+macOS や Linux では、`python` ではなく `python3` が登録されている場合があります。  
+`python3 --version` が成功するなら、この教材の `python` を `python3` に読み替えれば進められます。  
+
+</details>
+
+<details>
+<summary>Windows の py ランチャーを使う</summary>
+
+Windows では、Python Launcher が入っていると `py` コマンドも使えます。  
+
+```bash
+py --version
+```
+
+```text
+Python 3.12.7
+```
+
+ファイルは `py hello.py` で実行できます。  
+複数バージョンを使い分ける用途もありますが、この教材では `python` を基準に説明します。  
+
+</details>
+
+## よくあるつまずき
+
+- `hello.py.txt` のように、末尾へ `.txt` が付いたまま保存する
+- `hello.py` がないディレクトリでコマンドを実行する
+- `"hello"` の閉じクォートや、`)` を書き忘れる
+- 自分の環境では `python3` が必要なのに、`python` のまま実行する
+- 行頭へ不要な空白を入れる
+
+## まとめ / 次に学ぶとよいこと
+
+- `python --version` または `python3 --version` で Python 3.11 以降を確認する
+- Python ファイルは `python ファイル名.py` で実行する
+- `print(...)` は値を画面へ出力する
+- ファイルは上から順に実行され、インデントには構文上の意味がある
+
+次は [変数と計算](./variables-and-calculation) で、値に名前を付けて計算する方法を学びます。  

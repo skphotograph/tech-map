@@ -1,0 +1,288 @@
+---
+sidebar_position: 4
+---
+
+# 条件分岐
+
+注文金額や状態が違えば、必要な処理も変わります。  
+すべてのデータを同じ道へ流すのではなく、条件に応じて処理を選ぶ仕組みが **条件分岐** です。  
+
+[変数と計算](./variables-and-calculation) で扱った比較結果を、ここでは処理の選択に使います。  
+
+## このページで分かること
+
+- `if` / `elif` / `else` で処理を選ぶ方法
+- インデントが処理のまとまりを決めること
+- 条件式を使って二つの値から選ぶ方法
+- `and` / `or` / `not` で条件を組み合わせる方法
+
+## `if` / `else` で二つの道を選ぶ
+
+「1000 円以上ならまとめ買い、それ以外なら通常」と分けてみます。  
+
+```python
+amount = 1200
+
+if amount >= 1000:
+    print("bulk")
+else:
+    print("normal")
+```
+
+```text
+bulk
+```
+
+処理は次の順に進みます。  
+
+1. `amount >= 1000` を評価する
+2. `True` なら `if` の直後にインデントされた処理を実行する
+3. `False` なら `else` の直後にインデントされた処理を実行する
+
+`if` の条件を囲む丸括弧は必要ありません。  
+条件の末尾と `else` の末尾には、コロン `:` を置きます。  
+
+条件に当てはまらないときの処理が不要なら、`else` は省略できます。  
+
+```python
+if amount >= 1000:
+    print("bulk")
+```
+
+:::tip[if の基本形]
+
+`if 条件:` の次の行をインデントし、条件が `True` のときに実行する処理を書きます。  
+
+:::
+
+<QuizChoice
+title="if の出力"
+options={[
+{id: 'a', label: 'bulk'},
+{id: 'b', label: 'normal'},
+{id: 'c', label: '何も表示されない'},
+]}
+answer="b"
+explanation="amount &gt;= 1000 は False なので、else 側の normal が表示されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。<pre className="language-python"><code>{`amount = 800\n\nif amount >= 1000:\n    print("bulk")\nelse:\n    print("normal")`}</code></pre></div>
+</QuizChoice>
+
+## インデントが処理のまとまりを決める
+
+Python では、同じ深さにインデントされた行が一つの **ブロック** になります。  
+波括弧で範囲を囲まないため、行頭の空白が処理の意味を決めます。  
+
+```python
+amount = 1200
+
+if amount >= 1000:
+    print("bulk")
+    print("discount applied")
+
+print("finished")
+```
+
+```text
+bulk
+discount applied
+finished
+```
+
+二つのインデントされた `print` は、どちらも `if` の中です。  
+インデントのない `print("finished")` は `if` の外なので、条件に関係なく実行されます。  
+
+次のコードでは、二行目だけが `if` の中です。  
+
+```python
+amount = 800
+
+if amount >= 1000:
+    print("bulk")
+
+print("finished")
+```
+
+```text
+finished
+```
+
+通常は、インデント一段につき半角スペース 4 個を使います。  
+タブとスペースを混ぜたり、同じブロックで空白数を揃えなかったりすると、エラーや意図しない処理につながります。  
+
+:::warning[見た目ではなく構文]
+
+Python のインデントは飾りではありません。  
+どの処理を条件の中へ含めるかを決める、コードの一部です。  
+
+:::
+
+<QuizChoice
+title="if の外にある処理"
+options={[
+{id: 'a', label: 'bulk だけ'},
+{id: 'b', label: 'finished だけ'},
+{id: 'c', label: '何も表示されない'},
+]}
+answer="b"
+explanation="条件は False なのでインデントされた行は実行されません。finished は if の外にあるため表示されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。<pre className="language-python"><code>{`amount = 800\nif amount >= 1000:\n    print("bulk")\nprint("finished")`}</code></pre></div>
+</QuizChoice>
+
+## `elif` で枝を増やす
+
+候補が三つ以上あるときは、`elif` で条件を追加できます。  
+Python では `else if` ではなく、一語の `elif` と書きます。  
+
+```python
+amount = 500
+
+if amount >= 1000:
+    print("bulk")
+elif amount >= 100:
+    print("normal")
+else:
+    print("small")
+```
+
+```text
+normal
+```
+
+条件は上から順に調べられ、**最初に `True` になった枝だけ** が実行されます。  
+この例では `amount >= 100` が最初に当てはまるため、`normal` と表示されます。  
+
+条件の順番には意味があります。  
+先に `amount >= 100` を置くと、`1200` もそこで当てはまり、`amount >= 1000` の枝には進めません。  
+
+```python
+amount = 1200
+
+if amount >= 100:
+    print("normal")
+elif amount >= 1000:
+    print("bulk")
+```
+
+このコードは `normal` を表示します。  
+範囲を段階に分けるときは、一般に狭い条件や大きい境界から並べます。  
+
+## 条件式で二つの値から選ぶ
+
+条件によって二つの値から一つを選ぶだけなら、Python の **条件式** を使えます。  
+
+```python
+amount = 1200
+label = "bulk" if amount >= 1000 else "normal"
+
+print(label)
+```
+
+```text
+bulk
+```
+
+`True のときの値 if 条件 else False のときの値` の順です。  
+他の言語の三項演算子に似た役割ですが、Python では選ぶ値を先に書きます。  
+
+同じ処理を `if` / `else` で書くと、次のようになります。  
+
+```python
+if amount >= 1000:
+    label = "bulk"
+else:
+    label = "normal"
+```
+
+条件式を何段も重ねると、条件と結果の対応を追いにくくなります。  
+短い二択に使い、処理が複数ある場合は通常の `if` / `else` を選びます。  
+
+<QuizChoice
+title="条件式で選ばれる値"
+options={[
+{id: 'a', label: 'active'},
+{id: 'b', label: 'inactive'},
+{id: 'c', label: 'True'},
+]}
+answer="a"
+explanation="enabled は True なので、if の前にある active が選ばれます。"
+
+>
+
+ <div>次の <code>label</code> に入る値はどれですか。<pre className="language-python"><code>{`enabled = True\nlabel = "active" if enabled else "inactive"`}</code></pre></div>
+</QuizChoice>
+
+## 条件を組み合わせる
+
+複数の条件を一緒に判断するときは、論理演算子を使います。  
+
+| 演算子    | 意味                           |
+| --------- | ------------------------------ |
+| `a and b` | 両方が `True` なら成り立つ     |
+| `a or b`  | どちらかが `True` なら成り立つ |
+| `not a`   | 真偽を反転する                 |
+
+```python
+amount = 1200
+is_member = True
+
+if amount >= 1000 and is_member:
+    print("member-bulk")
+
+is_closed = False
+if not is_closed:
+    print("accepting")
+```
+
+```text
+member-bulk
+accepting
+```
+
+`and` は両方を満たす必要があり、`or` は少なくとも一方を満たせば成り立ちます。  
+条件が長くなったら、判断の意味を名前にすると読みやすくなります。  
+
+```python
+is_bulk_member = amount >= 1000 and is_member
+
+if is_bulk_member:
+    print("member-bulk")
+```
+
+<QuizChoice
+title="条件の組み合わせ"
+options={[
+{id: 'a', label: 'True'},
+{id: 'b', label: 'False'},
+{id: 'c', label: 'None'},
+]}
+answer="b"
+explanation="and は両方の条件が成り立つ必要があります。is_member が False なので、全体は False です。"
+
+>
+
+ <div>次の <code>result</code> に入る値はどれですか。<pre className="language-python"><code>{`amount = 1200\nis_member = False\nresult = amount >= 1000 and is_member`}</code></pre></div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `if` や `elif` の行末にコロン `:` を書き忘れる
+- `elif` を `else if` と書く
+- 同じブロックのインデント幅を揃えない
+- `if` の外に置く処理までインデントし、条件に当てはまるときしか実行されなくする
+- 広い条件を先に置き、後ろの `elif` へ進めなくする
+- `and` と `or` を取り違える
+
+## まとめ / 次に学ぶとよいこと
+
+- `if` / `elif` / `else` は条件を上から調べ、最初に当てはまった枝を実行する
+- Python ではインデントが処理のブロックを決める
+- 二つの値から選ぶだけなら `値1 if 条件 else 値2` と書ける
+- `and` / `or` / `not` で条件を組み合わせられる
+
+次は [繰り返し](./loops) で、同じ処理を回数や条件に応じて繰り返します。  

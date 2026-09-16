@@ -1,0 +1,220 @@
+---
+sidebar_position: 13
+---
+
+# クラス
+
+注文番号、状態、合計金額を別々の変数で持っていると、どの値がどの注文に属するのかが見えにくくなります。  
+さらに「注文を確定する処理」まで離れた関数に置くと、データと操作の関係も追いづらくなります。  
+クラスを使うと、関連するデータと操作をひとつにまとめられます。  
+
+## このページで分かること
+
+- `class` でクラスを定義し、インスタンスを作る方法
+- `__init__` と `self` の役割
+- インスタンス属性とメソッドの使い方
+- 継承と `super().__init__` の基本
+
+## クラスからインスタンスを作る
+
+**クラス** は、同じ種類のデータと操作を持つオブジェクトの設計を表します。  
+クラスをもとに実際に作ったオブジェクトを **インスタンス** と呼びます。  
+
+```python
+class Order:
+    def __init__(self, order_id, status):
+        self.order_id = order_id
+        self.status = status
+
+
+order = Order("ORD-1", "OPEN")
+
+print(order.order_id)  # ORD-1
+print(order.status)    # OPEN
+```
+
+クラス名は慣習として `Order` のような大文字始まりで書きます。  
+`Order("ORD-1", "OPEN")` を呼び出すと、`Order` のインスタンスが作られます。  
+
+## `__init__` で初期状態をそろえる
+
+`__init__` は、インスタンスを作るときに自動的に呼ばれる特別なメソッドです。  
+生成直後から必要なデータがそろうように、引数をインスタンスへ設定します。  
+
+```python
+class Order:
+    def __init__(self, order_id, status):
+        self.order_id = order_id
+        self.status = status
+```
+
+`self.order_id` と `self.status` は **インスタンス属性** です。  
+各インスタンスが持つデータであり、別々に作った注文は別々の状態を持てます。  
+
+```python
+first_order = Order("ORD-1", "OPEN")
+second_order = Order("ORD-2", "CLOSED")
+
+print(first_order.status)   # OPEN
+print(second_order.status)  # CLOSED
+```
+
+:::tip[`__init__` の役割]
+
+インスタンスが使い始められる状態になるように、必要な属性を `__init__` で設定します。  
+
+:::
+
+<QuizChoice
+title="インスタンス属性"
+options={[
+{id: 'a', label: 'ORD-1'},
+{id: 'b', label: 'ORD-2'},
+{id: 'c', label: 'OPEN'},
+]}
+answer="b"
+explanation="second の生成時に注文番号として ORD-2 を渡したため、second.order_id は ORD-2 です。"
+
+>
+
+ <div>次のコードで、最後に表示される値はどれですか。</div>
+ <pre className="language-python"><code>{`class Order:
+    def __init__(self, order_id, status):
+        self.order_id = order_id
+        self.status = status
+
+first = Order("ORD-1", "OPEN")
+second = Order("ORD-2", "OPEN")
+
+print(second.order_id)`}</code></pre>
+</QuizChoice>
+
+## `self` は操作対象のインスタンス
+
+インスタンスメソッドの最初の引数には、慣習として `self` と書きます。  
+`self` は、そのメソッドを呼び出したインスタンスを指します。  
+
+```python
+class Order:
+    def __init__(self, order_id, status):
+        self.order_id = order_id
+        self.status = status
+
+    def close(self):
+        self.status = "CLOSED"
+
+
+order = Order("ORD-1", "OPEN")
+order.close()
+
+print(order.status)  # CLOSED
+```
+
+`order.close()` と呼び出すと、Python は `order` を `self` として `close` メソッドへ渡します。  
+呼び出し側で `self` を明示する必要はありません。  
+
+メソッドには、通常の関数と同じように引数や戻り値を持たせられます。  
+
+```python
+class Order:
+    def __init__(self, order_id, total):
+        self.order_id = order_id
+        self.total = total
+
+    def add_fee(self, fee):
+        self.total += fee
+
+    def summary(self):
+        return f"{self.order_id}: {self.total}円"
+
+
+order = Order("ORD-1", 1200)
+order.add_fee(300)
+
+print(order.summary())  # ORD-1: 1500円
+```
+
+データを属性として持ち、そのデータに対する操作をメソッドとして置くことで、どの処理が注文に関係するのかが分かりやすくなります。  
+
+<QuizChoice
+title="self が指すもの"
+options={[
+{id: 'a', label: 'Order クラスそのもの'},
+{id: 'b', label: 'メソッドを呼び出したインスタンス'},
+{id: 'c', label: '直前に作られたすべてのインスタンス'},
+]}
+answer="b"
+explanation="インスタンスメソッドの self は、そのメソッドを呼び出したインスタンスを指します。"
+
+>
+
+ <div><code>order.close()</code> を呼び出したとき、<code>close</code> 内の <code>self</code> は何を指しますか。</div>
+</QuizChoice>
+
+## 継承で既存のクラスを引き継ぐ
+
+**継承** を使うと、既存クラスの属性やメソッドを引き継いだクラスを定義できます。  
+共通部分を保ちつつ、種類ごとのデータや操作を追加したい場面で使います。  
+
+```python
+class Order:
+    def __init__(self, order_id, status):
+        self.order_id = order_id
+        self.status = status
+
+    def close(self):
+        self.status = "CLOSED"
+
+
+class DeliveryOrder(Order):
+    def __init__(self, order_id, status, address):
+        super().__init__(order_id, status)
+        self.address = address
+
+
+order = DeliveryOrder("ORD-1", "OPEN", "Tokyo")
+order.close()
+
+print(order.status)   # CLOSED
+print(order.address)  # Tokyo
+```
+
+`class DeliveryOrder(Order):` は、`DeliveryOrder` が `Order` を継承することを表します。  
+`super().__init__(order_id, status)` は、継承元である `Order` の初期化処理を呼び出します。  
+そのあとで、配送注文だけが持つ `address` を設定しています。  
+
+継承は共通処理を再利用できますが、関係が複雑になると変更の影響も追いにくくなります。  
+まずは「配送注文は注文の一種」のように、種類として自然な関係がある場合に使います。  
+
+<QuizChoice
+title="継承元の初期化"
+options={[
+{id: 'a', label: 'super().\u005f\u005finit\u005f\u005f(order_id, status)'},
+{id: 'b', label: 'self.\u005f\u005finit\u005f\u005f(order_id, status)'},
+{id: 'c', label: 'super.order_id = order_id'},
+]}
+answer="a"
+explanation="継承元の \u005f\u005finit\u005f\u005f を呼び出すには super().\u005f\u005finit\u005f\u005f(...) と書きます。"
+
+>
+
+ <div>継承元の <code>Order.__init__</code> に初期化を任せる書き方はどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `__init__` や `self` の前後にあるアンダースコアを書き間違える
+- インスタンスメソッドの最初の引数に `self` を書き忘れる
+- `order_id = order_id` と書き、インスタンス属性へ保存できていない
+- メソッド呼び出しで `order.close` とだけ書き、末尾の `()` を忘れる
+- 継承先の `__init__` から `super().__init__` を呼ばず、必要な属性が作られない
+
+## まとめ / 次に学ぶとよいこと
+
+- クラスは、関連するデータと操作をまとめる設計を表す
+- クラスを呼び出すとインスタンスが作られる
+- `__init__` で初期状態をそろえ、`self` の属性へ保存する
+- インスタンスメソッドでは、呼び出し対象を `self` として扱う
+- 継承では `super().__init__` を使って継承元の初期化を再利用できる
+
+次は [例外](./exceptions) で、処理を続けられない状況を呼び出し元へ伝える方法を学びます。  

@@ -1,0 +1,8 @@
+{
+  "label": "venv とパッケージ管理",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "languages/python/tooling/index"
+  }
+}

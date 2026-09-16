@@ -1,0 +1,251 @@
+---
+sidebar_position: 10
+---
+
+# 実行の仕組み
+
+Python はソースコードを上から読んでいるように見えますが、実行までの間には変換と管理の仕組みがあります。  
+この地図がないと、`__pycache__` を見て「知らないファイルが増えた」、深いエラーを見て「どこから追えばよいか分からない」となりがちです。  
+ここでは、普段の実行とトラブル調査に必要な範囲へ絞って仕組みをつなげます。  
+
+## このページで分かること
+
+- CPython が `.py` をバイトコードへ変換して実行する流れ
+- `__pycache__` と `.pyc` の役割
+- 同期関数を管理するコールスタック
+- `ModuleNotFoundError` と `ImportError` の違い
+- Python がモジュールを探す場所
+
+## Python がコードを動かす流れ
+
+Python には複数の実装があります。  
+公式サイトから一般的に導入する Python は **CPython** で、Python の代表的な実装です。  
+
+CPython は、おおまかに次の流れで `.py` ファイルを実行します。  
+
+```text
+.py のソースコード
+        ↓
+バイトコードへ変換
+        ↓
+Python インタプリタが実行
+```
+
+**バイトコード**は、CPython が内部で実行するためにソースコードを変換したものです。  
+開発者が読んだり編集したりする対象ではありません。  
+
+普段は `python main.py` と実行すれば、この変換と実行を CPython が担当します。  
+
+```python title="main.py"
+price = 500
+quantity = 3
+
+print(price * quantity)
+```
+
+```bash
+python main.py
+```
+
+実行結果です。  
+
+```text
+1500
+```
+
+ソースコードを書き換えたら、もう一度実行するだけです。  
+通常の開発で、バイトコードを自分で作成・編集する必要はありません。  
+
+:::tip[実務での捉え方]
+
+`.py` を CPython がバイトコードへ変換し、そのバイトコードをインタプリタが実行します。変換作業は Python に任せます。  
+
+:::
+
+## `.pyc` は読み込みを速めるキャッシュ
+
+モジュールをインポートすると、`__pycache__` ディレクトリに `.pyc` ファイルが作られることがあります。  
+これは、変換済みのバイトコードを再利用するためのキャッシュです。  
+
+```text
+module-sample/
+├── main.py
+├── calc.py
+└── __pycache__/
+    └── calc.cpython-311.pyc
+```
+
+ファイル名には、使った Python 実装やバージョンを示す情報が含まれます。  
+元の `.py` が変わるなど、キャッシュをそのまま使えない場合は必要に応じて作り直されます。  
+
+`.pyc` はソースコードの代わりに編集するファイルではありません。  
+通常はバージョン管理にも含めず、`.gitignore` で `__pycache__/` を除外します。  
+
+<QuizChoice
+title="バイトコードキャッシュ"
+options={[
+{ id: 'a', label: '開発者が直接編集するソースコード' },
+{ id: 'b', label: '変換済みバイトコードを再利用するキャッシュ' },
+{ id: 'c', label: '実行時のログを保存するファイル' },
+]}
+answer="b"
+explanation=".pyc は変換済みのバイトコードを再利用するためのキャッシュです。通常は直接編集しません。"
+
+>
+
+ <div><code>__pycache__</code> に作られる <code>.pyc</code> の役割はどれですか。</div>
+</QuizChoice>
+
+## コールスタックは実行中の関数を管理する
+
+関数の中から別の関数を呼ぶと、Python は「いまどの関数を実行していて、終わったらどこへ戻るか」を管理します。  
+この積み重なりを **コールスタック**と呼びます。  
+
+```python
+def format_status(status):
+    return f"状態: {status}"
+
+
+def print_order():
+    message = format_status("受付")
+    print(message)
+
+
+print_order()
+```
+
+実行は次の順で進みます。  
+
+1. トップレベルから `print_order` を呼び出す
+2. `print_order` から `format_status` を呼び出す
+3. `format_status` が値を返して終了する
+4. `print_order` が戻り値を受け取り、表示して終了する
+
+```text
+┌─────────────────┐
+│ format_status() │  ← 先に終了する
+├─────────────────┤
+│ print_order()   │
+└─────────────────┘
+```
+
+あとから呼ばれた関数が先に終わり、呼び出し元へ戻ります。  
+通常の同期関数では、呼び出した関数が終わるまで、呼び出し元の次の行へは進みません。  
+
+エラー時の **トレースバック**には、この呼び出しの積み重なりが表示されます。  
+末尾に近い行で例外の種類と直接の発生箇所を確認し、上へたどると、どの関数から呼ばれたかを追えます。  
+
+<QuizChoice
+title="コールスタックの順番"
+options={[
+{ id: 'a', label: 'print_order が先に終了する' },
+{ id: 'b', label: 'format_status が先に終了する' },
+{ id: 'c', label: '両方が同時に終了する' },
+]}
+answer="b"
+explanation="print_order の中から format_status を呼ぶため、上に積まれた format_status が先に終了します。"
+
+>
+
+ <div>次の呼び出しで先に終了する関数はどれですか。</div>
+ <pre className="language-python"><code>{`def format_status(status):
+    return f"状態: {status}"
+
+def print_order():
+print(format_status("受付"))
+
+print_order()`}</code></pre>
+</QuizChoice>
+
+## Python は検索先からモジュールを探す
+
+`import calc` と書くと、Python はモジュールの検索先を順に調べます。  
+組み込みモジュール、実行するスクリプトに関係する場所、標準ライブラリ、利用中の環境へインストールされたパッケージなどが検索対象になります。  
+
+検索先の一覧は `sys.path` で確認できます。  
+
+```python
+import sys
+
+for path in sys.path:
+    print(path)
+```
+
+実行環境によって出力は異なります。  
+期待するモジュールが見つからないときは、まず次を確認します。  
+
+- ファイル名と `import` に書いた名前が一致しているか
+- 想定したディレクトリからプログラムを実行しているか
+- パッケージをインストールした Python と、実行中の Python が同じか
+- 自分のファイルが標準ライブラリと同じ名前になっていないか
+
+## `ModuleNotFoundError` と `ImportError`
+
+モジュール自体が検索先で見つからない場合は、`ModuleNotFoundError` が発生します。  
+
+```python
+import missing_module
+```
+
+```text
+ModuleNotFoundError: No module named 'missing_module'
+```
+
+この場合は、名前、配置、実行する場所、利用中の Python 環境を確認します。  
+外部パッケージなら `python -m pip show パッケージ名` を実行し、いまプログラムを動かしている Python に導入済みかも確認します。  
+
+モジュールは見つかったものの、指定した名前をその中から読み込めない場合は、`ImportError` になります。  
+
+```python
+from calc import subtract
+```
+
+`calc.py` に `subtract` が定義されていなければ、次のようなエラーになります。  
+
+```text
+ImportError: cannot import name 'subtract' from 'calc'
+```
+
+こちらは、関数名の綴りや定義場所、循環するインポートがないかを確認します。  
+`ModuleNotFoundError` は `ImportError` の一種ですが、調査では「モジュールそのものがない」のか「中の名前がない」のかを分けると原因へ近づきやすくなります。  
+
+:::tip[インポートエラーの切り分け]
+
+`ModuleNotFoundError` なら検索先とモジュール名、`ImportError` なら見つかったモジュール内の名前と読み込み関係を確認します。  
+
+:::
+
+<QuizChoice
+title="インポートエラーの判断"
+options={[
+{ id: 'a', label: 'ModuleNotFoundError' },
+{ id: 'b', label: 'ImportError' },
+{ id: 'c', label: 'IndexError' },
+]}
+answer="b"
+explanation="calc モジュールは見つかっていますが、その中に subtract という名前がないため ImportError です。"
+
+>
+
+ <div><code>calc.py</code> は見つかったものの、定義されていない <code>subtract</code> を読み込んだ場合の例外はどれですか。</div>
+ <pre className="language-python"><code>{`from calc import subtract`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `.pyc` を編集すべき実行ファイルだと思う
+- `__pycache__` を手作業で管理しようとする
+- トレースバックの先頭だけを見て、直接の例外と発生箇所を見落とす
+- `ModuleNotFoundError` をコードの構文エラーだと考える
+- パッケージをインストールした環境と、実行している環境の違いを見落とす
+- 自分のファイルを標準ライブラリと同じ名前にして、別のモジュールを読み込ませる
+
+## まとめ / 次に学ぶとよいこと
+
+- CPython は `.py` をバイトコードへ変換し、インタプリタで実行する
+- `.pyc` は変換済みバイトコードのキャッシュで、通常は直接編集しない
+- 同期関数はコールスタックで管理され、あとから呼んだ関数が先に終了する
+- Python は `sys.path` に並ぶ検索先からモジュールを探す
+- `ModuleNotFoundError` はモジュール自体、`ImportError` はモジュール内の名前を中心に確認する
+
+次は [型と参照](./types-and-references) で、値の変更と参照の共有がコードへどう現れるかを見ていきます。  

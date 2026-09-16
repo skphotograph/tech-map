@@ -1,0 +1,8 @@
+{
+  "label": "Python 言語",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "languages/python/basics/index"
+  }
+}

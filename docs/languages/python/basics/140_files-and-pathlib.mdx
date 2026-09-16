@@ -1,0 +1,182 @@
+---
+sidebar_position: 16
+---
+
+# ファイルと pathlib
+
+ログや設定を書き出したあと、実行する場所が変わるとファイルが見つからない。  
+文字化けしてから、文字コードを指定していなかったことに気づく。  
+ファイル操作では、内容だけでなく「どのパスを、どの文字コードで開くか」までコードに表すことが大切です。  
+
+## このページで分かること
+
+- `with open(...)` でテキストを安全に読み書きする方法
+- `pathlib.Path` でパスを組み立てる方法
+- `read_text` / `write_text` の使いどころ
+- ファイルが存在しない場合の扱い
+
+## `with` でファイルを開く
+
+`open` はファイルを開き、ファイルオブジェクトを返します。  
+`with` と組み合わせると、処理が終わったときや例外が起きたときにも自動で閉じられます。  
+
+```python
+with open("message.txt", mode="r", encoding="utf-8") as f:
+    text = f.read()
+
+print(text)
+```
+
+`message.txt` に `Hello, Python!` と書かれていれば、実行結果は次のとおりです。  
+
+```text
+Hello, Python!
+```
+
+`mode="r"` は読み込みです。  
+書き込みには `"w"`、末尾への追記には `"a"` を使います。  
+
+`encoding="utf-8"` は、文字をファイル内のバイトへ変換する規則を指定します。  
+書き込み時と読み込み時で同じ文字コードを使うことで、日本語などが文字化けする問題を避けやすくなります。  
+
+```python
+with open("result.txt", mode="w", encoding="utf-8") as f:
+    f.write("処理は成功しました\n")
+```
+
+`"w"` は既存の内容を上書きします。  
+残したいファイルへ誤って使わないよう、対象のパスとモードを一緒に確認してください。  
+
+:::tip[文字コードを明示する]
+
+テキストファイルでは `encoding="utf-8"` を明示すると、端末や OS が変わっても意図した文字コードで扱いやすくなります。  
+
+:::
+
+<QuizChoice
+title="ファイルを自動で閉じる書き方"
+options={[
+{ id: 'a', label: 'with open(...) as f:' },
+{ id: 'b', label: 'if open(...) as f:' },
+{ id: 'c', label: 'for open(...) as f:' },
+]}
+answer="a"
+explanation="with ブロックを抜けると、正常終了でも例外発生でもファイルが閉じられます。"
+
+>
+
+ <div>ファイルを閉じ忘れにくい書き方はどれですか。</div>
+</QuizChoice>
+
+## `Path` でパスを扱う
+
+文字列を `/` や `\` でつなぐと、OS ごとの差や区切りの重複が入り込みます。  
+`pathlib` の `Path` は、パスを値として組み立て、調べ、操作する標準ライブラリです。  
+
+```python
+from pathlib import Path
+
+data_dir = Path("data")
+file_path = data_dir / "users.txt"
+
+print(file_path)
+print(file_path.name)
+```
+
+実行結果の例です。  
+
+```text
+data/users.txt
+users.txt
+```
+
+表示される区切り文字は OS によって異なります。  
+`/` 演算子は文字列の割り算ではなく、`Path` に子のパスをつなぐ書き方です。  
+
+よく使う確認方法は次のとおりです。  
+
+```python
+from pathlib import Path
+
+path = Path("data/users.txt")
+
+print(path.exists())
+print(path.is_file())
+print(path.parent)
+```
+
+- `exists()` はパスが存在するかを返す
+- `is_file()` は通常のファイルかを返す
+- `parent` は親ディレクトリを表す
+- `name` は末尾のファイル名を表す
+
+## 短い読み書きには `read_text` と `write_text`
+
+ファイル全体を一度に扱うなら、`Path` のメソッドで簡潔に書けます。  
+
+```python
+from pathlib import Path
+
+path = Path("status.txt")
+path.write_text("ready\n", encoding="utf-8")
+
+text = path.read_text(encoding="utf-8")
+print(text, end="")
+```
+
+実行結果です。  
+
+```text
+ready
+```
+
+`write_text` は既存の内容を置き換え、書き込んだ文字数を返します。  
+大きなログを一行ずつ処理したい場合は、ファイル全体をメモリへ読む `read_text` より、`with open(...)` で反復する方が向いています。  
+
+```python
+from pathlib import Path
+
+path = Path("access.log")
+
+with path.open(mode="r", encoding="utf-8") as f:
+    for line in f:
+        print(line.rstrip())
+```
+
+## よくあるつまずき
+
+相対パスは、ソースファイルの場所ではなく、通常はコマンドを実行した **カレントディレクトリ** を基準に解決されます。  
+見つからないときは `Path.cwd()` で現在地を確認します。  
+
+```python
+from pathlib import Path
+
+print(Path.cwd())
+```
+
+存在しないファイルを読むと `FileNotFoundError` が発生します。  
+存在しないことが通常の分岐なら `exists()` で確認し、存在すべきファイルなら例外を握りつぶさず、パスの誤りとして調査します。  
+
+<QuizChoice
+title="短いテキストの読み込み"
+options={[
+{ id: 'a', label: 'path.read_text(encoding="utf-8")' },
+{ id: 'b', label: 'path.exists("utf-8")' },
+{ id: 'c', label: 'path.parent("utf-8")' },
+]}
+answer="a"
+explanation="Path.read_text はファイル全体を文字列として読み込みます。"
+
+>
+
+ <div><code>path</code> が <code>Path</code> のとき、UTF-8 のテキスト全体を読む式はどれですか。</div>
+</QuizChoice>
+
+## まとめ
+
+- `with open(...)` はファイルを確実に閉じる
+- テキストでは `encoding="utf-8"` を明示する
+- `Path` は OS の違いを意識しすぎずにパスを組み立てられる
+- 小さなファイル全体には `read_text` / `write_text`、逐次処理には `open` を使う
+
+次は [現代的な構文](./modern-syntax) で、アンパックや `match` を使ってデータの形をコードに表します。  

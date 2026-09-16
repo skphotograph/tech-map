@@ -1,0 +1,131 @@
+---
+sidebar_position: 5
+---
+
+# プロジェクト構成
+
+ファイルをルートへ足し続けると、実行コード、テスト、設定、生成物が混ざります。  
+置き場所と実行入口をそろえ、初めて見る人にも役割が予測できる構成にします。  
+
+## このページで分かること
+
+- 小さなプロジェクトの基本構成
+- ソースとテストを分ける理由
+- `__main__.py` による実行入口
+- 設定と秘密情報の置き方
+
+## 役割ごとに置く
+
+```text
+sample-client/
+├── pyproject.toml
+├── README.md
+├── .gitignore
+├── src/
+│   └── sample_client/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── client.py
+│       └── service.py
+└── tests/
+    ├── test_client.py
+    └── test_service.py
+```
+
+`src/sample_client/` は実行コード、`tests/` は自動テスト、`pyproject.toml` は依存とツール設定、README は共通手順を置く場所です。  
+通信を知る `client.py` と、中心の判断を行う `service.py` のように、変更理由が異なる境界で分けます。  
+
+<QuizChoice
+title="テストの置き場所"
+options={[
+{ id: 'a', label: 'tests/test_service.py' },
+{ id: 'b', label: '.venv/test_service.py' },
+{ id: 'c', label: 'pyproject.toml の中' },
+]}
+answer="a"
+explanation="テストは仮想環境や設定へ混ぜず、役割の分かる tests へ置きます。"
+
+>
+
+ <div><code>service.py</code> のテストを置く場所はどれですか。</div>
+</QuizChoice>
+
+## 実行入口を一つにする
+
+`client.py` は外部から値を得る役割、`service.py` は受け取った値を処理する役割にします。  
+
+```python title="src/sample_client/client.py"
+def load_name(user_id: str) -> str:
+    # 実際のアプリでは、ここで外部 API などから取得する
+    return "Aiko"
+```
+
+```python title="src/sample_client/service.py"
+from collections.abc import Callable
+
+
+def create_greeting(
+    user_id: str,
+    load_name: Callable[[str], str],
+) -> str:
+    return f"Hello, {load_name(user_id)}"
+```
+
+`__main__.py` では、この二つを組み合わせます。  
+
+```python title="src/sample_client/__main__.py"
+from .client import load_name
+from .service import create_greeting
+
+
+def main() -> None:
+    print(create_greeting("USER-1", load_name))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+`pyproject.toml` の `[project]` で名前を `sample-client` とし、ビルド設定を用意して[編集可能インストール](../tooling/pyproject-and-dependencies)した後は、次の入口で実行できます。  
+
+```bash
+python -m sample_client
+```
+
+```text
+Hello, Aiko
+```
+
+`-m sample_client` は、パッケージ内の `__main__.py` を実行する指定です。  
+`__main__.py` では部品を組み立て、計算や通信の詳細は各モジュールへ任せます。  
+
+:::tip[手順を README に一本化する]
+
+環境作成、依存導入、実行、テスト、型チェックのコマンドを README に置き、手元と CI から同じ入口を使います。  
+
+:::
+
+## 設定と秘密情報
+
+接続先やログレベルなど環境で変わる値は、起動時に読み取って検証します。  
+API キーやパスワードをソース、設定例、テストへ書かず、環境変数や配置先の秘密情報管理から渡します。  
+
+最初から多くの層を作る必要はありません。  
+通信・計算・表示が混ざる、テストで外部通信を避けられない、責務を名前で説明できない、といった兆候が出たら分割します。  
+
+## よくあるつまずき
+
+- `src/` 配下へ置いただけで、編集可能インストールをせずパッケージを読み込もうとする
+- 実行するたびに異なるファイルを直接指定し、正式な入口を分からなくする
+- 外部通信と中心の判断を同じモジュールへ詰め、通信なしではテストできなくする
+- `.venv/`、キャッシュ、秘密情報をソースと一緒に管理する
+
+## まとめ
+
+- ソース、テスト、設定、手順の置き場所を分ける
+- モジュールは変更理由と外部境界で分割する
+- `__main__.py` で実行入口を作る
+- 秘密情報はリポジトリへ入れない
+
+ここまでで Python の文法、型、依存管理、アプリケーション部品がつながりました。  
+[Python 章の入口](../) に戻り、必要な分野を復習できます。  

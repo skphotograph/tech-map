@@ -1,0 +1,341 @@
+---
+sidebar_position: 6
+---
+
+# 関数
+
+同じ料金計算を何か所にもコピーすると、計算式を直すたびにすべての場所を探すことになります。  
+一か所だけ古い式が残れば、同じ注文なのに結果が変わりかねません。  
+**関数**を使うと、ひとまとまりの処理に名前を付け、必要な値を渡して繰り返し利用できます。  
+
+## このページで分かること
+
+- `def` で関数を定義し、引数を渡す方法
+- `return` と、戻り値がない場合の `None`
+- デフォルト引数とキーワード引数
+- 早期 `return` で条件を整理する方法
+- ミュータブルなデフォルト引数の問題と避け方
+
+## `def` で処理に名前を付ける
+
+`def` の後ろに関数名と丸括弧を書き、処理をインデントします。  
+
+```python
+def greet():
+    print("こんにちは")
+```
+
+これは `greet` という関数の **定義** です。  
+定義しただけでは関数内の処理は動かず、関数名に `()` を付けて呼び出したときに実行されます。  
+
+```python
+def greet():
+    print("こんにちは")
+
+
+greet()
+greet()
+```
+
+```text
+こんにちは
+こんにちは
+```
+
+関数名は、`calculate_total` のように処理の目的が伝わる動詞や動詞句にします。  
+
+## 引数で値を渡す
+
+呼び出すたびに違う値を使う場合は、丸括弧内に引数を定義します。  
+
+```python
+def print_order(order_id, status):
+    print(f"{order_id}: {status}")
+
+
+print_order("ORD-1001", "受付")
+```
+
+```text
+ORD-1001: 受付
+```
+
+呼び出し側の値は、定義した順番に対応します。  
+上の例では、`"ORD-1001"` が `order_id`、`"受付"` が `status` に入ります。  
+
+<QuizChoice
+title="関数の呼び出し"
+options={[
+{ id: 'a', label: 'こんにちは、Mikaさん' },
+{ id: 'b', label: 'こんにちは、user_nameさん' },
+{ id: 'c', label: '何も表示されない' },
+]}
+answer="a"
+explanation="呼び出し時に渡した Mika が user_name に入り、関数内の print が実行されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`def greet(user_name):
+    print(f"こんにちは、{user_name}さん")
+
+greet("Mika")`}</code></pre>
+</QuizChoice>
+
+## `return` で結果を返す
+
+計算結果を後の処理で使う場合は、`return` で呼び出し元へ値を返します。  
+
+```python
+def calculate_total(price, quantity):
+    return price * quantity
+
+
+total = calculate_total(500, 3)
+print(total)
+```
+
+```text
+1500
+```
+
+`return` が実行されると、その値を返して関数は終了します。  
+呼び出し側は戻り値を変数へ代入したり、別の計算へ渡したりできます。  
+
+```python
+discounted_total = calculate_total(500, 3) - 200
+print(discounted_total)  # 1300
+```
+
+`print` は画面へ値を表示し、`return` は呼び出し元へ値を渡します。  
+
+:::tip[`print` と `return` を分ける]
+
+関数の結果を後続処理で使うなら `return` します。  
+動作確認の表示を、戻り値の代わりにしないようにします。  
+
+:::
+
+<QuizChoice
+title="戻り値を使う"
+options={[
+{ id: 'a', label: '800' },
+{ id: 'b', label: '1600' },
+{ id: 'c', label: 'None' },
+]}
+answer="b"
+explanation="add(500, 300) は 800 を返し、その戻り値を 2 倍するため 1600 が表示されます。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`def add(left, right):
+    return left + right
+
+print(add(500, 300) * 2)`}</code></pre>
+</QuizChoice>
+
+## `return` がない関数は `None` を返す
+
+関数に `return` がない場合、戻り値は `None` です。  
+
+```python
+def show_status(status):
+    print(f"状態: {status}")
+
+
+result = show_status("受付")
+print(result)
+```
+
+```text
+状態: 受付
+None
+```
+
+表示した文字列が戻り値になるわけではありません。  
+`return` だけを書いた場合も、`return None` と同じく `None` を返して終了します。  
+
+<QuizChoice
+title="return のない関数"
+options={[
+{ id: 'a', label: '"保存しました"' },
+{ id: 'b', label: 'True' },
+{ id: 'c', label: 'None' },
+]}
+answer="c"
+explanation="関数内で文字列を表示していても、return がなければ戻り値は None です。"
+
+>
+
+ <div>次のコードで <code>result</code> に入る値はどれですか。</div>
+ <pre className="language-python"><code>{`def save():
+    print("保存しました")
+
+result = save()`}</code></pre>
+</QuizChoice>
+
+## デフォルト引数で省略時の値を決める
+
+引数に `=` で値を指定すると、呼び出し時にその引数を省略できます。  
+
+```python
+def calculate_shipping(price, rate=0.1):
+    return price * rate
+
+
+print(calculate_shipping(2000))       # 200.0
+print(calculate_shipping(2000, 0.2))  # 400.0
+```
+
+`rate` を省略すると `0.1` が使われ、値を渡すと置き換わります。  
+省略できない引数は、省略できる引数より前に置きます。  
+
+## キーワード引数で意味を明確にする
+
+呼び出し時に引数名を指定する書き方を **キーワード引数** と呼びます。  
+
+```python
+def create_order(user_name, quantity, priority=False):
+    print(user_name, quantity, priority)
+
+
+create_order("Aiko", quantity=3, priority=True)
+```
+
+引数名が見えるため、`3` や `True` が何を表すのか分かりやすくなります。  
+キーワード引数だけなら、順番を変えても名前に対応する引数へ値が渡されます。  
+
+```python
+create_order(priority=True, quantity=3, user_name="Aiko")
+```
+
+位置引数と組み合わせる場合は、位置引数を先に書きます。  
+
+<QuizFill
+title="キーワード引数"
+answer="priority"
+explanation="引数名 priority を指定すると、True が何を意味する値なのか呼び出し側でも分かります。"
+
+>
+
+ <div>空欄を埋めて、優先注文であることを引数名付きで渡してください。</div>
+ <pre className="language-python"><code>{`create_order("Aiko", quantity=3, _____=True)`}</code></pre>
+</QuizFill>
+
+## 早期 `return` で条件を先に終える
+
+処理できない条件を先に判定し、関数の途中で `return` する書き方を **早期リターン** と呼びます。  
+
+```python
+def calculate_discount(price, member):
+    if price <= 0:
+        return 0
+
+    if not member:
+        return 0
+
+    return price * 0.1
+```
+
+価格が `0` 以下、または会員でない場合は、その場で `0` を返して終了します。  
+通常の計算へ進めない条件を入口で終わらせると、処理を深くインデントせずに書けます。  
+
+<QuizChoice
+title="早期 return"
+options={[
+{ id: 'a', label: '0' },
+{ id: 'b', label: '100.0' },
+{ id: 'c', label: 'None' },
+]}
+answer="a"
+explanation="price が 0 以下なので最初の return 0 で関数が終了し、後ろの計算には進みません。"
+
+>
+
+ <div>次の呼び出しが返す値はどれですか。</div>
+ <pre className="language-python"><code>{`def calculate_discount(price):
+    if price <= 0:
+        return 0
+    return price * 0.1
+
+calculate_discount(0)`}</code></pre>
+</QuizChoice>
+
+## 変更できる値をデフォルト引数へ直接置かない
+
+リストのように中身を変更できる値を **ミュータブルな値** と呼びます。  
+ミュータブルな値をデフォルト引数へ直接置くと、呼び出しをまたいで同じ値が使われます。  
+
+```python
+# 避けたい例
+def add_item(item, items=[]):
+    items.append(item)
+    return items
+
+
+print(add_item("book"))  # ['book']
+print(add_item("pen"))   # ['book', 'pen']
+```
+
+デフォルト値のリストは関数を呼ぶたびではなく、`def` が実行された時点で一度だけ作られます。  
+そのため、引数を省略した二回目の呼び出しも一回目と同じリストへ追加し、前回の `"book"` が意図せず残ります。  
+
+:::warning[リストをデフォルト値にしない]
+
+呼び出しごとに新しいリストが必要なら、デフォルト値を `None` にし、関数の中でリストを作ります。  
+
+:::
+
+```python
+def add_item(item, items=None):
+    if items is None:
+        items = []
+
+    items.append(item)
+    return items
+
+
+print(add_item("book"))  # ['book']
+print(add_item("pen"))   # ['pen']
+```
+
+`is None` は、値が `None` かを確かめる標準的な書き方です。  
+呼び出し時にリストが省略された場合だけ新しいリストを作るため、呼び出しごとの結果が混ざりません。  
+
+辞書や集合など、ほかのミュータブルな値もデフォルト引数へ直接置きません。  
+
+<QuizChoice
+title="安全なデフォルト引数"
+options={[
+{ id: 'a', label: 'def collect(value, values=[]):' },
+{ id: 'b', label: 'def collect(value, values=None):' },
+{ id: 'c', label: 'def collect(value, values={}):' },
+]}
+answer="b"
+explanation="None をデフォルト値にし、関数内で必要なリストを作れば、呼び出し間でリストを共有しません。"
+
+>
+
+ <div>呼び出しごとに新しいリストを使いたい場合、適切な関数定義はどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 関数を定義しただけで、中の処理も実行されたと思う
+- 関数名に呼び出し用の `()` を付け忘れる
+- `print` した値が戻り値になると思う
+- `return` より後ろに、実行されるつもりの処理を書く
+- 位置引数の順番を取り違える
+- リストや辞書をデフォルト引数にして、呼び出し間で状態を共有する
+
+## まとめ / 次に学ぶとよいこと
+
+- `def` で処理に名前を付け、`()` で呼び出す
+- 引数は関数へ値を渡し、`return` は結果を返す
+- `return` がない関数の戻り値は `None`
+- デフォルト引数は省略時の値を決め、キーワード引数は値の意味を明確にする
+- 早期 `return` は、処理できない条件を先に終わらせる
+- ミュータブルな値はデフォルト引数へ直接置かない
+
+次は [リストとタプル](./lists-and-tuples) で、複数の値を順番付きで扱う方法を学びます。  

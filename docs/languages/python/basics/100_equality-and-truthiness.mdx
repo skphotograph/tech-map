@@ -1,0 +1,228 @@
+---
+sidebar_position: 12
+---
+
+# 等価と比較
+
+「空なら未入力として扱う」と書いた条件が、数量 `0` まで未入力にしてしまう。  
+Python の条件式は短く書けますが、何を比べたいのかが曖昧だと、意味のある値まで取りこぼします。  
+値の等しさ、同一性、真偽値としての評価を使い分けることが大切です。  
+
+## このページで分かること
+
+- `==` で値が等しいかを比較する方法
+- `is` で同じオブジェクトかを調べる方法
+- `None` を `is None` で判定する理由
+- falsy な値と、`if value:` を使うときの注意点
+
+## `==` は値が等しいかを比べる
+
+ふたつの値の内容が等しいかを調べるには、`==` を使います。  
+等しくないことを調べるには `!=` を使います。  
+
+```python
+first_items = ["book", "pen"]
+second_items = ["book", "pen"]
+
+print(first_items == second_items)  # True
+print(first_items != second_items)  # False
+```
+
+`first_items` と `second_items` は別々に作ったリストですが、要素が同じため `==` は `True` になります。  
+文字列、数値、リストなどの内容を比較したい場面では、`==` が基本です。  
+
+## `is` は同じオブジェクトかを比べる
+
+`is` は、値の内容ではなく、ふたつの変数が **同じオブジェクト** を指しているかを調べます。  
+これを **同一性** の比較と呼びます。  
+
+```python
+first_items = ["book", "pen"]
+shared_items = first_items
+copied_items = first_items[:]
+
+print(first_items is shared_items)  # True
+print(first_items is copied_items)  # False
+print(first_items == copied_items)  # True
+```
+
+`shared_items` は代入によって同じリストを指しています。  
+一方、`copied_items` は同じ要素を持つ別のリストです。  
+したがって、値の比較では等しくても、同一性の比較では異なります。  
+
+:::tip[値には `==`、同一性には `is`]
+
+内容を比べる通常の比較には `==` を使います。  
+`is` は、同じオブジェクトかを確かめる演算子です。  
+
+:::
+
+<QuizChoice
+title="値と同一性"
+options={[
+{id: 'a', label: 'True, True'},
+{id: 'b', label: 'True, False'},
+{id: 'c', label: 'False, False'},
+]}
+answer="b"
+explanation="ふたつのリストは同じ要素を持つため == は True ですが、別々に作られたオブジェクトなので is は False です。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`first = [1, 2]
+second = [1, 2]
+
+print(first == second, first is second)`}</code></pre>
+</QuizChoice>
+
+## `None` は `is None` で調べる
+
+`None` は「値が設定されていない」ことなどを表す特別なオブジェクトです。  
+`None` かどうかは、必ず `is None` または `is not None` で判定します。  
+
+```python
+user_name = None
+
+if user_name is None:
+    print("名前が設定されていません")
+```
+
+値がある側を判定するときは、`is not None` を使います。  
+
+```python
+stock = 0
+
+if stock is not None:
+    print(f"在庫数: {stock}")  # 在庫数: 0
+```
+
+`None` はプログラム中でひとつだけ存在する特別なオブジェクトです。  
+そのため、値の等価比較ではなく同一性を表す `is` を使うのが、Python の標準的な書き方です。  
+
+`value == None` や `value != None` とは書きません。  
+`is None` と書けば、「値がない状態だけを調べる」という意図も読み手へ明確に伝わります。  
+
+<QuizChoice
+title="None の判定"
+options={[
+{id: 'a', label: 'value == None'},
+{id: 'b', label: 'value is None'},
+{id: 'c', label: 'value = None'},
+]}
+answer="b"
+explanation="None の判定には、同一性を調べる is None を使います。"
+
+>
+
+ <div><code>value</code> が <code>None</code> かを調べる標準的な書き方はどれですか。</div>
+</QuizChoice>
+
+## truthy と falsy
+
+`if` の条件には、`True` や `False` 以外の値も書けます。  
+条件で `False` として扱われる値を **falsy**、`True` として扱われる値を **truthy** と呼びます。  
+
+代表的な falsy の値は次のとおりです。  
+
+- `None`
+- `False`
+- `0`
+- `0.0`
+- `""`（空文字列）
+- `[]`（空リスト）
+- `{}`（空辞書）
+- `set()`（空集合）
+
+それ以外の多くの値は truthy です。  
+
+```python
+if "OPEN":
+    print("空でない文字列は truthy")
+
+if [1]:
+    print("要素のあるリストは truthy")
+
+if not []:
+    print("空リストは falsy")
+```
+
+この仕組みを使うと、空文字列や空のコレクションを簡潔に判定できます。  
+
+```python
+items = []
+
+if items:
+    print("商品があります")
+else:
+    print("商品がありません")
+```
+
+<QuizChoice
+title="falsy になる値"
+options={[
+{id: 'a', label: '"0"'},
+{id: 'b', label: '[0]'},
+{id: 'c', label: 'set()'},
+]}
+answer="c"
+explanation="空集合 set() は falsy です。空でない文字列と、要素をひとつ持つリストは truthy です。"
+
+>
+
+ <div>次のうち、<code>if</code> の条件で falsy になる値はどれですか。</div>
+</QuizChoice>
+
+## `if value:` では区別できない値がある
+
+`if value:` は、「truthy なら処理する」という条件です。  
+「値が設定されているか」だけを判定する条件ではありません。  
+
+```python
+stock = 0
+
+if stock:
+    print(f"在庫数: {stock}")
+else:
+    print("在庫数が未設定です")
+```
+
+このコードでは、在庫数 `0` が falsy のため「未設定」と表示されます。  
+しかし、`0` は在庫切れを表す意味のある値です。  
+未設定を `None` で表しているなら、条件も明示します。  
+
+```python
+stock = 0
+
+if stock is None:
+    print("在庫数が未設定です")
+else:
+    print(f"在庫数: {stock}")  # 在庫数: 0
+```
+
+空文字列や空リストも同様です。  
+空であることと、値そのものが存在しないことを区別する必要があるなら、`is None` や `== ""` のように判定対象を具体的に書きます。  
+
+:::tip[条件は目的に合わせる]
+
+空もまとめて除外したいなら `if value:`、`None` だけを除外したいなら `if value is not None:` を使います。  
+
+:::
+
+## よくあるつまずき
+
+- 値の比較に `is` を使い、実行環境によって偶然一致する結果に頼る
+- `None` を `== None` で判定する
+- `if value:` を「値が存在するかだけの判定」だと思う
+- 意味のある `0` や空文字列を、未設定と同じ扱いにする
+- 空でない文字列 `"0"` も falsy だと考える
+
+## まとめ / 次に学ぶとよいこと
+
+- `==` と `!=` は値の等しさを比較する
+- `is` と `is not` は、同じオブジェクトかを比較する
+- `None` の判定には、必ず `is None` または `is not None` を使う
+- `None`、`False`、ゼロ、空文字列、空のコレクションは falsy
+- `0` や空の値に意味がある場面では、`if value:` より具体的な条件を書く
+
+次は [クラス](./classes) で、関連するデータと操作をひとつにまとめる方法を学びます。  

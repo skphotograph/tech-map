@@ -1,0 +1,115 @@
+---
+sidebar_position: 4
+---
+
+# テストの基本
+
+手で一度動かすだけでは、境界値や失敗時の確認が抜けやすくなります。  
+自動テストは入力と期待する結果をコードに残し、変更後も同じ振る舞いを確認します。  
+
+## このページで分かること
+
+- `unittest` で成功と例外を確認する方法
+- テストケースを選ぶ基準
+- 外部依存を差し替える理由
+
+## 最初のテスト
+
+```python title="pricing.py"
+def discounted_price(price: int, rate: float) -> int:
+    if price < 0:
+        raise ValueError("price must be non-negative")
+    return int(price * (1 - rate))
+```
+
+```python title="tests/test_pricing.py"
+import unittest
+
+from pricing import discounted_price
+
+class DiscountedPriceTest(unittest.TestCase):
+    def test_applies_discount(self) -> None:
+        self.assertEqual(discounted_price(2000, 0.1), 1800)
+
+    def test_rejects_negative_price(self) -> None:
+        with self.assertRaises(ValueError):
+            discounted_price(-1, 0.1)
+```
+
+```bash
+python -m unittest discover -s tests
+```
+
+成功時は実行件数に続いて `OK` と表示されます。  
+
+```text
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+OK
+```
+
+先頭の `..` は二件のテストが成功したこと、`OK` は失敗がなかったことを表します。実行時間は環境によって変わります。  
+代表的な正常値、境界値、空の値、不正値、過去に障害となった入力からケースを選びます。  
+
+<QuizChoice
+title="例外の確認"
+options={[
+{ id: 'a', label: 'with self.assertRaises(ValueError):' },
+{ id: 'b', label: 'self.assertEqual(ValueError, True)' },
+{ id: 'c', label: 'except ValueError: pass' },
+]}
+answer="a"
+explanation="assertRaises の中で呼び出すと、指定した例外が発生したことを確認できます。"
+
+>
+
+ <div><code>ValueError</code> の発生を確認する書き方はどれですか。</div>
+</QuizChoice>
+
+## 外部依存を差し替える
+
+実際の API を毎回呼ぶテストは、通信状態や外部データで結果が揺れます。  
+外部から値を得る関数を引数で受け取ると、テスト用実装へ差し替えられます。  
+
+```python
+from collections.abc import Callable
+
+def greeting(user_id: str, load_name: Callable[[str], str]) -> str:
+    return f"Hello, {load_name(user_id)}"
+```
+
+```python
+def test_greeting(self) -> None:
+    def fake_load_name(user_id: str) -> str:
+        return "Aiko"
+
+    self.assertEqual(
+        greeting("USER-1", fake_load_name),
+        "Hello, Aiko",
+    )
+```
+
+:::tip[振る舞いを確認する]
+
+内部の呼び出し回数だけに依存せず、入力に対する結果や例外を中心に確認すると、内部整理で壊れにくいテストになります。  
+
+:::
+
+## よくあるつまずき
+
+- 正常な一例だけをテストし、境界値や例外を確認しない
+- テストをプロジェクトのルート以外から実行し、対象モジュールを読み込めなくする
+- 実際の外部 API を呼び、通信状態によって結果が変わるテストにする
+- 実装内部の細かな手順だけを固定し、整理しただけでテストを壊す
+- 失敗したテストを削除して、期待する振る舞いまで失う
+
+## まとめ
+
+- 自動テストは期待する振る舞いをコードに残す
+- 正常値、境界値、失敗を小さなケースに分ける
+- `assertEqual` は結果、`assertRaises` は例外を確認する
+- 外部依存を差し替えて中心の処理を安定してテストする
+
+次は [プロジェクト構成](./project-shape) で、ソースとテストの置き場所を整えます。  

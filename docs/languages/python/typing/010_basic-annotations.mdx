@@ -1,0 +1,113 @@
+---
+sidebar_position: 3
+---
+
+# 基本の型注釈
+
+型ヒントは、値の横に型名を置くだけではありません。  
+コレクションの中身、関数の入力と出力まで書くと、データがどのように流れるかを追いやすくなります。  
+
+## このページで分かること
+
+- 変数と関数への型注釈
+- `list[str]` や `dict[str, int]` の読み方
+- 戻り値がない関数の `None`
+- 型推論を活かして注釈を増やしすぎない考え方
+
+## 変数へ型を書く
+
+変数名の後ろに `: 型` を書きます。  
+
+```python
+service_name: str = "order-api"
+port: int = 8080
+enabled: bool = True
+ratio: float = 0.75
+```
+
+右辺から型が明らかなローカル変数は、チェッカーが推論できます。  
+型注釈は、宣言だけを分けたい場合や、より広い型として扱いたい場合に特に役立ちます。  
+
+## コレクションの中身を書く
+
+Python 3.9 以降では、組み込み型に角括弧を付けて要素の型を表せます。  
+
+```python
+names: list[str] = ["Aiko", "Ren"]
+scores: dict[str, int] = {"Aiko": 90, "Ren": 84}
+coordinates: tuple[int, int] = (10, 20)
+tags: set[str] = {"api", "python"}
+```
+
+`list[str]` は「文字列のリスト」、`dict[str, int]` は「文字列のキーと整数の値を持つ辞書」です。  
+外側の入れ物だけでなく、中に何が入るかまで約束できます。  
+
+<QuizChoice
+title="辞書の型"
+options={[
+{ id: 'a', label: 'dict[str, int]' },
+{ id: 'b', label: 'list[str, int]' },
+{ id: 'c', label: 'dict[int]' },
+]}
+answer="a"
+explanation="dict の角括弧には、キーの型、値の型の順で指定します。"
+
+>
+
+ <div>文字列のキーと整数の値を持つ辞書の型はどれですか。</div>
+</QuizChoice>
+
+## 関数の引数と返り値を書く
+
+引数は変数と同じく `名前: 型`、返り値は `-> 型` で表します。  
+
+```python
+def total(prices: list[int], tax: float) -> int:
+    subtotal = sum(prices)
+    return int(subtotal * (1 + tax))
+
+
+print(total([1000, 500], 0.1))
+```
+
+実行結果です。  
+
+```text
+1650
+```
+
+値を返さない関数には `-> None` を使います。  
+
+```python
+def show_status(name: str, active: bool) -> None:
+    state = "active" if active else "inactive"
+    print(f"{name}: {state}")
+```
+
+:::tip[公開する境界を優先する]
+
+引数と返り値へ型を書くと、呼び出す側と実装側の約束が見えます。関数内の明らかな一時変数は型推論に任せると、重要な型が埋もれません。  
+
+:::
+
+## よくあるつまずき
+
+空のコレクションだけでは、中身の型を推論できないことがあります。  
+後から値を追加する空リストには、意図する型を書きます。  
+
+```python
+user_ids: list[str] = []
+user_ids.append("USER-1")
+```
+
+型ヒントは値を変換しません。  
+`value: int = "10"` と書いても `"10"` は文字列のままであり、必要なら `int("10")` のように明示して変換します。  
+
+## まとめ
+
+- 変数は `name: str`、返り値は `-> str` のように書く
+- `list[str]` と `dict[str, int]` は中身の型まで表す
+- 値を返さない関数の返り値は `None`
+- 明らかなローカル変数は型推論に任せられる
+
+次は [Optional・Union・型エイリアス](./optional-union-aliases) で、複数の可能性を型に表します。  

@@ -1,0 +1,131 @@
+---
+sidebar_position: 4
+---
+
+# Optional・Union・型エイリアス
+
+検索結果が見つからないときだけ `None` が返る。  
+識別子を文字列でも整数でも受け付ける。  
+値に複数の可能性があるなら、分岐だけでなく型にもその事実を表します。  
+
+## このページで分かること
+
+- `X | None` と `Optional[X]`
+- ユニオン型を分岐で絞り込む方法
+- 型エイリアスで複雑な型に名前を付ける方法
+- Python 3.12 の `type` 文との関係
+
+## `None` の可能性を書く
+
+Python 3.10 以降では、文字列または `None` を `str | None` と書けます。  
+
+```python
+def find_name(user_id: str) -> str | None:
+    if user_id == "USER-1":
+        return "Aiko"
+    return None
+
+
+name = find_name("USER-2")
+
+if name is None:
+    print("not found")
+else:
+    print(name.upper())
+```
+
+実行結果です。  
+
+```text
+not found
+```
+
+`None` の確認後、チェッカーは `else` 側の `name` を `str` として扱えます。  
+このように条件分岐で候補を狭めることを **型の絞り込み** と呼びます。  
+
+同じ型は `typing.Optional` でも表せます。  
+
+```python
+from typing import Optional
+
+
+def find_name(user_id: str) -> Optional[str]:
+    ...
+```
+
+`Optional[str]` と `str | None` の意味は同じです。  
+Python 3.10 以降のコードでは、`str | None` が短く読みやすい書き方です。  
+
+<QuizChoice
+title="None を含む型"
+options={[
+{ id: 'a', label: 'str | None' },
+{ id: 'b', label: 'str + None' },
+{ id: 'c', label: 'str & None' },
+]}
+answer="a"
+explanation="縦線は、値が左右いずれかの型であることを表します。"
+
+>
+
+ <div>文字列または <code>None</code> を表す型はどれですか。</div>
+</QuizChoice>
+
+## ユニオン型で複数候補を表す
+
+`|` は `None` 以外の型も組み合わせられます。  
+
+```python
+def normalize_id(value: str | int) -> str:
+    if isinstance(value, int):
+        return str(value)
+    return value.strip()
+
+
+print(normalize_id(42))
+print(normalize_id(" USER-1 "))
+```
+
+```text
+42
+USER-1
+```
+
+`isinstance` の分岐により、前半では `int`、後半では `str` として扱えます。  
+候補を増やしすぎると、呼び出す側も実装側も分岐が増えるため、本当に複数の入力が必要かも確認します。  
+
+## 型エイリアスで意図に名前を付ける
+
+繰り返し使う型や、業務上の意味を持つ型には別名を付けられます。  
+
+```python
+from typing import TypeAlias
+
+UserId: TypeAlias = str
+ScoreTable: TypeAlias = dict[UserId, int]
+
+
+def top_score(scores: ScoreTable) -> int:
+    return max(scores.values())
+```
+
+型エイリアスは新しい実行時の型を作るものではありません。  
+この例の `UserId` の実体は `str` であり、コード上の意図を読みやすくする名前です。  
+
+Python 3.12 以降では、`type` 文でも書けます。  
+
+```python
+type UserId = str
+type ScoreTable = dict[UserId, int]
+```
+
+プロジェクトが対応する Python の最低バージョンに合わせて選びます。  
+
+## まとめ
+
+- `str | None` は文字列または `None` を表す
+- `Optional[str]` は `str | None` と同じ意味を持つ
+- `isinstance` や `is None` の分岐で型を絞り込める
+- 型エイリアスは複雑な型や意図に名前を付ける
+
+次は [ジェネリクスと Protocol](./generics-and-protocols) で、型を保った再利用と振る舞いの約束を学びます。  

@@ -1,0 +1,211 @@
+---
+sidebar_position: 17
+---
+
+# 現代的な構文
+
+関数から返った二つの値を、添字で一つずつ取り出す。  
+種類ごとの分岐が増え、`if` と `elif` の条件が何を見ているのか分からなくなる。  
+Python の構文をデータの形に合わせると、取り出し方と分岐の意図を短く表せます。  
+
+## このページで分かること
+
+- アンパックで複数の値を受け取る方法
+- `*rest` で残りの要素をまとめる方法
+- Python 3.10 以降の `match` / `case`
+- `dataclass` でデータを表す方法
+
+## アンパックで値を対応づける
+
+タプルやリストの要素数が分かっているときは、複数の変数へ一度に代入できます。  
+これを **アンパック** と呼びます。  
+
+```python
+pair = ("api", 200)
+name, status = pair
+
+print(name)
+print(status)
+```
+
+実行結果です。  
+
+```text
+api
+200
+```
+
+左辺と右辺の要素数が合わない場合は `ValueError` になります。  
+「必ず二要素」というデータの形が崩れたことを、その場で検出できる書き方でもあります。  
+
+変数の交換にも一時変数は不要です。  
+
+```python
+left = "A"
+right = "B"
+
+left, right = right, left
+print(left, right)
+```
+
+```text
+B A
+```
+
+## `*rest` で残りをまとめる
+
+先頭の要素だけを分け、残りをリストとして受け取るには `*` を使います。  
+
+```python
+first, *rest = ["start", "load", "save"]
+
+print(first)
+print(rest)
+```
+
+実行結果です。  
+
+```text
+start
+['load', 'save']
+```
+
+末尾だけを分けることもできます。  
+
+```python
+*body, last = [10, 20, 30]
+
+print(body)
+print(last)
+```
+
+```text
+[10, 20]
+30
+```
+
+<QuizChoice
+title="スター付きアンパック"
+options={[
+{ id: 'a', label: '["write", "close"]' },
+{ id: 'b', label: '"write"' },
+{ id: 'c', label: '["open", "write", "close"]' },
+]}
+answer="a"
+explanation="先頭は first に入り、それ以降の要素がリストとして rest に入ります。"
+
+>
+
+ <div>次のコードで <code>rest</code> の値はどれですか。</div>
+ <pre className="language-python"><code>{`first, *rest = ["open", "write", "close"]`}</code></pre>
+</QuizChoice>
+
+## `match` / `case` で形ごとに分岐する
+
+Python 3.10 以降では、`match` を使って値やデータの形ごとに処理を分けられます。  
+次の例では、コマンドを表すタプルの先頭要素と個数を照合しています。  
+
+```python
+def handle(command):
+    match command:
+        case ("start",):
+            return "started"
+        case ("stop", reason):
+            return f"stopped: {reason}"
+        case _:
+            return "unknown command"
+
+
+print(handle(("start",)))
+print(handle(("stop", "maintenance")))
+print(handle(("retry",)))
+```
+
+実行結果です。  
+
+```text
+started
+stopped: maintenance
+unknown command
+```
+
+`case ("stop", reason)` は二要素のタプルを照合し、二つ目の値を `reason` に取り込みます。  
+`case _` は、それまでのどのパターンにも一致しない場合です。  
+
+:::tip[match を選ぶ目安]
+
+一つの値を単純比較するだけなら `if` でも十分です。データの種類と形を同時に読み分けたいとき、`match` が意図を表しやすくなります。  
+
+:::
+
+<QuizChoice
+title="match の既定ケース"
+options={[
+{ id: 'a', label: 'case _:' },
+{ id: 'b', label: 'case else:' },
+{ id: 'c', label: 'case default:' },
+]}
+answer="a"
+explanation="アンダースコアは、それまでのパターンに一致しなかった値を受けるワイルドカードです。"
+
+>
+
+ <div>どのパターンにも一致しない場合を受ける書き方はどれですか。</div>
+</QuizChoice>
+
+## `dataclass` でデータを簡潔に表す
+
+値をまとめて運ぶクラスでは、初期化処理や表示用処理が似た形になりがちです。  
+`dataclasses.dataclass` を使うと、型注釈から `__init__` や比較・表示に使うメソッドを生成できます。  
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class User:
+    name: str
+    active: bool = True
+
+
+user = User("Aiko")
+print(user)
+print(user.name)
+```
+
+実行結果です。  
+
+```text
+User(name='Aiko', active=True)
+Aiko
+```
+
+`dataclass` は、主にデータを保持するクラスの定型コードを減らします。  
+`name: str` は文字列、`active: bool` は真偽値を期待するという注釈で、`dataclass` はこの並びから初期化処理を作ります。  
+この注釈だけで実行時の値を検査するわけではないため、外部から受け取る値の検証は別に必要です。  
+入力検証や複雑な振る舞いが必要なら、通常のメソッドを追加するか、役割を別のクラスへ分けます。  
+
+<details>
+<summary>代入式 := の使いどころ</summary>
+
+Python 3.8 以降の `:=` は、式の途中で値を変数へ代入する **代入式** です。  
+
+```python
+line = "warning"
+
+if (length := len(line)) > 5:
+    print(length)
+```
+
+値を計算して、その直後の条件でも使う場合に重複を減らせます。  
+一方、式が読みにくくなるなら、通常の代入を前の行に分ける方が明確です。  
+</details>
+
+## まとめ
+
+- アンパックはデータの各要素を変数へ対応づける
+- `*rest` は残りの要素をリストで受け取る
+- `match` / `case` は値と形に基づく分岐を表す
+- `dataclass` はデータを保持するクラスの定型コードを減らす
+
+次は [型ヒント](../typing/) で、関数やデータが期待する形をコードに記述します。  
