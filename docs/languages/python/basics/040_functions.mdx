@@ -21,25 +21,25 @@ sidebar_position: 6
 `def` の後ろに関数名と丸括弧を書き、処理をインデントします。
 
 ```python
-def greet():
-    print("こんにちは")
+def confirm_order():
+    print("注文を受け付けました")
 ```
 
-これは `greet` という関数の **定義** です。  
+これは `confirm_order` という関数の **定義** です。  
 定義しただけでは関数内の処理は動かず、関数名に `()` を付けて呼び出したときに実行されます。
 
 ```python
-def greet():
-    print("こんにちは")
+def confirm_order():
+    print("注文を受け付けました")
 
 
-greet()
-greet()
+confirm_order()
+confirm_order()
 ```
 
 ```text
-こんにちは
-こんにちは
+注文を受け付けました
+注文を受け付けました
 ```
 
 関数名は、`calculate_total` のように処理の目的が伝わる動詞や動詞句にします。
@@ -66,20 +66,20 @@ ORD-1001: 受付
 <QuizChoice
 title="関数の呼び出し"
 options={[
-{ id: 'a', label: 'こんにちは、Mikaさん' },
-{ id: 'b', label: 'こんにちは、user_nameさん' },
+{ id: 'a', label: '商品: mug' },
+{ id: 'b', label: '商品: product_id' },
 { id: 'c', label: '何も表示されない' },
 ]}
 answer="a"
-explanation="呼び出し時に渡した Mika が user_name に入り、関数内の print が実行されます。"
+explanation="呼び出し時に渡した mug が product_id に入り、関数内の print が実行されます。"
 
 >
 
  <div>次のコードの出力はどれですか。</div>
- <pre className="language-python"><code>{`def greet(user_name):
-    print(f"こんにちは、{user_name}さん")
+ <pre className="language-python"><code>{`def print_label(product_id):
+    print(f"商品: {product_id}")
 
-greet("Mika")`}</code></pre>
+print_label("mug")`}</code></pre>
 </QuizChoice>
 
 ## `return` で結果を返す
@@ -91,20 +91,20 @@ def calculate_total(price, quantity):
     return price * quantity
 
 
-total = calculate_total(500, 3)
+total = calculate_total(1200, 3)
 print(total)
 ```
 
 ```text
-1500
+3600
 ```
 
 `return` が実行されると、その値を返して関数は終了します。  
 呼び出し側は戻り値を変数へ代入したり、別の計算へ渡したりできます。
 
 ```python
-discounted_total = calculate_total(500, 3) - 200
-print(discounted_total)  # 1300
+discounted_total = calculate_total(1200, 3) - 200
+print(discounted_total)  # 3400
 ```
 
 `print` は画面へ値を表示し、`return` は呼び出し元へ値を渡します。
@@ -274,12 +274,12 @@ def add_item(item, items=[]):
     return items
 
 
-print(add_item("book"))  # ['book']
-print(add_item("pen"))   # ['book', 'pen']
+print(add_item("mug"))    # ['mug']
+print(add_item("cable"))  # ['mug', 'cable']
 ```
 
 デフォルト値のリストは関数を呼ぶたびではなく、`def` が実行された時点で一度だけ作られます。  
-そのため、引数を省略した二回目の呼び出しも一回目と同じリストへ追加し、前回の `"book"` が意図せず残ります。
+そのため、引数を省略した二回目の呼び出しも一回目と同じリストへ追加し、前回の `"mug"` が意図せず残ります。
 
 :::warning[リストをデフォルト値にしない]
 
@@ -296,8 +296,8 @@ def add_item(item, items=None):
     return items
 
 
-print(add_item("book"))  # ['book']
-print(add_item("pen"))   # ['pen']
+print(add_item("mug"))    # ['mug']
+print(add_item("cable"))  # ['cable']
 ```
 
 `is None` は、値が `None` かを確かめる標準的な書き方です。  

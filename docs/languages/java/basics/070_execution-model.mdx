@@ -13,7 +13,7 @@ sidebar_position: 10
 :::tip[復習]
 
 手元での最短ルートは次でした。  
-`javac Hello.java` で `.class` を作り、`java Hello` でクラス名を指定して実行する。
+`javac OrderApp.java` で `.class` を作り、`java OrderApp` でクラス名を指定して実行する。
 
 :::
 
@@ -31,12 +31,12 @@ sidebar_position: 10
 
 流れは短いです。
 
-1. 人が書くソース（`.java`）——レシピ
-2. `javac` がバイトコード（`.class`）に変換する——下ごしらえ
-3. JVM が `.class` を読み、実行する——盛り付けて出す
+1. 人が書くソース（`.java`）——注文票の下書き
+2. `javac` がバイトコード（`.class`）に変換する——出荷前の梱包準備
+3. JVM が `.class` を読み、実行する——出荷して動かす
 
 ```text
-Hello.java  --javac-->  Hello.class  --java-->  JVM 上で実行
+OrderApp.java  --javac-->  OrderApp.class  --java-->  JVM 上で実行
 ```
 
 バイトコードは、特定の OS の機械語ではありません。  
@@ -57,7 +57,7 @@ explanation="javac はバイトコードの .class を生成します。実行�
 >
 
   <div>次の流れで正しいものはどれですか。</div>
-  <pre className="language-text"><code>{`Hello.java  --???-->  Hello.class  --???-->  実行`}</code></pre>
+  <pre className="language-text"><code>{`OrderApp.java  --???-->  OrderApp.class  --???-->  実行`}</code></pre>
 </QuizChoice>
 
 ## JDK / JRE / JVM
@@ -65,11 +65,11 @@ explanation="javac はバイトコードの .class を生成します。実行�
 名前が似ているので、役割だけ分けます。  
 たとえで言うと、こうです。
 
-| 名前    | たとえ                     | ざっくり言うと                         |
-| ------- | -------------------------- | -------------------------------------- |
-| **JVM** | 厨房のコンロ               | バイトコードを実行するエンジン         |
-| **JRE** | 厨房一式（歴史的な呼び方） | JVM ＋ 実行に必要なライブラリ          |
-| **JDK** | 厨房＋包丁まな板セット     | 書いて・コンパイルして・動かす開発一式 |
+| 名前    | たとえ                         | ざっくり言うと                         |
+| ------- | ------------------------------ | -------------------------------------- |
+| **JVM** | 出荷センターのコンベアエンジン | バイトコードを実行するエンジン         |
+| **JRE** | 出荷に必要な一式（歴史的呼称） | JVM ＋ 実行に必要なライブラリ          |
+| **JDK** | 書いて梱包して動かす開発一式   | 書いて・コンパイルして・動かす開発一式 |
 
 学習では **JDK を入れる** と考えておけば足ります。  
 `java -version` と `javac -version` が両方通ることを確認します。
@@ -149,16 +149,16 @@ JVM は起動時に、必要なクラスをまとめて全部メモリに載せ�
 
 ## クラスパスは「探しに行く棚」
 
-`java Hello` のとき、JVM は **クラスパス** に並んだ場所から `Hello.class` を探します。  
+`java OrderApp` のとき、JVM は **クラスパス** に並んだ場所から `OrderApp.class` を探します。  
 何も指定しないと、多くの環境ではカレントディレクトリ（`.`）がクラスパスに入ります。  
-だから、ソースと同じディレクトリで `javac` した直後に `java Hello` すると見つかることが多いです。
+だから、ソースと同じディレクトリで `javac` した直後に `java OrderApp` すると見つかることが多いです。
 
 ```bash
-# カレントに Hello.class がある前提
-java Hello
+# カレントに OrderApp.class がある前提
+java OrderApp
 
 # 探し先を明示する例（区切りは OS による。Linux/macOS は : 、Windows は ; ）
-java -cp . Hello
+java -cp . OrderApp
 ```
 
 依存ライブラリの jar が増えると、クラスパスに複数の場所を並べます。  

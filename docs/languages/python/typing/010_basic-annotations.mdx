@@ -34,7 +34,7 @@ Python 3.9 以降では、組み込み型に角括弧を付けて要素の型を
 
 ```python
 names: list[str] = ["Aiko", "Ren"]
-scores: dict[str, int] = {"Aiko": 90, "Ren": 84}
+prices: dict[str, int] = {"mug": 1200, "notebook": 450}
 coordinates: tuple[int, int] = (10, 20)
 tags: set[str] = {"api", "python"}
 ```
@@ -67,13 +67,13 @@ def total(prices: list[int], tax: float) -> int:
     return int(subtotal * (1 + tax))
 
 
-print(total([1000, 500], 0.1))
+print(total([1200, 450], 0.1))
 ```
 
 実行結果です。
 
 ```text
-1650
+1815
 ```
 
 値を返さない関数には `-> None` を使います。

@@ -61,50 +61,50 @@ Python 3.12.7
 
 :::
 
-## `hello.py` を書く
+## `order.py` を書く
 
-作業用のディレクトリに、次の内容で `hello.py` を保存します。
+作業用のディレクトリに、次の内容で `order.py` を保存します。
 
 ```python
-print("hello")
+print("ORD-1001: 受付")
 ```
 
 `print(...)` は、丸括弧の中に渡した値を画面へ出力する関数です。  
-`"hello"` は文字列で、ダブルクォートの代わりにシングルクォートを使って `'hello'` と書くこともできます。
+`"ORD-1001: 受付"` は文字列で、ダブルクォートの代わりにシングルクォートを使って `'ORD-1001: 受付'` と書くこともできます。
 
 Python では、決まった名前のクラスや `main` メソッドを用意する必要はありません。  
 実行したファイルの先頭から、文が順番に処理されます。
 
 ## プログラムを実行する
 
-ターミナルで `hello.py` を保存したディレクトリへ移動し、次を実行します。
+ターミナルで `order.py` を保存したディレクトリへ移動し、次を実行します。
 
 ```bash
-python hello.py
+python order.py
 ```
 
 成功すると、次の一行が表示されます。
 
 ```text
-hello
+ORD-1001: 受付
 ```
 
-このコマンドは「`python` で `hello.py` を実行する」と読みます。  
+このコマンドは「`python` で `order.py` を実行する」と読みます。  
 ファイル名は、拡張子 `.py` まで含めて指定します。
 
 <QuizChoice
 title="Python ファイルの実行"
 options={[
-{id: 'a', label: 'python hello.py'},
-{id: 'b', label: 'python hello'},
-{id: 'c', label: 'hello.py python'},
+{id: 'a', label: 'python order.py'},
+{id: 'b', label: 'python order'},
+{id: 'c', label: 'order.py python'},
 ]}
 answer="a"
 explanation="python の後ろに、拡張子 .py を含むファイル名を指定します。"
 
 >
 
- <div><code>hello.py</code> を実行するコマンドはどれですか。</div>
+ <div><code>order.py</code> を実行するコマンドはどれですか。</div>
 </QuizChoice>
 
 ## ファイルは上から順に動く
@@ -132,7 +132,7 @@ Python では、行の先頭に置く空白を **インデント** と呼びま�
 最初のプログラムでは、`print` の前に空白を入れる必要はありません。
 
 ```python
-print("hello")
+print("ORD-1001: 受付")
 ```
 
 理由のないインデントを先頭へ入れると、`IndentationError` になることがあります。  
@@ -185,16 +185,16 @@ py --version
 Python 3.12.7
 ```
 
-ファイルは `py hello.py` で実行できます。  
+ファイルは `py order.py` で実行できます。  
 複数バージョンを使い分ける用途もありますが、この教材では `python` を基準に説明します。
 
 </details>
 
 ## よくあるつまずき
 
-- `hello.py.txt` のように、末尾へ `.txt` が付いたまま保存する
-- `hello.py` がないディレクトリでコマンドを実行する
-- `"hello"` の閉じクォートや、`)` を書き忘れる
+- `order.py.txt` のように、末尾へ `.txt` が付いたまま保存する
+- `order.py` がないディレクトリでコマンドを実行する
+- `"ORD-1001: 受付"` の閉じクォートや、`)` を書き忘れる
 - 自分の環境では `python3` が必要なのに、`python` のまま実行する
 - 行頭へ不要な空白を入れる
 

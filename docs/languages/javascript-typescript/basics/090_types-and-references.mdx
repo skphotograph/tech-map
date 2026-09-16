@@ -42,7 +42,7 @@ console.log(typeof undefined); // "undefined"
 `null` とオブジェクトには注意が必要です。
 
 ```js
-console.log(typeof { id: 'ORD-1' }); // "object"
+console.log(typeof { id: 'ORD-1001' }); // "object"
 console.log(typeof [10, 20]); // "object"
 console.log(typeof null); // "object"
 ```
@@ -76,10 +76,10 @@ explanation={'JavaScript では配列に typeof を使うと "object" になり�
 let firstStatus = 'OPEN';
 let secondStatus = firstStatus;
 
-secondStatus = 'CLOSED';
+secondStatus = 'PAID';
 
 console.log(firstStatus); // "OPEN"
-console.log(secondStatus); // "CLOSED"
+console.log(secondStatus); // "PAID"
 ```
 
 `secondStatus` を変更しても、`firstStatus` は変わりません。  
@@ -98,15 +98,15 @@ console.log(secondStatus); // "CLOSED"
 
 ```js
 const firstOrder = {
-  id: 'ORD-1',
+  id: 'ORD-1001',
   status: 'OPEN',
 };
 
 const secondOrder = firstOrder;
-secondOrder.status = 'CLOSED';
+secondOrder.status = 'PAID';
 
-console.log(firstOrder.status); // "CLOSED"
-console.log(secondOrder.status); // "CLOSED"
+console.log(firstOrder.status); // "PAID"
+console.log(secondOrder.status); // "PAID"
 ```
 
 `firstOrder` と `secondOrder` は、同じ注文オブジェクトを指しています。  
@@ -115,12 +115,12 @@ console.log(secondOrder.status); // "CLOSED"
 配列も同じです。
 
 ```js
-const firstItems = ['book'];
+const firstItems = ['mug'];
 const secondItems = firstItems;
 
-secondItems.push('pen');
+secondItems.push('notebook');
 
-console.log(firstItems); // ["book", "pen"]
+console.log(firstItems); // ["mug", "notebook"]
 ```
 
 `const` は変数への再代入を防ぎますが、オブジェクトや配列の中身まで変更不可にするものではありません。  
@@ -130,7 +130,7 @@ console.log(firstItems); // ["book", "pen"]
 title="参照を共有したオブジェクト"
 options={[
 {id: 'a', label: '"OPEN"'},
-{id: 'b', label: '"CLOSED"'},
+{id: 'b', label: '"PAID"'},
 {id: 'c', label: '実行時エラー'},
 ]}
 answer="b"
@@ -141,7 +141,7 @@ explanation="copy と order は同じオブジェクトを参照しているた�
   <div>次のコードの出力はどれですか。</div>
   <pre className="language-js"><code>{`const order = { status: "OPEN" };
 const copy = order;
-copy.status = "CLOSED";
+copy.status = "PAID";
 
 console.log(order.status);`}</code></pre>
 </QuizChoice>
@@ -152,27 +152,27 @@ console.log(order.status);`}</code></pre>
 
 ```js
 const originalOrder = {
-  id: 'ORD-1',
+  id: 'ORD-1001',
   status: 'OPEN',
 };
 
 const copiedOrder = { ...originalOrder };
-copiedOrder.status = 'CLOSED';
+copiedOrder.status = 'PAID';
 
 console.log(originalOrder.status); // "OPEN"
-console.log(copiedOrder.status); // "CLOSED"
+console.log(copiedOrder.status); // "PAID"
 ```
 
 配列では `[...]` の中に展開します。
 
 ```js
-const originalItems = ['book'];
+const originalItems = ['mug'];
 const copiedItems = [...originalItems];
 
-copiedItems.push('pen');
+copiedItems.push('notebook');
 
-console.log(originalItems); // ["book"]
-console.log(copiedItems); // ["book", "pen"]
+console.log(originalItems); // ["mug"]
+console.log(copiedItems); // ["mug", "notebook"]
 ```
 
 ただし、これは **浅いコピー** です。  

@@ -18,22 +18,22 @@ sidebar_position: 3
 
 ## 変数は「名前の付いた付箋」
 
-カフェのカウンターで、注文を口頭だけだとすぐ忘れます。  
-「ホット L」「3 杯」と付箋に書いて貼ると、あとの人が迷いません。  
+カートの画面で、数量や単価を口頭だけだとすぐ忘れます。  
+「マグカップ」「2 個」「1200 円」と付箋に書いて貼ると、あとの処理が迷いません。  
 プログラムでも、途中の値には **名前付きの付箋（変数）** を付けます。
 
 ```java
-int cups = 3;
-boolean takeout = true;
-String drink = "latte";
+int quantity = 2;
+boolean inStock = true;
+String productName = "mug";
 ```
 
 - 左が **型**（どんな付箋か）、右が入れる **値**
 - `=` は「等しい？」ではなく **書き込み**（付箋の中身を入れる／貼り替える）
 
 ```java
-int cups = 3;
-cups = cups + 1; // 4 になる
+int quantity = 2;
+quantity = quantity + 1; // 3 になる
 ```
 
 同じ名前の付箋でも、中身はあとから書き換えられます。
@@ -48,18 +48,18 @@ cups = cups + 1; // 4 になる
 <QuizChoice
 title="代入の意味"
 options={[
-{id: 'a', label: 'cups は 3 のまま'},
-{id: 'b', label: 'cups は 4'},
+{id: 'a', label: 'quantity は 2 のまま'},
+{id: 'b', label: 'quantity は 3'},
 {id: 'c', label: 'コンパイルエラーになる'},
 ]}
 answer="b"
-explanation="= は書き込みです。cups + 1 の結果 4 が、もう一度 cups に入ります。"
+explanation="= は書き込みです。quantity + 1 の結果 3 が、もう一度 quantity に入ります。"
 
 >
 
-  <div>次のコードのあと、<code>cups</code> はどうなりますか。</div>
-  <pre className="language-java"><code>{`int cups = 3;
-cups = cups + 1;`}</code></pre>
+  <div>次のコードのあと、<code>quantity</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`int quantity = 2;
+quantity = quantity + 1;`}</code></pre>
 </QuizChoice>
 
 ## よく使う型
@@ -67,14 +67,14 @@ cups = cups + 1;`}</code></pre>
 型は、「その付箋に何を書いてよいか」の約束です。  
 整数の付箋に文字の並びを書くと、コンパイルが止まります。
 
-| 型        | 持つもの         | 例                      |
-| --------- | ---------------- | ----------------------- |
-| `int`     | 整数（よく使う） | `0`, `3`, `-1`, `1_000` |
-| `long`    | より大きな整数   | `1_000_000_000L`        |
-| `double`  | 小数             | `1.5`, `0.1`, `3.0`     |
-| `boolean` | はい／いいえ     | `true`, `false`         |
-| `char`    | 文字 1 つ        | `'A'`, `'あ'`           |
-| `String`  | 文字の並び       | `"latte"`, `"OPEN"`     |
+| 型        | 持つもの         | 例                        |
+| --------- | ---------------- | ------------------------- |
+| `int`     | 整数（よく使う） | `0`, `3`, `-1`, `1_000`   |
+| `long`    | より大きな整数   | `1_000_000_000L`          |
+| `double`  | 小数             | `1.5`, `0.1`, `3.0`       |
+| `boolean` | はい／いいえ     | `true`, `false`           |
+| `char`    | 文字 1 つ        | `'A'`, `'あ'`             |
+| `String`  | 文字の並び       | `"mug"`, `"OPEN"`         |
 
 ポイントです。
 
@@ -87,17 +87,17 @@ cups = cups + 1;`}</code></pre>
 
 ```java
 int quantity = 2;
-double price = 350.0;
-boolean member = true;
+int unitPrice = 1200;
+boolean inStock = true;
 char grade = 'A';
-String item = "tea";
+String productName = "mug";
 ```
 
 <details>
 <summary>型が合わないとどうなるか</summary>
 
 ```java
-int cups = "three"; // コンパイルエラー
+int quantity = "two"; // コンパイルエラー
 ```
 
 付箋の種類と中身が合わないと、実行前に止まります。  
@@ -118,10 +118,12 @@ int cups = "three"; // コンパイルエラー
 | `%`    | 割った余り | `7 % 2` → `1` |
 
 ```java
-int subtotal = 350 * 2;     // 700
-int change = 1000 - subtotal; // 300
-int pairs = 7 / 2;          // 3（整数どうしの割り算は端数切り捨て）
-int leftover = 7 % 2;       // 1
+int unitPrice = 1200;
+int quantity = 2;
+int subtotal = unitPrice * quantity; // 2400
+int change = 3000 - subtotal;        // 600
+int pairs = 7 / 2;                   // 3（整数どうしの割り算は端数切り捨て）
+int leftover = 7 % 2;                // 1
 ```
 
 :::warning[整数の割り算]
@@ -148,8 +150,8 @@ int yen = (int) price; // 3（小数点以下は切り捨て）
 `int` を `double` に入れるなど、情報が落ちない方向は、キャストなしで進むことが多いです。
 
 ```java
-int cups = 3;
-double asDouble = cups; // 3.0
+int quantity = 3;
+double asDouble = quantity; // 3.0
 ```
 
 逆方向（狭い型へ）は、多くの場合キャストが必要です。
@@ -159,7 +161,7 @@ double asDouble = cups; // 3.0
 文字列の `+` は「つなげる」意味になります。
 
 ```java
-String label = "order-" + 1001; // "order-1001"
+String label = "ORD-" + 1001; // "ORD-1001"
 ```
 
 計算の順序は、だいたい算数と同じで、掛け割りが足し引きより先です。  
@@ -191,11 +193,11 @@ explanation="int どうしの割り算は端数を切り捨てます。7 / 2 は
 同じ付箋を更新するとき、略記がよく出ます。
 
 ```java
-int cups = 3;
-cups = cups + 1; // 4
-cups += 1;       // 同じ意味で 5
-cups++;          // 同じ意味で 6（1 だけ増やす）
-cups--;          // 1 だけ減らす
+int quantity = 2;
+quantity = quantity + 1; // 3
+quantity += 1;           // 同じ意味で 4
+quantity++;              // 同じ意味で 5（1 だけ増やす）
+quantity--;              // 1 だけ減らす
 ```
 
 | 書き方   | 意味（ざっくり） |
@@ -208,7 +210,7 @@ cups--;          // 1 だけ減らす
 | `x--`    | `x = x - 1`      |
 
 まずは **`x++` は `x = x + 1` の短い書き方** と覚えておけば足ります。  
-スタンプカードに「もう 1 回押す」イメージです。
+カートの数量を「もう 1 個足す」イメージです。
 
 ## 比較（分岐の材料）
 

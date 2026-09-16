@@ -19,21 +19,21 @@ sidebar_position: 2
 次の関数は、文字列を受け取り、文字列を返すことを注釈で表しています。
 
 ```python
-def greeting(name: str) -> str:
-    return f"Hello, {name}"
+def format_order_label(order_id: str) -> str:
+    return f"注文 {order_id}"
 
 
-message = greeting("Aiko")
+message = format_order_label("ORD-1001")
 print(message)
 ```
 
 実行結果です。
 
 ```text
-Hello, Aiko
+注文 ORD-1001
 ```
 
-`name: str` は引数の期待する型、`-> str` は返り値の期待する型です。  
+`order_id: str` は引数の期待する型、`-> str` は返り値の期待する型です。  
 呼び出す側は実装をすべて読まなくても、関数の境界を把握できます。
 
 ## 実行前に食い違いを探す

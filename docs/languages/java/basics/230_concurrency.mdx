@@ -142,7 +142,7 @@ ExecutorService executor = new ThreadPoolExecutor(
 共有ホワイトボードに二人で同時に数字を書き換える——書いたつもりが消える、が起きます。
 
 ```java
-class NaiveCounter {
+class UnsyncedOrderCounter {
     int count;
 
     void increment() {
@@ -203,7 +203,7 @@ explanation="count++ は複合操作です。単一フィールドなら AtomicI
 >
 
   <div>次の更新について、正しいものはどれですか。</div>
-  <pre className="language-java"><code>{`class NaiveCounter {
+  <pre className="language-java"><code>{`class UnsyncedOrderCounter {
     int count;
     void increment() {
         count++; // 読み取り → 加算 → 書き込み

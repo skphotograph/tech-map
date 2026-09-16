@@ -5,7 +5,7 @@ sidebar_position: 4
 # 条件分岐
 
 同じプログラムでも、状況によって動きを変えたいことがあります。  
-「1000 円以上ならまとめ買い」「そうでなければ通常」——道を選ぶ書き方が **条件分岐** です。
+「3000 円以上なら送料無料」「そうでなければ通常送料」——道を選ぶ書き方が **条件分岐** です。
 
 [変数と計算](./variables-and-calculation) の比較（`>=` など）が、ここで材料になります。
 
@@ -18,23 +18,23 @@ sidebar_position: 4
 - 条件は `boolean`（はい／いいえ）になる式であること
 - `&&` / `||` / `!` で条件を組み合わせる入口
 
-## `if` / `else`: 改札のふたつの道
+## `if` / `else`: チェックアウトのふたつの道
 
-駅の改札で、「切符が有効なら通る／だめなら別の案内」と同じです。
+注文確定の画面で、「合計がしきい値以上なら送料無料／そうでなければ通常」と同じです。
 
 ```java
-int yen = 1200;
+int amount = 3200;
 
-if (yen >= 1000) {
-    System.out.println("bulk");
+if (amount >= 3000) {
+    System.out.println("free-shipping");
 } else {
-    System.out.println("normal");
+    System.out.println("standard-shipping");
 }
 ```
 
 読み方です。
 
-1. `yen >= 1000` を調べる（結果は `true` か `false`）
+1. `amount >= 3000` を調べる（結果は `true` か `false`）
 2. `true` なら最初の `{ ... }` へ
 3. `false` なら `else` の `{ ... }` へ
 
@@ -42,8 +42,8 @@ if (yen >= 1000) {
 「条件がはいのときだけ動かす」書き方です。
 
 ```java
-if (yen >= 1000) {
-    System.out.println("bulk");
+if (amount >= 3000) {
+    System.out.println("free-shipping");
 }
 ```
 
@@ -57,35 +57,35 @@ if (yen >= 1000) {
 <QuizChoice
 title="if のどちらへ"
 options={[
-{id: 'a', label: 'bulk と出る'},
-{id: 'b', label: 'normal と出る'},
+{id: 'a', label: 'free-shipping と出る'},
+{id: 'b', label: 'standard-shipping と出る'},
 {id: 'c', label: '何も出ない'},
 ]}
 answer="a"
-explanation="yen は 1200 なので yen &gt;= 1000 は true。if 側の塊が動きます。"
+explanation="amount は 3200 なので amount &gt;= 3000 は true。if 側の塊が動きます。"
 
 >
 
   <div>次のコードの出力はどうなりますか。</div>
-  <pre className="language-java"><code>{`int yen = 1200;
-if (yen >= 1000) {
-    System.out.println("bulk");
+  <pre className="language-java"><code>{`int amount = 3200;
+if (amount >= 3000) {
+    System.out.println("free-shipping");
 } else {
-    System.out.println("normal");
+    System.out.println("standard-shipping");
 }`}</code></pre>
 </QuizChoice>
 
-## `else if`: メニュー表のように枝を増やす
+## `else if`: 料金帯のように枝を増やす
 
 ふたつでは足りないとき、`else if` で枝を増やします。  
-サイズ選びのメニュー表に近いです。
+まとめ買い割引の料金帯表に近いです。
 
 ```java
-int yen = 500;
+int amount = 1500;
 
-if (yen >= 1000) {
+if (amount >= 3000) {
     System.out.println("bulk");
-} else if (yen >= 100) {
+} else if (amount >= 1000) {
     System.out.println("normal");
 } else {
     System.out.println("small");
@@ -93,7 +93,7 @@ if (yen >= 1000) {
 ```
 
 上から順に調べ、**最初に当てはまった枝だけ** が動きます。  
-`500` は 1000 以上ではないが 100 以上なので、`"normal"` です。
+`1500` は 3000 以上ではないが 1000 以上なので、`"normal"` です。
 
 順番を間違えると、意図と違う枝に入ります。  
 厳しい条件（大きい金額など）を先に書くことが多いです。
@@ -104,34 +104,34 @@ if (yen >= 1000) {
 `if` / `else` で変数に代入するのと同じことを、短い式で書きます。
 
 ```java
-int yen = 1200;
-String label = yen >= 1000 ? "bulk" : "normal";
-System.out.println(label); // bulk
+int amount = 3200;
+String label = amount >= 3000 ? "free-shipping" : "standard-shipping";
+System.out.println(label); // free-shipping
 ```
 
 読み方は左から次のとおりです。
 
-1. `yen >= 1000` … 条件
-2. `?` の直後 … はいのときの値（`"bulk"`）
-3. `:` の直後 … いいえのときの値（`"normal"`）
+1. `amount >= 3000` … 条件
+2. `?` の直後 … はいのときの値（`"free-shipping"`）
+3. `:` の直後 … いいえのときの値（`"standard-shipping"`）
 
 ```java
 // 同じ意味の if / else
 String label;
-if (yen >= 1000) {
-    label = "bulk";
+if (amount >= 3000) {
+    label = "free-shipping";
 } else {
-    label = "normal";
+    label = "standard-shipping";
 }
 ```
 
 短い二択の代入には便利です。  
 `?` と `:` を何段も重ねると読みにくくなるので、枝が増えたら普通の `if` に戻します。
 
-## `switch` 文: ロッカーの番号で開ける
+## `switch` 文: 注文状態で開ける
 
-「いくつ以上か」ではなく、**決まった候補のどれか** で道を選びたいときがあります。
-注文の状態が `"OPEN"` / `"PAID"` / `"CLOSED"` のどれか、のようにです。  
+「いくつ以上か」ではなく、**決まった候補のどれか** で道を選びたいときがあります。  
+注文の状態が `"OPEN"` / `"PAID"` / `"SHIPPED"` のどれか、のようにです。  
 ロッカーの番号を見て、その扉だけ開けるイメージが `switch` 文です。
 
 ```java
@@ -144,7 +144,7 @@ switch (status) {
     case "PAID":
         System.out.println("ship");
         break;
-    case "CLOSED":
+    case "SHIPPED":
         System.out.println("archive");
         break;
     default:
@@ -167,7 +167,7 @@ ship
 4. `default:` … どの `case` にも当てはまらないときの受け皿（省略可）
 
 `else if` の連打でも書けますが、候補がはっきりしているときは `switch` の方が追いやすいことが多いです。  
-逆に「1000 円以上」のような範囲の比較は、`if` の方が向きます。
+逆に「3000 円以上」のような範囲の比較は、`if` の方が向きます。
 
 :::warning[break を忘れない]
 
@@ -200,7 +200,7 @@ switch (code) {
 ```java
 switch (status) {
     case "OPEN":
-    case "REVIEW":
+    case "PAID":
         System.out.println("active");
         break;
     default:
@@ -237,7 +237,7 @@ switch (status) {
     case "PAID":
         System.out.println("ship");
         break;
-    case "CLOSED":
+    case "SHIPPED":
         System.out.println("archive");
         break;
 }`}</code></pre>
@@ -254,19 +254,19 @@ switch (status) {
 | `!a`       | はい／いいえを反転   |
 
 ```java
-int yen = 1200;
+int amount = 3200;
 boolean member = true;
 
-if (yen >= 1000 && member) {
-    System.out.println("member-bulk");
+if (amount >= 3000 && member) {
+    System.out.println("member-free-shipping");
 }
 
-if (yen < 0 || yen > 1_000_000) {
+if (amount < 0 || amount > 1_000_000) {
     System.out.println("out-of-range");
 }
 
-boolean closed = false;
-if (!closed) {
+boolean cancelled = false;
+if (!cancelled) {
     System.out.println("accepting");
 }
 ```
@@ -275,9 +275,9 @@ if (!closed) {
 複雑な条件は、名前付きの `boolean` に一度入れてから `if` すると追いやすいです。
 
 ```java
-boolean bulkMember = yen >= 1000 && member;
-if (bulkMember) {
-    System.out.println("member-bulk");
+boolean freeForMember = amount >= 3000 && member;
+if (freeForMember) {
+    System.out.println("member-free-shipping");
 }
 ```
 

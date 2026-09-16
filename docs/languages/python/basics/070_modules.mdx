@@ -11,8 +11,8 @@ Python の **モジュール**を使うと、関数や値をファイルに分�
 ## このページで分かること
 
 - 役割ごとにファイルを分ける理由
-- `import calc` でモジュールを読み込む
-- `from calc import add` で名前を直接読み込む
+- `import order_totals` でモジュールを読み込む
+- `from order_totals import add` で名前を直接読み込む
 - `if __name__ == "__main__":` で直接実行時だけ処理する
 - `__init__.py` を持つパッケージの基本
 
@@ -23,17 +23,17 @@ Python の **モジュール**を使うと、関数や値をファイルに分�
 何を担当するコードかが分かる単位に分けると、変更する場所と再利用する場所を見つけやすくなります。
 
 Python では、ひとつの `.py` ファイルを **モジュール**として読み込めます。  
-ここでは、計算を担当する `calc.py` と、それを使う `main.py` に分けます。
+ここでは、注文金額の合計を担当する `order_totals.py` と、それを使う `main.py` に分けます。
 
 ```text
 module-sample/
-├── calc.py
+├── order_totals.py
 └── main.py
 ```
 
-`calc.py` に関数を定義します。
+`order_totals.py` に関数を定義します。
 
-```python title="calc.py"
+```python title="order_totals.py"
 def add(left, right):
     return left + right
 
@@ -42,14 +42,14 @@ def multiply(left, right):
     return left * right
 ```
 
-## `import calc` でモジュールを読み込む
+## `import order_totals` でモジュールを読み込む
 
-同じディレクトリの `main.py` から `calc.py` を読み込みます。
+同じディレクトリの `main.py` から `order_totals.py` を読み込みます。
 
 ```python title="main.py"
-import calc
+import order_totals
 
-total = calc.add(500, 300)
+total = order_totals.add(1200, 800)
 print(total)
 ```
 
@@ -62,15 +62,15 @@ python main.py
 実行結果です。
 
 ```text
-800
+2000
 ```
 
-`import calc` によって、`calc.py` が `calc` という名前で使えるようになります。  
-関数は `calc.add` のように、モジュール名を付けて呼び出します。
+`import order_totals` によって、`order_totals.py` が `order_totals` という名前で使えるようになります。  
+関数は `order_totals.add` のように、モジュール名を付けて呼び出します。
 
 :::tip[モジュール名を残す利点]
 
-`calc.add` と書くと、`add` が `calc` モジュールから来た関数だとコード上で分かります。
+`order_totals.add` と書くと、`add` が `order_totals` モジュールから来た関数だとコード上で分かります。
 
 :::
 
@@ -79,34 +79,34 @@ python main.py
 モジュールから特定の名前だけを読み込むには、`from ... import ...` を使います。
 
 ```python title="main.py"
-from calc import add
+from order_totals import add
 
-total = add(500, 300)
+total = add(1200, 800)
 print(total)
 ```
 
 この場合は、モジュール名を付けずに `add` と呼び出せます。  
 短く書けますが、同じ名前の関数を別の場所で定義すると、どの `add` か見分けにくくなります。
 
-- 出どころを明確にしたいなら `import calc` と `calc.add`
-- 使う名前が少なく、衝突しないなら `from calc import add`
+- 出どころを明確にしたいなら `import order_totals` と `order_totals.add`
+- 使う名前が少なく、衝突しないなら `from order_totals import add`
 
-`from calc import *` は、どの名前を読み込んだか分かりにくくなるため避けます。
+`from order_totals import *` は、どの名前を読み込んだか分かりにくくなるため避けます。
 
 <QuizChoice
 title="モジュールの読み込み"
 options={[
-{ id: 'a', label: 'calc.add(2, 3)' },
-{ id: 'b', label: 'add.calc(2, 3)' },
-{ id: 'c', label: 'calc(2, 3)' },
+{ id: 'a', label: 'order_totals.add(2, 3)' },
+{ id: 'b', label: 'add.order_totals(2, 3)' },
+{ id: 'c', label: 'order_totals(2, 3)' },
 ]}
 answer="a"
-explanation="import calc で読み込んだ関数は、モジュール名を付けて calc.add(...) と呼び出します。"
+explanation="import order_totals で読み込んだ関数は、モジュール名を付けて order_totals.add(...) と呼び出します。"
 
 >
 
  <div>次の読み込みに続けて <code>add</code> 関数を呼ぶ書き方はどれですか。</div>
- <pre className="language-python"><code>{`import calc`}</code></pre>
+ <pre className="language-python"><code>{`import order_totals`}</code></pre>
 </QuizChoice>
 
 ## インポートするとファイルの処理が実行される
@@ -114,8 +114,8 @@ explanation="import calc で読み込んだ関数は、モジュール名を付�
 Python はモジュールを初めてインポートするとき、そのファイルのトップレベルに書かれた処理を上から実行します。  
 関数定義だけでなく、直接書いた `print` も実行対象です。
 
-```python title="calc.py"
-print("calc を読み込みました")
+```python title="order_totals.py"
+print("order_totals を読み込みました")
 
 
 def add(left, right):
@@ -123,15 +123,15 @@ def add(left, right):
 ```
 
 ```python title="main.py"
-import calc
+import order_totals
 
-print(calc.add(2, 3))
+print(order_totals.add(2, 3))
 ```
 
 実行結果です。
 
 ```text
-calc を読み込みました
+order_totals を読み込みました
 5
 ```
 
@@ -147,7 +147,7 @@ Python は、各モジュールに `__name__` という特別な変数を用意�
 
 この違いを使うと、動作確認やプログラムの開始処理を直接実行時だけ動かせます。
 
-```python title="calc.py"
+```python title="order_totals.py"
 def add(left, right):
     return left + right
 
@@ -156,8 +156,8 @@ if __name__ == "__main__":
     print(add(2, 3))
 ```
 
-`python calc.py` と直接実行すると `5` が表示されます。  
-一方、`main.py` から `import calc` しても、条件の中の `print` は実行されません。
+`python order_totals.py` と直接実行すると `5` が表示されます。  
+一方、`main.py` から `import order_totals` しても、条件の中の `print` は実行されません。
 
 :::tip[`__main__` の目的]
 
@@ -192,15 +192,15 @@ module-sample/
 ├── main.py
 └── shop/
     ├── __init__.py
-    └── calc.py
+    └── order_totals.py
 ```
 
-`shop/calc.py` の関数は、次のように読み込めます。
+`shop/order_totals.py` の関数は、次のように読み込めます。
 
 ```python title="main.py"
-from shop.calc import add
+from shop.order_totals import add
 
-print(add(500, 300))
+print(add(1200, 800))
 ```
 
 `__init__.py` は空でも構いません。  
@@ -226,8 +226,8 @@ for path in sys.path:
 
 ## よくあるつまずき
 
-- `calc.py` と `main.py` の配置や実行するディレクトリが想定と異なる
-- `import calc` のあと、`calc.add` ではなく `add` と直接呼ぶ
+- `order_totals.py` と `main.py` の配置や実行するディレクトリが想定と異なる
+- `import order_totals` のあと、`order_totals.add` ではなく `add` と直接呼ぶ
 - 動作確認の `print` をトップレベルへ置き、インポート時にも実行させる
 - ファイル名を `json.py` など標準ライブラリと同じ名前にし、意図しない方を読み込む
 - `from module import *` を使い、名前の出どころを追えなくする
@@ -235,7 +235,7 @@ for path in sys.path:
 ## まとめ / 次に学ぶとよいこと
 
 - `.py` ファイルはモジュールとして読み込める
-- `import calc` では `calc.add`、`from calc import add` では `add` と呼ぶ
+- `import order_totals` では `order_totals.add`、`from order_totals import add` では `add` と呼ぶ
 - インポート時には、モジュールのトップレベルの処理が実行される
 - `if __name__ == "__main__":` は直接実行時だけ開始処理を動かす
 - 関連するモジュールは、`__init__.py` を持つパッケージにまとめられる

@@ -5,7 +5,7 @@ sidebar_position: 5
 # 繰り返し
 
 同じ作業を、手で何行もコピペするのはつらいです。  
-「3 回出す」「在庫があるあいだ取り出す」——回す書き方が **繰り返し（ループ）** です。
+「明細を 3 行出す」「在庫があるあいだ取り出す」——回す書き方が **繰り返し（ループ）** です。
 
 [変数と計算](./variables-and-calculation) の `++` と、[条件分岐](./branching) の条件の感覚が材料になります。
 
@@ -18,7 +18,7 @@ sidebar_position: 5
 
 ## `for`: 決まった回数まわす
 
-朝のラジオ体操を 3 回やる、のイメージです。
+注文の明細を 3 行、順番に確認するイメージです。
 
 ```java
 for (int i = 0; i < 3; i++) {
@@ -81,11 +81,12 @@ explanation="i が 0, 1, 2 のとき条件 i &lt; 3 がはいなので、本体�
 合計のように、ループの外の変数を更新することもあります。
 
 ```java
+int[] lineTotals = {1200, 450, 800};
 int sum = 0;
-for (int i = 1; i <= 3; i++) {
-    sum += i;
+for (int i = 0; i < lineTotals.length; i++) {
+    sum += lineTotals[i];
 }
-System.out.println(sum); // 6（1+2+3）
+System.out.println(sum); // 2450（マグカップ + ノート + ケーブル）
 ```
 
 ## `while`: 終わる条件が主役
@@ -94,10 +95,10 @@ System.out.println(sum); // 6（1+2+3）
 在庫が残っているあいだ取り出す、に近いです。
 
 ```java
-int n = 3;
-while (n > 0) {
-    System.out.println(n);
-    n = n - 1;
+int stock = 3;
+while (stock > 0) {
+    System.out.println(stock);
+    stock = stock - 1;
 }
 ```
 
@@ -123,11 +124,11 @@ while (n > 0) {
 <summary>do-while（あとで条件）</summary>
 
 ```java
-int n = 0;
+int stock = 0;
 do {
-    System.out.println(n);
-    n++;
-} while (n < 1);
+    System.out.println(stock);
+    stock++;
+} while (stock < 1);
 ```
 
 本体を **少なくとも 1 回** 実行してから条件を見ます。  

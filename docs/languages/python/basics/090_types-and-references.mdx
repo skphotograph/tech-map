@@ -53,10 +53,10 @@ print(copied_quantity)  # 5
 first_status = "OPEN"
 second_status = first_status
 
-second_status = "CLOSED"
+second_status = "CANCELLED"
 
 print(first_status)   # OPEN
-print(second_status)  # CLOSED
+print(second_status)  # CANCELLED
 ```
 
 `second_status` を再代入しても、`first_status` が指す文字列は変わりません。
@@ -71,18 +71,18 @@ print(second_status)  # CLOSED
 title="文字列の再代入"
 options={[
 {id: 'a', label: 'OPEN'},
-{id: 'b', label: 'CLOSED'},
+{id: 'b', label: 'CANCELLED'},
 {id: 'c', label: '実行時エラー'},
 ]}
 answer="a"
-explanation="second は CLOSED を指すように再代入されますが、first が指す文字列は変わりません。"
+explanation="second は CANCELLED を指すように再代入されますが、first が指す文字列は変わりません。"
 
 >
 
  <div>次のコードで、最後に表示される値はどれですか。</div>
  <pre className="language-python"><code>{`first = "OPEN"
 second = first
-second = "CLOSED"
+second = "CANCELLED"
 
 print(first)`}</code></pre>
 </QuizChoice>
@@ -96,18 +96,18 @@ print(first)`}</code></pre>
 ふたつの変数が、同じリストを指す状態になります。
 
 ```python
-first_items = ["book"]
+first_items = ["mug"]
 second_items = first_items
 
-second_items.append("pen")
+second_items.append("cable")
 
-print(first_items)   # ['book', 'pen']
-print(second_items)  # ['book', 'pen']
+print(first_items)   # ['mug', 'cable']
+print(second_items)  # ['mug', 'cable']
 ```
 
 `append` は、`second_items` の指す先を変える操作ではありません。  
 両方の変数が指しているひとつのリストに、要素を追加する操作です。  
-そのため、`first_items` から見ても `"pen"` が追加されています。
+そのため、`first_items` から見ても `"cable"` が追加されています。
 
 辞書や集合も同じように参照を共有します。
 
@@ -115,9 +115,9 @@ print(second_items)  # ['book', 'pen']
 first_order = {"status": "OPEN"}
 second_order = first_order
 
-second_order["status"] = "CLOSED"
+second_order["status"] = "PAID"
 
-print(first_order["status"])  # CLOSED
+print(first_order["status"])  # PAID
 ```
 
 この共有は、関数へリストや辞書を渡す場面でも起こります。  
@@ -133,9 +133,9 @@ print(first_order["status"])  # CLOSED
 <QuizChoice
 title="共有されたリスト"
 options={[
-{id: 'a', label: '["book"]'},
-{id: 'b', label: '["book", "pen"]'},
-{id: 'c', label: '["pen"]'},
+{id: 'a', label: '["mug"]'},
+{id: 'b', label: '["mug", "cable"]'},
+{id: 'c', label: '["cable"]'},
 ]}
 answer="b"
 explanation="items と shared は同じリストを参照しているため、shared.append の結果は items からも見えます。"
@@ -143,9 +143,9 @@ explanation="items と shared は同じリストを参照しているため、sh
 >
 
  <div>次のコードの出力はどれですか。</div>
- <pre className="language-python"><code>{`items = ["book"]
+ <pre className="language-python"><code>{`items = ["mug"]
 shared = items
-shared.append("pen")
+shared.append("cable")
 
 print(items)`}</code></pre>
 </QuizChoice>
@@ -155,13 +155,13 @@ print(items)`}</code></pre>
 リストを別々に変更したいときは、スライス `[:]` でコピーを作れます。
 
 ```python
-original_items = ["book"]
+original_items = ["mug"]
 copied_items = original_items[:]
 
-copied_items.append("pen")
+copied_items.append("cable")
 
-print(original_items)  # ['book']
-print(copied_items)    # ['book', 'pen']
+print(original_items)  # ['mug']
+print(copied_items)    # ['mug', 'cable']
 ```
 
 標準ライブラリの `copy.copy` でも同じく浅いコピーを作れます。
@@ -172,7 +172,7 @@ import copy
 original_order = {"status": "OPEN"}
 copied_order = copy.copy(original_order)
 
-copied_order["status"] = "CLOSED"
+copied_order["status"] = "PAID"
 
 print(original_order["status"])  # OPEN
 ```
@@ -181,12 +181,12 @@ print(original_order["status"])  # OPEN
 外側のリストや辞書は新しくなりますが、内側にあるミュータブルなオブジェクトまでは複製されません。
 
 ```python
-original = [["book"]]
+original = [["mug"]]
 copied = original[:]
 
-copied[0].append("pen")
+copied[0].append("cable")
 
-print(original)  # [['book', 'pen']]
+print(original)  # [['mug', 'cable']]
 ```
 
 `original[0]` と `copied[0]` は、同じ内側のリストを指しています。  
@@ -205,9 +205,9 @@ explanation="スライスで外側はコピーされますが、内側のリス�
 >
 
  <div>次のコードを実行すると、元のリストはどうなりますか。</div>
- <pre className="language-python"><code>{`original = [["book"]]
+ <pre className="language-python"><code>{`original = [["mug"]]
 copied = original[:]
-copied[0].append("pen")`}</code></pre>
+copied[0].append("cable")`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき

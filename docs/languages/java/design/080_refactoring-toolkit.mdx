@@ -88,23 +88,23 @@ Sprout は移行の足場です。
 
 ## Value Object へ置き換える
 
-金額、メールアドレス、タスク ID などを `String` や `int` のまま扱うと、取り違えや検証の重複が起きます。  
+金額、メールアドレス、注文 ID などを `String` や `int` のまま扱うと、取り違えや検証の重複が起きます。  
 規則と操作を持つ値を Value Object へ置き換えます。
 
 ```java
-record TaskId(UUID value) {
-    TaskId {
+record OrderId(UUID value) {
+    OrderId {
         Objects.requireNonNull(value);
     }
 }
 
-record TaskTitle(String value) {
-    TaskTitle {
+record ProductName(String value) {
+    ProductName {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("タイトルが必要です");
+            throw new IllegalArgumentException("商品名が必要です");
         }
         if (value.length() > 100) {
-            throw new IllegalArgumentException("タイトルは 100 文字以内です");
+            throw new IllegalArgumentException("商品名は 100 文字以内です");
         }
     }
 }
@@ -122,9 +122,9 @@ Value Object はドメインの値と規則を表し、値による等価性や�
 DTO は転送先の都合、Value Object は業務上の意味が主な変更理由です。
 
 ```java
-record CreateTaskRequest(String title) {}
+record CreateOrderRequest(String productName) {}
 
-TaskTitle title = new TaskTitle(request.title());
+ProductName name = new ProductName(request.productName());
 ```
 
 同じ `record` 構文で書けても役割は異なります。  
@@ -135,11 +135,11 @@ TaskTitle title = new TaskTitle(request.title());
 クラスの内部で具体的な依存を生成すると、利用側は差し替えられず、テストでも実際の外部資源が必要になります。
 
 ```java
-final class TaskService {
-    private final TaskRepository repository;
+final class OrderService {
+    private final OrderRepository repository;
     private final Clock clock;
 
-    TaskService(TaskRepository repository, Clock clock) {
+    OrderService(OrderRepository repository, Clock clock) {
         this.repository = Objects.requireNonNull(repository);
         this.clock = Objects.requireNonNull(clock);
     }
@@ -157,18 +157,18 @@ final class TaskService {
 コンポジションは必要な部品をフィールドとして保持し、処理を委譲します。
 
 ```java
-final class AuditedTaskService {
-    private final TaskService tasks;
+final class AuditedOrderService {
+    private final OrderService orders;
     private final AuditLog auditLog;
 
-    AuditedTaskService(TaskService tasks, AuditLog auditLog) {
-        this.tasks = tasks;
+    AuditedOrderService(OrderService orders, AuditLog auditLog) {
+        this.orders = orders;
         this.auditLog = auditLog;
     }
 
-    void complete(TaskId id) {
-        tasks.complete(id);
-        auditLog.record("task completed: " + id.value());
+    void ship(OrderId id) {
+        orders.ship(id);
+        auditLog.record("order shipped: " + id.value());
     }
 }
 ```
@@ -182,20 +182,20 @@ Strategy は、交換可能なアルゴリズムや方針を共通の契約と�
 条件分岐が複数箇所へ散らばる場合や、実行時に方針を選ぶ場合に役立ちます。
 
 ```java
-interface TaskPriorityPolicy {
-    int priorityFor(Task task);
+interface ShippingPriorityPolicy {
+    int priorityFor(Shipment shipment);
 }
 
-final class DueDatePriority implements TaskPriorityPolicy {
+final class ExpressShippingPriority implements ShippingPriorityPolicy {
     private final Clock clock;
 
-    DueDatePriority(Clock clock) {
+    ExpressShippingPriority(Clock clock) {
         this.clock = clock;
     }
 
     @Override
-    public int priorityFor(Task task) {
-        return task.isOverdue(clock.instant()) ? 100 : 10;
+    public int priorityFor(Shipment shipment) {
+        return shipment.isOverdue(clock.instant()) ? 100 : 10;
     }
 }
 ```
@@ -227,13 +227,13 @@ final class OrderFactory {
 Template Method は、処理の共通手順を親クラスで定義し、一部のステップを子クラスへ任せるパターンです。
 
 ```java
-abstract class TaskImporter {
-    final List<Task> importTasks(Path path) {
+abstract class OrderImporter {
+    final List<Order> importOrders(Path path) {
         List<String> lines = readLines(path);
         return lines.stream().map(this::parse).toList();
     }
 
-    protected abstract Task parse(String line);
+    protected abstract Order parse(String line);
 
     private List<String> readLines(Path path) {
         // 例示のため省略

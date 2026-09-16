@@ -119,7 +119,7 @@ console.log(skills.size);`}</code></pre>
 配列から重複を除いた新しい配列を作る処理にも Set を使えます。
 
 ```js
-const categories = ['book', 'tool', 'book', 'food'];
+const categories = ['mug', 'cable', 'mug', 'notebook'];
 const uniqueCategories = [...new Set(categories)];
 
 console.log(uniqueCategories);
@@ -128,7 +128,7 @@ console.log(uniqueCategories);
 実行結果です。
 
 ```text
-[ 'book', 'tool', 'food' ]
+[ 'mug', 'cable', 'notebook' ]
 ```
 
 ただし、重複した回数そのものに意味がある場合は Set に変換してはいけません。  
@@ -179,14 +179,14 @@ Map には、次の特徴があります。
 ```js
 const prices = new Map();
 
-prices.set('book', 1200);
-prices.set('pen', 200);
+prices.set('mug', 1200);
+prices.set('cable', 800);
 
-console.log(prices.get('book')); // 1200
-console.log(prices.has('pen')); // true
+console.log(prices.get('mug')); // 1200
+console.log(prices.has('cable')); // true
 
-prices.delete('pen');
-console.log(prices.has('pen')); // false
+prices.delete('cable');
+console.log(prices.has('cable')); // false
 ```
 
 実行結果です。
@@ -233,7 +233,7 @@ explanation="Map に対応する値を取得するときは get(key) を使い�
   <div>次の Map から <code>受付中</code> を取得する式はどれですか。</div>
   <pre className="language-js"><code>{`const statusLabels = new Map([
   ["OPEN", "受付中"],
-  ["CLOSED", "完了"],
+  ["CANCELLED", "キャンセル"],
 ]);`}</code></pre>
 </QuizChoice>
 

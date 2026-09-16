@@ -101,22 +101,22 @@ USER-1
 ```python
 from typing import TypeAlias
 
-UserId: TypeAlias = str
-ScoreTable: TypeAlias = dict[UserId, int]
+ProductId: TypeAlias = str
+PriceTable: TypeAlias = dict[ProductId, int]
 
 
-def top_score(scores: ScoreTable) -> int:
-    return max(scores.values())
+def max_price(prices: PriceTable) -> int:
+    return max(prices.values())
 ```
 
 型エイリアスは新しい実行時の型を作るものではありません。  
-この例の `UserId` の実体は `str` であり、コード上の意図を読みやすくする名前です。
+この例の `ProductId` の実体は `str` であり、コード上の意図を読みやすくする名前です。
 
 Python 3.12 以降では、`type` 文でも書けます。
 
 ```python
-type UserId = str
-type ScoreTable = dict[UserId, int]
+type ProductId = str
+type PriceTable = dict[ProductId, int]
 ```
 
 プロジェクトが対応する Python の最低バージョンに合わせて選びます。

@@ -56,7 +56,7 @@ final class FreeShippingCampaign implements ShippingPolicy {
 リスコフの置換原則（Liskov Substitution Principle、LSP）は、子型を親型として使っても、親型の契約を壊さないことを求めます。  
 契約とは、「呼べる操作」「前提条件」「保証する結果」の約束です。
 
-たとえば `TaskQueue` が「追加したタスクを受け付ける」と約束しているのに、読み取り専用の子クラスだけが `add` で例外を投げるなら、置換可能とは言いにくい設計です。  
+たとえば `OrderQueue` が「追加した注文を受け付ける」と約束しているのに、読み取り専用の子クラスだけが `add` で例外を投げるなら、置換可能とは言いにくい設計です。  
 継承関係を作る前に、次を確認します。
 
 - 子型が親型より厳しい事前条件を要求していないか
@@ -71,17 +71,17 @@ final class FreeShippingCampaign implements ShippingPolicy {
 巨大な契約書の隅までサインさせるより、相手が本当に使う条項だけを渡すイメージです。
 
 ```java
-interface TaskReader {
-    Optional<Task> findById(long id);
+interface OrderReader {
+    Optional<Order> findById(long id);
 }
 
-interface TaskWriter {
-    void save(Task task);
+interface OrderWriter {
+    void save(Order order);
 }
 ```
 
-一覧表示だけを行うクラスは `TaskReader` だけに依存できます。  
-巨大な `TaskRepository` に検索、保存、削除、集計、ファイル出力まで並べるより、利用者の必要に沿った契約を作れます。
+一覧表示だけを行うクラスは `OrderReader` だけに依存できます。  
+巨大な `OrderRepository` に検索、保存、削除、集計、ファイル出力まで並べるより、利用者の必要に沿った契約を作れます。
 
 小さく分けすぎると型の数と配線が増えるため、利用者や変更理由が実際に異なる境界で分けます。
 
@@ -134,20 +134,20 @@ SRP で責務を分け、ISP で利用者ごとの契約を小さくし、DIP �
 - **クエリ**: 値を返し、観察可能な状態を変更しない
 
 ```java
-final class Task {
-    private boolean completed;
+final class Order {
+    private boolean paid;
 
-    void complete() {          // コマンド
-        completed = true;
+    void markPaid() {          // コマンド
+        paid = true;
     }
 
-    boolean isCompleted() {    // クエリ
-        return completed;
+    boolean isPaid() {         // クエリ
+        return paid;
     }
 }
 ```
 
-`completeAndReturnStatus()` のように更新と問い合わせを混ぜると、呼ぶだけで状態が変わることを見落としやすくなります。  
+`markPaidAndReturnStatus()` のように更新と問い合わせを混ぜると、呼ぶだけで状態が変わることを見落としやすくなります。  
 CQS に沿うと、副作用がある場所を名前と戻り値から推測しやすくなり、テストも分けやすくなります。
 
 ただし、集合への追加結果を返す `Set.add` や、原子的な更新結果が必要な処理など、更新と戻り値をまとめる合理的な API もあります。  

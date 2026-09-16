@@ -4,7 +4,7 @@ sidebar_position: 14
 
 # 継承とインタフェース
 
-注文処理にも、キャンセルにも、共通の「実行して結果を残す」流れがある。  
+注文の受付にも、お急ぎ便にも、共通の「確定して結果を残す」流れがある。  
 同じ手続きをコピペで増やすと、仕様変更のたびに漏れが出ます。  
 共通部分を親やインタフェースに寄せ、差分だけを差し替える——職種ごとのマニュアルを、共通編と専門編に分ける感覚です。
 
@@ -13,8 +13,8 @@ sidebar_position: 14
 
 ## なぜ型の関係が必要か
 
-呼び出し側は「タスクを完了する」とだけ知りたいことが多いです。  
-中身が通常タスクか緊急タスクかは、差し替えられれば十分、という場面が増えます。  
+呼び出し側は「注文を確定する」とだけ知りたいことが多いです。  
+中身が通常注文かお急ぎ便かは、差し替えられれば十分、という場面が増えます。  
 共通の呼び方を守りつつ、実体ごとの振る舞いを変えられるのが、継承・実装のうれしい点です。
 
 ## 継承（extends）
@@ -23,16 +23,16 @@ sidebar_position: 14
 Java のクラス継承は **単一継承**（親はひとつ）です。
 
 ```java
-class Task {
-    void complete() {
-        System.out.println("task done");
+class Order {
+    void confirm() {
+        System.out.println("order confirmed");
     }
 }
 
-class UrgentTask extends Task {
+class ExpressOrder extends Order {
     @Override
-    void complete() {
-        System.out.println("urgent task done");
+    void confirm() {
+        System.out.println("express order confirmed");
     }
 }
 ```
@@ -45,22 +45,22 @@ class UrgentTask extends Task {
 子のコンストラクタから、親のコンストラクタを呼ぶのが `super(...)` です。
 
 ```java
-class Task {
-    String label;
+class Order {
+    String orderId;
 
-    Task(String label) {
-        this.label = label;
+    Order(String orderId) {
+        this.orderId = orderId;
     }
 }
 
-class UrgentTask extends Task {
-    UrgentTask(String label) {
-        super(label); // 親の Task(String) を先に実行する
+class ExpressOrder extends Order {
+    ExpressOrder(String orderId) {
+        super(orderId); // 親の Order(String) を先に実行する
     }
 }
 ```
 
-- `super(label)` は、親クラスのコンストラクタを呼び出す
+- `super(orderId)` は、親クラスのコンストラクタを呼び出す
 - 親に「引数付きコンストラクタだけ」があるとき、子側で `super(...)` が要ることが多い
 
 ## `protected`: 子からも触れる見える範囲
@@ -73,21 +73,21 @@ class UrgentTask extends Task {
 | `protected` | 同じパッケージに加え、**別パッケージの子クラス**からも |
 
 ```java
-public class Task {
-    protected String label;
+public class Order {
+    protected String orderId;
 
-    public Task(String label) {
-        this.label = label;
+    public Order(String orderId) {
+        this.orderId = orderId;
     }
 }
 
-public class UrgentTask extends Task {
-    public UrgentTask(String label) {
-        super(label);
+public class ExpressOrder extends Order {
+    public ExpressOrder(String orderId) {
+        super(orderId);
     }
 
-    public String banner() {
-        return "[URGENT] " + label; // 子から protected フィールドを読める
+    public String shippingLabel() {
+        return "[EXPRESS] " + orderId; // 子から protected フィールドを読める
     }
 }
 ```
@@ -109,31 +109,31 @@ public class UrgentTask extends Task {
 <QuizChoice
 title="オーバーライド"
 options={[
-{id: 'a', label: '"task done" と出る'},
-{id: 'b', label: '"urgent task done" と出る'},
+{id: 'a', label: '"order confirmed" と出る'},
+{id: 'b', label: '"express order confirmed" と出る'},
 {id: 'c', label: 'コンパイルエラーになる'},
 ]}
 answer="b"
-explanation="UrgentTask が complete をオーバーライドしているので、実体が UrgentTask なら子の実装が動きます。"
+explanation="ExpressOrder が confirm をオーバーライドしているので、実体が ExpressOrder なら子の実装が動きます。"
 
 >
 
   <div>次の出力はどうなりますか。</div>
-  <pre className="language-java"><code>{`class Task {
-    void complete() {
-        System.out.println("task done");
+  <pre className="language-java"><code>{`class Order {
+    void confirm() {
+        System.out.println("order confirmed");
     }
 }
 
-class UrgentTask extends Task {
+class ExpressOrder extends Order {
 @Override
-void complete() {
-System.out.println("urgent task done");
+void confirm() {
+System.out.println("express order confirmed");
 }
 }
 
-UrgentTask task = new UrgentTask();
-task.complete();`}</code></pre>
+ExpressOrder order = new ExpressOrder();
+order.confirm();`}</code></pre>
 </QuizChoice>
 
 ## インタフェース（implements）
@@ -161,17 +161,17 @@ class MailNotifier implements Notifiable {
 ## 参照型と実行時の型
 
 変数の型（コンパイル時に見える型）と、実際に入っているオブジェクトの型は一致するとは限りません。  
-窓口の受付票は「タスク」、対応する係員は「緊急チーム」——聞けることは受付票、実際の返事は係員、です。
+窓口の受付票は「注文」、対応する係員は「お急ぎ便チーム」——聞けることは受付票、実際の返事は係員、です。
 
 ```java
-Task task = new UrgentTask();
-task.complete(); // "urgent task done"
+Order order = new ExpressOrder("ORD-1001");
+order.confirm(); // "express order confirmed"
 ```
 
-- **参照型（宣言型）**: `Task` … 呼べるメンバーの上限を決める
-- **実行時の型**: `UrgentTask` … 実際に動くオーバーライド先
+- **参照型（宣言型）**: `Order` … 呼べるメンバーの上限を決める
+- **実行時の型**: `ExpressOrder` … 実際に動くオーバーライド先
 
-呼び出し側は `Task` として扱いつつ、実行時には子の実装が選ばれます。  
+呼び出し側は `Order` として扱いつつ、実行時には子の実装が選ばれます。  
 これがポリモーフィズムの基本動作です。
 
 :::tip[覚えておくこと]
@@ -212,8 +212,8 @@ System.out.println(s.name());`}</code></pre>
 実行時の実体がその型でなければ `ClassCastException` です。
 
 ```java
-Task task = new Task();
-UrgentTask urgent = (UrgentTask) task; // 失敗しうる
+Order order = new Order("ORD-1002");
+ExpressOrder express = (ExpressOrder) order; // 失敗しうる
 ```
 
 <details>
@@ -222,8 +222,8 @@ UrgentTask urgent = (UrgentTask) task; // 失敗しうる
 現代の Java では、`instanceof` と変数宣言をまとめて書けます。
 
 ```java
-if (task instanceof UrgentTask urgent) {
-    // urgent として使える
+if (order instanceof ExpressOrder express) {
+    // express として使える
 }
 ```
 

@@ -21,16 +21,16 @@ sidebar_position: 16
 `with` と組み合わせると、処理が終わったときや例外が起きたときにも自動で閉じられます。
 
 ```python
-with open("message.txt", mode="r", encoding="utf-8") as f:
+with open("orders.csv", mode="r", encoding="utf-8") as f:
     text = f.read()
 
 print(text)
 ```
 
-`message.txt` に `Hello, Python!` と書かれていれば、実行結果は次のとおりです。
+`orders.csv` に `ORD-1001,OPEN` と書かれていれば、実行結果は次のとおりです。
 
 ```text
-Hello, Python!
+ORD-1001,OPEN
 ```
 
 `mode="r"` は読み込みです。  
@@ -40,8 +40,8 @@ Hello, Python!
 書き込み時と読み込み時で同じ文字コードを使うことで、日本語などが文字化けする問題を避けやすくなります。
 
 ```python
-with open("result.txt", mode="w", encoding="utf-8") as f:
-    f.write("処理は成功しました\n")
+with open("order_status.log", mode="w", encoding="utf-8") as f:
+    f.write("ORD-1001 を受付しました\n")
 ```
 
 `"w"` は既存の内容を上書きします。  
@@ -77,7 +77,7 @@ explanation="with ブロックを抜けると、正常終了でも例外発生�
 from pathlib import Path
 
 data_dir = Path("data")
-file_path = data_dir / "users.txt"
+file_path = data_dir / "orders.csv"
 
 print(file_path)
 print(file_path.name)
@@ -86,8 +86,8 @@ print(file_path.name)
 実行結果の例です。
 
 ```text
-data/users.txt
-users.txt
+data/orders.csv
+orders.csv
 ```
 
 表示される区切り文字は OS によって異なります。  
@@ -98,7 +98,7 @@ users.txt
 ```python
 from pathlib import Path
 
-path = Path("data/users.txt")
+path = Path("data/orders.csv")
 
 print(path.exists())
 print(path.is_file())
@@ -117,8 +117,8 @@ print(path.parent)
 ```python
 from pathlib import Path
 
-path = Path("status.txt")
-path.write_text("ready\n", encoding="utf-8")
+path = Path("order_status.log")
+path.write_text("ORD-1001: OPEN\n", encoding="utf-8")
 
 text = path.read_text(encoding="utf-8")
 print(text, end="")
@@ -127,7 +127,7 @@ print(text, end="")
 実行結果です。
 
 ```text
-ready
+ORD-1001: OPEN
 ```
 
 `write_text` は既存の内容を置き換え、書き込んだ文字数を返します。  
@@ -136,7 +136,7 @@ ready
 ```python
 from pathlib import Path
 
-path = Path("access.log")
+path = Path("order_status.log")
 
 with path.open(mode="r", encoding="utf-8") as f:
     for line in f:

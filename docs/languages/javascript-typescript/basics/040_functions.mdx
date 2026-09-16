@@ -76,12 +76,12 @@ function createLabel(orderId, status) {
   return `${orderId}: ${status}`;
 }
 
-const label = createLabel(1001, 'PAID');
-console.log(label); // 1001: PAID
+const label = createLabel('ORD-1001', 'PAID');
+console.log(label); // ORD-1001: PAID
 ```
 
 引数は左から順に仮引数へ渡されます。  
-この例では、`orderId` に `1001`、`status` に `"PAID"` が入ります。
+この例では、`orderId` に `"ORD-1001"`、`status` に `"PAID"` が入ります。
 
 JavaScript は、引数の個数が定義と違っても呼び出し自体を許します。  
 足りない仮引数には `undefined` が入り、余分な引数は通常使われません。  
@@ -106,7 +106,7 @@ function calculatePrice(unitPrice, quantity) {
 返された値は、変数への代入だけでなく、別の式や関数呼び出しにも使えます。
 
 ```js
-console.log(calculatePrice(350, 2)); // 700
+console.log(calculatePrice(1200, 2)); // 2400
 ```
 
 ## 戻り値が無い関数
@@ -241,28 +241,28 @@ console.log(multiply(4, 5));`}</code></pre></div>
 JavaScript では、引数の個数や種類だけを変えて、同じ名前の関数を複数定義する **シグネチャによるオーバーロード** はできません。
 
 ```js
-function greet(name) {
-  return `hello, ${name}`;
+function formatOrderLine(name) {
+  return `${name} x1`;
 }
 
-function greet(name, times) {
-  return `hello, ${name} x${times}`;
+function formatOrderLine(name, quantity) {
+  return `${name} x${quantity}`;
 }
 
-console.log(greet('Aiko')); // hello, Aiko xundefined
+console.log(formatOrderLine('mug')); // mug xundefined
 ```
 
-後から書いた `greet` が前の定義を置き換えるため、引数一つ用の関数は選ばれません。  
+後から書いた `formatOrderLine` が前の定義を置き換えるため、引数一つ用の関数は選ばれません。  
 必要なら、仮引数に **既定値** を書いておく方法があります。  
 呼び出しで値が渡されなかったときだけ、その既定値が入ります。
 
 ```js
-function greet(name, times = 1) {
-  return `hello, ${name} x${times}`;
+function formatOrderLine(name, quantity = 1) {
+  return `${name} x${quantity}`;
 }
 
-console.log(greet('Aiko')); // hello, Aiko x1（times は既定値の 1）
-console.log(greet('Aiko', 2)); // hello, Aiko x2
+console.log(formatOrderLine('mug')); // mug x1（quantity は既定値の 1）
+console.log(formatOrderLine('mug', 2)); // mug x2
 ```
 
 引数の個数や意味が大きく違う処理は、無理に同じ名前へ押し込めず、別の関数名に分ける方が追いやすいこともあります。

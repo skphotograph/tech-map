@@ -29,21 +29,21 @@ python -m pip install httpx
 import httpx
 
 response = httpx.get(
-    "https://api.github.com/repos/python/cpython",
-    headers={"Accept": "application/vnd.github+json"},
+    "https://api.example.com/orders/ORD-1001",
+    headers={"Accept": "application/json"},
     timeout=5.0,
 )
 response.raise_for_status()
 data = response.json()
-print(data["name"])
+print(data["status"])
 ```
 
-代表的な出力は `cpython` です。  
+代表的な出力は `OPEN` です。  
 `timeout` は無制限に待たないための上限、`raise_for_status()` は 4xx・5xx を例外として扱うための確認です。  
 `response.json()` は JSON 形式の本文を、辞書やリストなどの Python の値へ変換します。  
 変換できても必要なキーや値の型が保証されるわけではないため、外部 API の仕様に沿って確認してから使います。
 
-クエリ文字列は手で連結せず、`params={"q": "language:python"}` のように渡すとエンコードをライブラリへ任せられます。
+クエリ文字列は手で連結せず、`params={"status": "OPEN"}` のように渡すとエンコードをライブラリへ任せられます。
 
 <QuizChoice
 title="待ち時間の設計"
@@ -69,22 +69,22 @@ HTTP の失敗には、大きく二種類あります。
 ```python
 import httpx
 
-def fetch_user(user_id: str) -> dict[str, object]:
+def fetch_order(order_id: str) -> dict[str, object]:
     try:
         response = httpx.get(
-            f"https://api.example.com/users/{user_id}",
+            f"https://api.example.com/orders/{order_id}",
             timeout=5.0,
         )
         response.raise_for_status()
         return response.json()
     except httpx.TimeoutException as error:
-        raise RuntimeError("user API timed out") from error
+        raise RuntimeError("order API timed out") from error
     except httpx.HTTPStatusError as error:
         if error.response.status_code == 404:
-            raise LookupError(user_id) from error
-        raise RuntimeError("user API returned an error") from error
+            raise LookupError(order_id) from error
+        raise RuntimeError("order API returned an error") from error
     except httpx.RequestError as error:
-        raise RuntimeError("user API is unreachable") from error
+        raise RuntimeError("order API is unreachable") from error
 ```
 
 404、タイムアウト、接続不能を分けると、呼び出し側は「見つからない」と伝える、時間を置いて再試行する、障害として記録するといった対応を選べます。  

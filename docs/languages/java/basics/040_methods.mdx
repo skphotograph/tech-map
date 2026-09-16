@@ -21,32 +21,32 @@ Java では、メソッドは **クラスの中** に書きます。
 
 ## メソッドは「名前の付いた手順書」
 
-キッチンで「2 と 3 を足す」を毎回口で説明するより、`add` と書いた手順書を渡した方が早いです。
+明細の小計を毎回口で説明するより、`calculateLineTotal` と書いた手順書を渡した方が早いです。
 
 ```java
-public class Calculator {
-    static int add(int a, int b) {
-        return a + b;
+public class OrderService {
+    static int calculateLineTotal(int quantity, int unitPrice) {
+        return quantity * unitPrice;
     }
 
     public static void main(String[] args) {
-        int total = add(2, 3);
-        System.out.println(total); // 5
+        int total = calculateLineTotal(2, 1200);
+        System.out.println(total); // 2400
     }
 }
 ```
 
-| 書き方           | たとえ                                 |
-| ---------------- | -------------------------------------- |
-| `int add(...)`   | 手順書の名前が `add`。答えは整数で返す |
-| `(int a, int b)` | 材料として渡すふたつの数               |
-| `return a + b`   | 計算結果を呼び出し元へ返す             |
-| `add(2, 3)`      | 手順書を実際に使う（呼び出す）         |
+| 書き方                                  | たとえ                                               |
+| --------------------------------------- | ---------------------------------------------------- |
+| `int calculateLineTotal(...)`           | 手順書の名前が `calculateLineTotal`。答えは整数で返す |
+| `(int quantity, int unitPrice)`         | 材料として渡す数量と単価                             |
+| `return quantity * unitPrice`           | 計算結果を呼び出し元へ返す                           |
+| `calculateLineTotal(2, 1200)`           | 手順書を実際に使う（呼び出す）                       |
 
 呼び出し側では、返ってきた値を変数に入れたり、そのまま使ったりできます。
 
 ```java
-System.out.println(add(10, 20)); // 30
+System.out.println(calculateLineTotal(1, 450)); // 450
 ```
 
 :::tip[覚えておくこと]
@@ -60,22 +60,22 @@ System.out.println(add(10, 20)); // 30
 title="メソッドの戻り値"
 options={[
 {id: 'a', label: 'total は 2'},
-{id: 'b', label: 'total は 5'},
+{id: 'b', label: 'total は 2400'},
 {id: 'c', label: 'コンパイルエラーになる'},
 ]}
 answer="b"
-explanation="add(2, 3) は 2 + 3 を return するので、total には 5 が入ります。"
+explanation="calculateLineTotal(2, 1200) は 2 * 1200 を return するので、total には 2400 が入ります。"
 
 >
 
   <div>次のコードのあと、<code>total</code> はどうなりますか。</div>
-  <pre className="language-java"><code>{`public class Calculator {
-    static int add(int a, int b) {
-        return a + b;
+  <pre className="language-java"><code>{`public class OrderService {
+    static int calculateLineTotal(int quantity, int unitPrice) {
+        return quantity * unitPrice;
     }
 
     public static void main(String[] args) {
-        int total = add(2, 3);
+        int total = calculateLineTotal(2, 1200);
     }
 
 }`}</code></pre>
@@ -86,13 +86,13 @@ explanation="add(2, 3) は 2 + 3 を return するので、total には 5 が入
 画面に出すだけのように、返事が要らない手順は、戻り値の型に `void` を書きます。
 
 ```java
-public class Reporter {
+public class OrderService {
     static void printTotal(int total) {
         System.out.println(total);
     }
 
     public static void main(String[] args) {
-        printTotal(5);
+        printTotal(2400);
     }
 }
 ```
@@ -103,7 +103,7 @@ public class Reporter {
 ## `main` から同じクラスの手順を呼ぶ
 
 起動の入口 `main` も、クラスの中の手順書のひとつです。  
-上の例では、`main` から同じクラスの `add` / `printTotal` を呼んでいます。
+上の例では、`main` から同じクラスの `calculateLineTotal` / `printTotal` を呼んでいます。
 
 いまは次だけ押さえておけば足ります。
 
@@ -117,8 +117,8 @@ public class Reporter {
 `if` が何段も重なると読みにくくなります。  
 そこで、すぐ弾ける条件を先に `return` し、下は「通った人だけ」を扱う書き方があります（早期 return）。
 
-映画館の入り口でまずチケットを確認し、チケットがなければ細かい案内の前にお帰りいただく。  
-ある場合だけ、どのシアターへ案内するかを考える、といったイメージです。
+注文確定の入口でまず金額を確認し、不正なら細かい割引の前に弾く。  
+通った場合だけ、まとめ買い割引のラベルを付ける、といったイメージです。
 
 ```java
 public class OrderService {
@@ -151,18 +151,18 @@ public class OrderService {
 そのとき **同じ名前のメソッドを、引数の違いで並べる** ことができます（オーバーロード）。
 
 ```java
-public class Greeter {
-    static String greet(String name) {
-        return "hello, " + name;
+public class OrderService {
+    static int applyDiscount(int amount) {
+        return amount;
     }
 
-    static String greet(String name, int times) {
-        return greet(name) + " x" + times;
+    static int applyDiscount(int amount, int percentOff) {
+        return amount - (amount * percentOff / 100);
     }
 
     public static void main(String[] args) {
-        System.out.println(greet("Aiko"));      // hello, Aiko
-        System.out.println(greet("Aiko", 3));   // hello, Aiko x3
+        System.out.println(applyDiscount(1000));     // 1000
+        System.out.println(applyDiscount(1000, 10)); // 900
     }
 }
 ```
@@ -180,25 +180,25 @@ public class Greeter {
 <QuizChoice
 title="オーバーロードの呼び出し"
 options={[
-{id: 'a', label: 'hello, Aiko'},
-{id: 'b', label: 'hello, Aiko x2'},
+{id: 'a', label: '1000'},
+{id: 'b', label: '900'},
 {id: 'c', label: 'コンパイルエラーになる'},
 ]}
 answer="b"
-explanation="引数が String と int のふたつなので、greet(String, int) が選ばれます。"
+explanation="引数が int と int のふたつなので、applyDiscount(int, int) が選ばれ、10% 引きの 900 になります。"
 
 >
 
   <div>次のコードの出力はどうなりますか。</div>
-  <pre className="language-java"><code>{`static String greet(String name) {
-    return "hello, " + name;
+  <pre className="language-java"><code>{`static int applyDiscount(int amount) {
+    return amount;
 }
 
-static String greet(String name, int times) {
-return greet(name) + " x" + times;
+static int applyDiscount(int amount, int percentOff) {
+return amount - (amount * percentOff / 100);
 }
 
-System.out.println(greet("Aiko", 2));`}</code></pre>
+System.out.println(applyDiscount(1000, 10));`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき

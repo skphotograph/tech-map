@@ -28,10 +28,10 @@ def first(items: list[T]) -> T:
     return items[0]
 
 name = first(["Aiko", "Ren"])
-score = first([80, 95])
+amount = first([1200, 9800])
 ```
 
-型チェッカーは `name` を `str`、`score` を `int` と推論します。  
+型チェッカーは `name` を `str`、`amount` を `int` と推論します。  
 `T` は特定の一種類を表す名前ではなく、同じ呼び出しの中で同じ型になる場所を結び付ける型変数です。  
 なお、空リストで起きる `IndexError` は型ヒントとは別に対処が必要です。
 

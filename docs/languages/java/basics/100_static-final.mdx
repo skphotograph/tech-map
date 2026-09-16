@@ -27,16 +27,16 @@ sidebar_position: 13
 各自のノートではなく、会議室の共有ホワイトボードです。
 
 ```java
-class TaskBoard {
+class OrderBoard {
     static int openCount = 0; // ボード全体で共有
-    String title;             // 各ボードごと
+    String orderId;           // 各ボードごと
 }
 ```
 
 ```java
-TaskBoard a = new TaskBoard();
-TaskBoard b = new TaskBoard();
-TaskBoard.openCount++;
+OrderBoard a = new OrderBoard();
+OrderBoard b = new OrderBoard();
+OrderBoard.openCount++;
 System.out.println(b.openCount); // 同じ場所を見ている
 ```
 
@@ -68,17 +68,17 @@ options={[
 {id: 'c', label: '0 と出る（インスタンスからは見えない）'},
 ]}
 answer="b"
-explanation="static フィールドはクラス側の共有です。TicketCounter.issued への代入も、インスタンス経由の参照も同じ場所を見ます。"
+explanation="static フィールドはクラス側の共有です。OrderSequence.issued への代入も、インスタンス経由の参照も同じ場所を見ます。"
 
 >
 
   <div>次のコードのあと、出力はどうなりますか。</div>
-  <pre className="language-java"><code>{`class TicketCounter {
+  <pre className="language-java"><code>{`class OrderSequence {
     static int issued;
 }
 
-TicketCounter a = new TicketCounter();
-TicketCounter.issued = 2;
+OrderSequence a = new OrderSequence();
+OrderSequence.issued = 2;
 System.out.println(a.issued);`}</code></pre>
 </QuizChoice>
 
@@ -174,7 +174,9 @@ user.name = "b"; // ?
 ```java
 public final class OrderStatus {
     public static final String OPEN = "OPEN";
-    public static final String CLOSED = "CLOSED";
+    public static final String PAID = "PAID";
+    public static final String SHIPPED = "SHIPPED";
+    public static final String CANCELLED = "CANCELLED";
 
     private OrderStatus() {
         // インスタンス化させない

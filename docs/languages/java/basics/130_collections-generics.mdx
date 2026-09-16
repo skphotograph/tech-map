@@ -15,39 +15,39 @@ sidebar_position: 16
 
 ## なぜコレクションが中心になるか
 
-未完了タスクの一覧、注文に紐づく明細、ユーザー ID から表示名への対応。  
+未完了ではなく、カートの明細行、注文に紐づく商品、ユーザー ID から表示名への対応。  
 配列だけでも表現はできますが、追加・検索・一意制約など、用途に合う型を選ぶ方が安全です。  
 標準ライブラリのコレクションは、その選択を型で示してくれます。
 
-キッチンのカウンターに「並び用」「重複なし用」「番号から探す用」のトレイを分けて置くイメージです。  
+倉庫の棚に「並び用」「重複なし用」「番号から探す用」のトレイを分けて置くイメージです。  
 用途が違うのに一つの箱に押し込むと、あとで探す手間とミスが増えます。
 
 ## List / Set / Map
 
-| インタフェース | 向き                      | 典型ユース                        |
-| -------------- | ------------------------- | --------------------------------- |
-| **List**       | 順序あり、重複可          | タイムライン、明細行              |
-| **Set**        | 重複なし（相等は equals） | タグ、許可 ID の集合              |
-| **Map**        | キー → 値                 | ID からエンティティ、設定テーブル |
+| インタフェース | 向き                      | 典型ユース                          |
+| -------------- | ------------------------- | ----------------------------------- |
+| **List**       | 順序あり、重複可          | 注文の明細行、タイムライン          |
+| **Set**        | 重複なし（相等は equals） | クーポンコード、許可 ID の集合      |
+| **Map**        | キー → 値                 | 商品 ID → 在庫数、設定テーブル      |
 
 ```java
-List<String> steps = new ArrayList<>();
-steps.add("open");
-steps.add("review");
+List<String> lineItems = new ArrayList<>();
+lineItems.add("mug");
+lineItems.add("notebook");
 
-Set<String> tags = new HashSet<>();
-tags.add("urgent");
-tags.add("urgent"); // 実質ひとつ
+Set<String> coupons = new HashSet<>();
+coupons.add("WELCOME10");
+coupons.add("WELCOME10"); // 実質ひとつ
 
 Map<String, Integer> stock = new HashMap<>();
-stock.put("item-1", 3);
+stock.put("mug", 3);
 ```
 
 実装クラス（`ArrayList`, `HashSet`, `HashMap` など）は性能特性が違います。  
 まずはインタフェース型で変数を持ち、必要になったら実装を選ぶ、が無難です。
 
 ```java
-List<String> steps = new ArrayList<>(); // 左はインタフェース、右は実装
+List<String> lineItems = new ArrayList<>(); // 左はインタフェース、右は実装
 ```
 
 [継承とインタフェース](./inheritance-interface) で見たように、`List` は「一覧として使える契約」、`ArrayList` はその契約を満たす実装のひとつです。  
@@ -91,8 +91,8 @@ flowchart LR
 <QuizChoice
 title="List / Set / Map"
 options={[
-{id: 'a', label: '順序ありの明細行 → Set、タグの重複なし → List'},
-{id: 'b', label: '順序ありの明細行 → List、タグの重複なし → Set、ID 対応 → Map'},
+{id: 'a', label: '順序ありの明細行 → Set、クーポンの重複なし → List'},
+{id: 'b', label: '順序ありの明細行 → List、クーポンの重複なし → Set、商品 ID 対応 → Map'},
 {id: 'c', label: 'どれも Map で足りるので、List と Set は使わない'},
 ]}
 answer="b"
@@ -102,7 +102,7 @@ explanation="List は順序と重複可、Set は重複なし、Map はキーか
 
   <div>次の用途に合う組み合わせはどれですか。</div>
   <pre className="language-java"><code>{`// 明細の行（順番あり）
-// 許可タグ（同じ文字は一つ）
+// クーポンコード（同じ文字は一つ）
 // 商品 ID → 在庫数`}</code></pre>
 </QuizChoice>
 
@@ -113,7 +113,7 @@ explanation="List は順序と重複可、Set は重複なし、Map はキーか
 
 ```java
 List<String> names = new ArrayList<>();
-names.add("user-a");
+names.add("Aiko");
 // names.add(42); // コンパイルエラー
 String first = names.get(0); // キャスト不要
 ```

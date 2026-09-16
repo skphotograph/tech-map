@@ -195,7 +195,7 @@ if (box.ready) { // volatile read
 同じモニタを介した unlock → lock で、中で行った書き込みが見えるようになります。
 
 ```java
-class Counter {
+class OrderCounter {
     private int count;
 
     synchronized void increment() {

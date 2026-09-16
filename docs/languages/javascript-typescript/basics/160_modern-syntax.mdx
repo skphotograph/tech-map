@@ -205,24 +205,24 @@ console.log(activeUser);
 <QuizChoice
 title="オブジェクトの展開順序"
 options={[
-{ id: 'a', label: 'draft' },
-{ id: 'b', label: 'published' },
+{ id: 'a', label: 'OPEN' },
+{ id: 'b', label: 'PAID' },
 { id: 'c', label: '両方の値が配列になる' },
 ]}
 answer="b"
-explanation="同じ status プロパティでは後ろに書いた値が使われるため、published になります。"
+explanation="同じ status プロパティでは後ろに書いた値が使われるため、PAID になります。"
 
 >
 
   <div>次のコードで <code>updated.status</code> はどの値になりますか。</div>
-  <pre className="language-js"><code>{`const article = {
-  id: 1,
-  status: "draft",
+  <pre className="language-js"><code>{`const order = {
+  id: "ORD-1001",
+  status: "OPEN",
 };
 
 const updated = {
-...article,
-status: "published",
+...order,
+status: "PAID",
 };`}</code></pre>
 </QuizChoice>
 
@@ -234,11 +234,11 @@ status: "published",
 配列では、取り出していない残りの要素を配列にできます。
 
 ```js
-const scores = [80, 75, 90, 85];
-const [first, ...remaining] = scores;
+const prices = [1200, 450, 800, 9800];
+const [first, ...remaining] = prices;
 
-console.log(first); // 80
-console.log(remaining); // [75, 90, 85]
+console.log(first); // 1200
+console.log(remaining); // [450, 800, 9800]
 ```
 
 オブジェクトでは、取り出していないプロパティを新しいオブジェクトにまとめます。
@@ -419,11 +419,11 @@ function createSummary(order) {
 }
 
 const summary = createSummary({
-  id: 'ORD-1',
+  id: 'ORD-1001',
   customer: null,
   items: [
-    { name: 'book', price: 1200 },
-    { name: 'pen', price: 200 },
+    { name: 'mug', price: 1200 },
+    { name: 'notebook', price: 450 },
   ],
 });
 
@@ -434,9 +434,9 @@ console.log(summary);
 
 ```text
 {
-  id: 'ORD-1',
+  id: 'ORD-1001',
   customerName: 'ゲスト',
-  itemNames: [ 'book', 'pen' ]
+  itemNames: [ 'mug', 'notebook' ]
 }
 ```
 

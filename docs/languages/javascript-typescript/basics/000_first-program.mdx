@@ -50,12 +50,12 @@ v20.18.0
 
 :::
 
-## `hello.js` を書く
+## `order.js` を書く
 
-作業用のディレクトリに、次の内容で `hello.js` を保存します。
+作業用のディレクトリに、次の内容で `order.js` を保存します。
 
 ```js
-console.log('hello');
+console.log('order placed: mug');
 ```
 
 `console.log(...)` は、丸括弧の中の値を画面へ一行出力します。  
@@ -66,34 +66,34 @@ JavaScript では、このファイル自体が実行の入口です。
 
 ## プログラムを実行する
 
-ターミナルで `hello.js` を保存したディレクトリへ移動し、次を実行します。
+ターミナルで `order.js` を保存したディレクトリへ移動し、次を実行します。
 
 ```bash
-node hello.js
+node order.js
 ```
 
 成功すると、次の一行が表示されます。
 
 ```text
-hello
+order placed: mug
 ```
 
-コマンドは「`node` で `hello.js` を実行する」と読みます。  
+コマンドは「`node` で `order.js` を実行する」と読みます。  
 ファイル名の `.js` まで含めて指定するのがポイントです。
 
 <QuizChoice
 title="JavaScript ファイルの実行"
 options={[
-{id: 'a', label: 'node hello.js'},
-{id: 'b', label: 'node hello'},
-{id: 'c', label: 'hello.js node'},
+{id: 'a', label: 'node order.js'},
+{id: 'b', label: 'node order'},
+{id: 'c', label: 'order.js node'},
 ]}
 answer="a"
 explanation="node の後ろに、拡張子 .js を含むファイル名を指定します。"
 
 >
 
- <div><code>hello.js</code> を Node.js で実行するコマンドはどれですか。</div>
+ <div><code>order.js</code> を Node.js で実行するコマンドはどれですか。</div>
 </QuizChoice>
 
 ## ファイルは上から順に動く
@@ -134,10 +134,10 @@ Node.js 20 以上を公式の手順でインストールし、ターミナルを
 
 ## よくあるつまずき
 
-- `hello.js.txt` のように、末尾へ `.txt` が付いたまま保存する
-- `node hello` と入力し、拡張子 `.js` を省略する
+- `order.js.txt` のように、末尾へ `.txt` が付いたまま保存する
+- `node order` と入力し、拡張子 `.js` を省略する
 - 別のディレクトリでコマンドを実行し、ファイルが見つからない
-- `"hello"` の閉じクォートや、`)` を書き忘れる
+- `"order placed: mug"` の閉じクォートや、`)` を書き忘れる
 
 ## まとめ / 次に学ぶとよいこと
 

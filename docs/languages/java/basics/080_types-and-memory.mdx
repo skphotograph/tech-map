@@ -284,13 +284,13 @@ class Order {
 }
 
 Order order = new Order();
-order.id = "ORD-1";
+order.id = "ORD-1001";
 order.status = "OPEN";
 close(order);
-System.out.println(order.status); // CLOSED
+System.out.println(order.status); // CANCELLED
 
 static void close(Order target) {
-    target.status = "CLOSED";
+    target.status = "CANCELLED";
 }
 ```
 
@@ -306,7 +306,7 @@ static void replace(Order target) {
 }
 ```
 
-`replace` のあと、呼び出し元の `order.id` は元の `"ORD-1"` のままです。
+`replace` のあと、呼び出し元の `order.id` は元の `"ORD-1001"` のままです。
 
 :::tip[覚えておくこと]
 
@@ -340,9 +340,9 @@ bump(x);`}</code></pre>
 <QuizChoice
 title="参照の渡し方"
 options={[
-{id: 'a', label: 'status は CLOSED、id は other'},
-{id: 'b', label: 'status は CLOSED、id は ORD-1'},
-{id: 'c', label: 'status は OPEN、id は ORD-1'},
+{id: 'a', label: 'status は CANCELLED、id は other'},
+{id: 'b', label: 'status は CANCELLED、id は ORD-1001'},
+{id: 'c', label: 'status は OPEN、id は ORD-1001'},
 ]}
 answer="b"
 explanation="参照のコピーが渡るので status の変更は共有されます。一方 order = new Order() はメソッド内の変数の付け替えだけで、呼び出し元の order が指す先は変わりません。"
@@ -356,13 +356,13 @@ explanation="参照のコピーが渡るので status の変更は共有され�
 }
 
 void touch(Order order) {
-order.status = "CLOSED";
+order.status = "CANCELLED";
 order = new Order();
 order.id = "other";
 }
 
 Order order = new Order();
-order.id = "ORD-1";
+order.id = "ORD-1001";
 order.status = "OPEN";
 touch(order);
 // order.status と order.id は？`}</code></pre>
@@ -409,13 +409,13 @@ flowchart LR
 **掲示板に一枚だけ貼ってある共有メモ**です。
 
 ```java
-class TicketCounter {
+class OrderSequence {
     static int issued;
     int number;
 }
 ```
 
-`new TicketCounter()` を 100 個作っても、`number` はインスタンスごと、`issued` はクラスに対して 1 個です。
+`new OrderSequence()` を 100 個作っても、`number` はインスタンスごと、`issued` はクラスに対して 1 個です。
 
 便利な一方、テスト同士の干渉や、リクエストをまたいだ値の残留につながります。
 
@@ -432,13 +432,13 @@ explanation="static フィールドはクラス側の共有です。インスタ
 >
 
   <div>次のコードのあと、<code>b.issued</code> はどうなりますか。</div>
-  <pre className="language-java"><code>{`class TicketCounter {
+  <pre className="language-java"><code>{`class OrderSequence {
     static int issued;
     int number;
 }
 
-TicketCounter a = new TicketCounter();
-TicketCounter b = new TicketCounter();
+OrderSequence a = new OrderSequence();
+OrderSequence b = new OrderSequence();
 a.issued++;
 // b.issued は？`}</code></pre>
 </QuizChoice>
@@ -451,7 +451,7 @@ a.issued++;
 
 ```java
 Order order = null;
-order.id = "ORD-1"; // NPE
+order.id = "ORD-1001"; // NPE
 ```
 
 NPE は「Java が壊れた」のではありません。  
@@ -468,7 +468,7 @@ NPE は「Java が壊れた」のではありません。
 <QuizChoice
 title="null 参照"
 options={[
-{id: 'a', label: 'id に ORD-1 が入る'},
+{id: 'a', label: 'id に ORD-1001 が入る'},
 {id: 'b', label: 'NullPointerException になる'},
 {id: 'c', label: 'コンパイルエラーになる'},
 ]}
@@ -483,7 +483,7 @@ explanation="order は null（行き先がない）なので、フィールド�
 }
 
 Order order = null;
-order.id = "ORD-1";`}</code></pre>
+order.id = "ORD-1001";`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき
