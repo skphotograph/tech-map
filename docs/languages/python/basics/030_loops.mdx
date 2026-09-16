@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # 繰り返し
@@ -13,6 +13,7 @@ sidebar_position: 5
 - `range` で決まった回数を繰り返す方法
 - `while` で条件が成り立つ間だけ繰り返す方法
 - `break` / `continue` でループの流れを変える方法
+- 入れ子のループ、`enumerate`、`zip`、`sorted` の入口
 
 ## `for` で値を順番に取り出す
 
@@ -272,6 +273,123 @@ explanation="continue は現在の周の残りを実行せず、次の要素の�
  <div><code>continue</code> の説明として正しいものはどれですか。</div>
 </QuizChoice>
 
+## 入れ子のループで表を処理する
+
+ループの中に、別のループを置けます。  
+行と列の両方を順に処理するときに使います。
+
+```python
+orders = [
+    ["ORD-1001", "ORD-1002"],
+    ["ORD-2001", "ORD-2002"],
+]
+
+for row in orders:
+    for order_id in row:
+        print(order_id)
+```
+
+```text
+ORD-1001
+ORD-1002
+ORD-2001
+ORD-2002
+```
+
+外側のループが行、内側が列のイメージです。  
+入れ子が深くなると追いにくくなるため、必要なときだけ使います。
+
+## `enumerate` で番号付きに処理する
+
+要素と一緒に **添字** が欲しいときは `enumerate` を使います。
+
+```python
+statuses = ["OPEN", "PAID", "CLOSED"]
+
+for index, status in enumerate(statuses):
+    print(index, status)
+```
+
+```text
+0 OPEN
+1 PAID
+2 CLOSED
+```
+
+自分で `range(len(...))` と添字アクセスを組み合わせるより、意図が伝わりやすい書き方です。
+
+<QuizChoice
+title="enumerate の役割"
+options={[
+{ id: 'a', label: '要素と添字を同時に取り出す' },
+{ id: 'b', label: 'リストを昇順に並べ替える' },
+{ id: 'c', label: 'ループを強制終了する' },
+]}
+answer="a"
+explanation="enumerate は for のたびに (添字, 要素) の組を返します。"
+
+>
+
+ <div><code>enumerate</code> の説明として正しいものはどれですか。</div>
+</QuizChoice>
+
+## `zip` で並びを対応づける
+
+長さが同じ並びを、同時に取り出したいときは `zip` を使います。
+
+```python
+order_ids = ["ORD-1001", "ORD-1002"]
+amounts = [1200, 800]
+
+for order_id, amount in zip(order_ids, amounts):
+    print(f"{order_id}: {amount}")
+```
+
+```text
+ORD-1001: 1200
+ORD-1002: 800
+```
+
+注文番号と金額のように、同じ位置の値が対応している前提で使います。
+
+## `sorted` で並べ替えた一覧を作る
+
+並べ替えた **新しいリスト** が欲しいときは `sorted` を使います。  
+元のリストは変更されません。
+
+```python
+amounts = [1200, 450, 9800]
+
+for amount in sorted(amounts):
+    print(amount)
+```
+
+```text
+450
+1200
+9800
+```
+
+元のリストをその場で並べ替える `.sort()` もありますが、入門では `sorted` から使うと安全です。
+
+<QuizChoice
+title="sorted の結果"
+options={[
+{ id: 'a', label: '450、1200、9800' },
+{ id: 'b', label: '9800、1200、450' },
+{ id: 'c', label: '元の順のまま' },
+]}
+answer="a"
+explanation="sorted は小さい順に並べ替えた新しいリストを返します。"
+
+>
+
+ <div>次のコードが順に表示する値はどれですか。</div>
+ <pre className="language-python"><code>{`amounts = [1200, 450, 9800]
+for amount in sorted(amounts):
+    print(amount)`}</code></pre>
+</QuizChoice>
+
 ## ループの選び方
 
 | やりたいこと                 | 選びやすい構文   |
@@ -299,5 +417,6 @@ explanation="continue は現在の周の残りを実行せず、次の要素の�
 - `while` は条件が `True` の間だけ繰り返す
 - `break` はループを終了し、`continue` は次の周へ進む
 - `while` では、条件が終了へ向かって変化するか確認する
+- `enumerate` は添字付き、`zip` は並び同士の対応、`sorted` は並べ替えた一覧を作る
 
 次は [関数](./functions) で、まとまった処理に名前を付けて再利用します。

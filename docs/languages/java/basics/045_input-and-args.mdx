@@ -1,0 +1,215 @@
+---
+sidebar_position: 8
+---
+
+# 入力と引数
+
+これまでの例は、画面へ出す（`println`）が中心でした。  
+現場では、起動時の引数や、キーボード入力を **文字列として受け取り、数値に変換して計算する** 場面もよく出ます。  
+このページでは、その入口を手順付きで押さえます。
+
+## このページで分かること
+
+- `args` が文字列の並び（配列）であること
+- `main` の `String[] args` で起動引数を読む
+- `Integer.parseInt` で文字列を整数に変換する（成功例）
+- キーボード入力の入口（`Scanner`）
+- 表示の整形（`String.format`）
+
+## `args` は文字列の並び
+
+`main` の `String[] args` は、起動時に渡された **文字列の並び** です。  
+`String[]` は同じ型（`String`）の値を順番に並べた **配列** です。  
+ここでは `args` を読むのに必要な分だけ押さえます。
+
+| 書き方        | 意味（このページで使う範囲） |
+| ------------- | ---------------------------- |
+| `args.length` | 渡された個数                 |
+| `args[0]`     | 1 番目（**0 始まり**）       |
+| `args[1]`     | 2 番目                       |
+
+```java
+// java Demo first second と起動したときのイメージ
+// args[0] → "first"
+// args[1] → "second"
+// args.length → 2
+```
+
+固定長の配列や `List` との使い分けは [配列と List](./arrays-and-lists) で扱います。
+
+## 起動引数を読む
+
+```java
+public class ArgsDemo {
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("usage: java ArgsDemo <quantity>");
+            return;
+        }
+        System.out.println("quantity=" + args[0]);
+    }
+}
+```
+
+```bash
+javac ArgsDemo.java
+java ArgsDemo 3
+```
+
+成功例:
+
+```text
+quantity=3
+```
+
+引数が無いときに `args[0]` へ触ると実行時エラーになるので、先に `args.length` を見るのが定番です。
+
+:::tip[覚えておくこと]
+
+`args` は起動時に渡る文字列の配列。  
+触る前に `length` で件数を確認する。
+
+:::
+
+<QuizChoice
+title="args の添字"
+options={[
+{id: 'a', label: 'args[0] は 1200'},
+{id: 'b', label: 'args[0] は 2'},
+{id: 'c', label: 'args[1] は 2'},
+]}
+answer="b"
+explanation="java PriceDemo 2 1200 の 1 番目の引数は 2 です。添字 0 が最初です。"
+
+>
+
+  <div>次の起動のあと、<code>args[0]</code> の中身はどれですか。</div>
+  <pre className="language-bash"><code>{`java PriceDemo 2 1200`}</code></pre>
+</QuizChoice>
+
+## 文字列を整数に: `Integer.parseInt`
+
+単価や数量は、引数では **文字列** として渡されます。  
+計算するときは整数に変換します。
+
+```java
+public class LineTotalApp {
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("usage: java LineTotalApp <quantity> <unitPrice>");
+            return;
+        }
+        int quantity = Integer.parseInt(args[0]);
+        int unitPrice = Integer.parseInt(args[1]);
+        int total = quantity * unitPrice;
+        System.out.println(total);
+    }
+}
+```
+
+```bash
+javac LineTotalApp.java
+java LineTotalApp 2 1200
+```
+
+成功例:
+
+```text
+2400
+```
+
+`Integer.parseInt("1200")` は整数 `1200` を返します。  
+数値に変換できない文字列を渡すと実行時エラーになります。  
+まずは、入力が整数として読める形式かを確認して実行してください。
+
+## キーボード入力（`Scanner`）
+
+対話的に 1 行読む例です。
+
+```java
+import java.util.Scanner;
+
+public class ScannerDemo {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("order id: ");
+        String orderId = scanner.nextLine();
+        System.out.println("received: " + orderId);
+    }
+}
+```
+
+```bash
+javac ScannerDemo.java
+java ScannerDemo
+```
+
+実行例（入力 `ORD-1001` のあと Enter）:
+
+```text
+order id: ORD-1001
+received: ORD-1001
+```
+
+- `System.in` … 標準入力（キーボード）
+- `nextLine()` … 1 行まとめて読む
+
+## 表示を整える: `String.format`
+
+金額を `"total: 2400 yen"` のように出したいとき、`String.format` が使えます。
+
+```java
+public class FormatDemo {
+    public static void main(String[] args) {
+        int total = 2400;
+        String message = String.format("total: %d yen", total);
+        System.out.println(message);
+    }
+}
+```
+
+```bash
+javac FormatDemo.java
+java FormatDemo
+```
+
+成功例:
+
+```text
+total: 2400 yen
+```
+
+`%d` は整数の穴埋めです。
+
+<QuizChoice
+title="parseInt の結果"
+options={[
+{id: 'a', label: 'quantity は 3'},
+{id: 'b', label: 'quantity は文字列の 3 のまま'},
+{id: 'c', label: 'コンパイルエラーになる'},
+]}
+answer="a"
+explanation="Integer.parseInt は int を返します。args[0] の文字列 3 が整数 3 になります。"
+
+>
+
+  <div>次のコードのあと、<code>quantity</code> の型と値として正しいのはどれですか。</div>
+  <pre className="language-java"><code>{`String[] args = {"3"};
+int quantity = Integer.parseInt(args[0]);`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 引数の個数を確認せず `args[0]` へ触る
+- 数値の計算前に `parseInt` を忘れる（文字列の `"2"` と整数の `2` は別物）
+- `Scanner` を使うファイルで `import java.util.Scanner;` を忘れる
+- 表示用の `%d` と、渡す値の型が合わない
+
+## まとめ / 次に学ぶとよいこと
+
+- `args` は文字列の配列。`length` と 0 始まりの添字で読む
+- 計算前に `Integer.parseInt` で整数へ変換する
+- 対話入力の入口は `Scanner` と `nextLine()`
+- 表示は `String.format` で整形できる
+
+次は [クラスと new](./classes) で、データと操作をひとつの型にまとめます。

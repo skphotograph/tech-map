@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 10
 ---
 
 # 辞書と集合
@@ -12,6 +12,8 @@ Python の **辞書**は値へ名前を付け、**集合**は重複のない値�
 
 - 辞書でキーと値の対応を表す
 - `[]` と `get` で値を取得する
+- `del`、`.pop()`、`.update()` で辞書を更新する
+- `in` でキーの有無を調べる
 - `keys` / `values` / `items` を繰り返す
 - 集合で重複を除き、要素を追加・確認する
 - リスト・辞書・集合を目的に合わせて選ぶ
@@ -46,7 +48,7 @@ print(order["status"])  # 完了
 ```
 
 辞書はリストと同じく可変です。  
-代入によって、辞書そのものの内容が変わります。
+代入によって、辞書そのものの内容が変わります（参照の詳細は [型と参照](./types-and-references)）。
 
 :::tip[辞書が表すもの]
 
@@ -77,7 +79,8 @@ print(order["id"])`}</code></pre>
 ## `[]` と `get` を使い分ける
 
 存在しないキーを `[]` で読むと `KeyError` になります。  
-必ず存在するはずのキーなら、データの不足にすぐ気づけるこの動作が役立ちます。
+必ず存在するはずのキーなら、データの不足にすぐ気づけるこの動作が役立ちます。  
+`KeyError` は「指定したキーが辞書に無い」という意味のエラーです。
 
 ```python
 order = {"id": "ORD-1001"}
@@ -98,6 +101,81 @@ print(order.get("status", "未設定"))  # 未設定
 ```
 
 「必須項目なので、なければ不具合として扱う」なら `[]`、「省略できる項目なので代わりの値を使う」なら `get`、という目的で選びます。
+
+## キーの削除とまとめて更新する
+
+キーを削除するには `del` を使います。
+
+```python
+order = {"id": "ORD-1001", "note": "急ぎ"}
+
+del order["note"]
+print(order)
+```
+
+```text
+{'id': 'ORD-1001'}
+```
+
+キーを取り出して削除するには `.pop()` を使います。
+
+```python
+order = {"id": "ORD-1001", "status": "受付"}
+
+status = order.pop("status")
+print(status)
+print(order)
+```
+
+```text
+受付
+{'id': 'ORD-1001'}
+```
+
+別の辞書の内容を取り込むには `.update()` を使います。
+
+```python
+order = {"id": "ORD-1001"}
+extra = {"status": "受付", "total": 1500}
+
+order.update(extra)
+print(order)
+```
+
+```text
+{'id': 'ORD-1001', 'status': '受付', 'total': 1500}
+```
+
+## `in` でキーがあるか調べる
+
+辞書にキーが含まれるかは `in` で調べられます。
+
+```python
+order = {"id": "ORD-1001", "status": "受付"}
+
+print("status" in order)   # True
+print("total" in order)    # False
+```
+
+値そのものではなく、**キー** の有無を調べる点に注意してください。
+
+<QuizChoice
+title="辞書の pop"
+options={[
+{ id: 'a', label: '受付 と {"id": "ORD-1001"}' },
+{ id: 'b', label: '受付 と {"id": "ORD-1001", "status": "受付"}' },
+{ id: 'c', label: 'KeyError' },
+]}
+answer="a"
+explanation="pop は値を返し、対応するキーを辞書から削除します。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`order = {"id": "ORD-1001", "status": "受付"}
+value = order.pop("status")
+print(value, order)`}</code></pre>
+</QuizChoice>
 
 ## キー・値・組を繰り返す
 
@@ -239,7 +317,8 @@ explanation="集合は重複のない要素を保持します。同じ値を追�
 
 - 辞書はキーと値の対応を持ち、`dict[key]` で値を読む
 - `get` はキーがない場合に `None` または指定した既定値を返す
-- `keys` / `values` / `items` で、必要な部分を繰り返せる
+- `del` / `pop` / `update` で辞書の内容を更新する
+- `in` でキーの有無を調べ、`keys` / `values` / `items` で必要な部分を繰り返せる
 - 集合は重複のない値を持ち、`add` で追加し、`in` で所属を確認する
 - リスト・辞書・集合は、順番・対応・重複なしという目的で選ぶ
 

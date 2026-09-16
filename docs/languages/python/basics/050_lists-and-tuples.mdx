@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # リストとタプル
@@ -12,8 +12,10 @@ Python では、複数の値を順番付きで扱うために **リスト** と 
 
 - リストを作り、添字で要素を読む
 - `append` / `pop` でリストを更新する
+- `insert` / `remove` / `extend` とリストの連結
+- `in` で要素の有無を調べる
 - `len` と `for` で一覧を扱う
-- スライスで一部分を取り出す
+- スライスと負の添字で一部分を取り出す
 - リストとタプルを目的に合わせて選ぶ
 
 ## リストは変更できる順番付きの一覧
@@ -97,6 +99,92 @@ print(order_ids) # ['ORD-1001', 'ORD-1002']
 `append` はリストそのものを更新し、戻り値は `None` です。  
 `pop` はリストを更新すると同時に、削除した要素を返します。
 
+## ほかの更新方法
+
+指定位置へ挿入するには `insert`、値を指定して削除するには `remove` を使います。
+
+```python
+order_ids = ["ORD-1001", "ORD-1003"]
+
+order_ids.insert(1, "ORD-1002")
+order_ids.remove("ORD-1003")
+
+print(order_ids)
+```
+
+```text
+['ORD-1001', 'ORD-1002']
+```
+
+別のリストの要素を末尾へ追加するときは `extend` を使います。
+
+```python
+pending = ["ORD-1001"]
+more = ["ORD-1002", "ORD-1003"]
+
+pending.extend(more)
+print(pending)
+```
+
+```text
+['ORD-1001', 'ORD-1002', 'ORD-1003']
+```
+
+2 つのリストをつなげた **新しいリスト** が欲しいときは `+` を使います。  
+元のリストは変更されません。
+
+```python
+first = ["ORD-1001"]
+second = ["ORD-1002"]
+
+combined = first + second
+print(combined)
+print(first)
+```
+
+```text
+['ORD-1001', 'ORD-1002']
+['ORD-1001']
+```
+
+:::tip[extend と + の違い]
+
+`extend` は左側のリストを更新します。  
+`+` は新しいリストを作り、元はそのままです。
+
+:::
+
+<QuizChoice
+title="extend の結果"
+options={[
+{ id: 'a', label: '["ORD-1001", "ORD-1002"]' },
+{ id: 'b', label: '["ORD-1002"]' },
+{ id: 'c', label: '["ORD-1001"]' },
+]}
+answer="a"
+explanation="extend は more の要素を pending の末尾へ追加します。"
+
+>
+
+ <div>次のコード実行後の <code>pending</code> はどれですか。</div>
+ <pre className="language-python"><code>{`pending = ["ORD-1001"]
+more = ["ORD-1002"]
+pending.extend(more)`}</code></pre>
+</QuizChoice>
+
+## `in` で要素があるか調べる
+
+リストに値が含まれるかは `in` で調べられます。
+
+```python
+order_ids = ["ORD-1001", "ORD-1002"]
+
+print("ORD-1001" in order_ids)  # True
+print("ORD-9999" in order_ids)  # False
+```
+
+`not in` で「含まれない」ことも調べられます。
+
 ## `for` で要素を順番に読む
 
 全要素を先頭から処理するなら、`for` でリストから要素をひとつずつ受け取ります。
@@ -160,7 +248,11 @@ print(quantities)  # [2, 1, 3, 2]
 ```python
 print(quantities[:2])  # [2, 1]
 print(quantities[2:])  # [3, 2]
+print(quantities[-1])  # 2
 ```
+
+`-1` は末尾の要素を指します。  
+文字列の添字と同じ考え方で、[文字列と入力](./strings-and-text) でも使いました。
 
 ## タプルは変更できない順番付きの組
 
@@ -215,10 +307,11 @@ explanation="商品コードと数量のように組として扱い、途中で�
 
 ## まとめ / 次に学ぶとよいこと
 
-- リストは変更できる順番付きの一覧で、添字は `0` から始まる
-- `append` は末尾へ追加し、`pop` は末尾から取り出して削除する
-- `len` は要素数を返し、`for item in list` で各要素を読める
+- リストは変更できる順番付きの一覧で、添字は `0` から始まり、`-1` で末尾を指す
+- `append` / `pop` / `insert` / `remove` / `extend` で一覧を更新する
+- `+` は新しいリストを作り、`extend` は左側のリストを更新する
+- `in` で要素の有無を調べ、`for item in list` で各要素を読める
 - `list[1:3]` は添字 `1` から `3` の手前までを取り出す
 - タプルは変更できない順番付きの組で、固定した値に向く
 
-次は [辞書と集合](./dicts-and-sets) で、名前を付けた値と重複のない集まりを扱います。
+次は [文字列の分割と結合](./text-split-and-join) で、文字列とリストを行き来する方法を学びます。

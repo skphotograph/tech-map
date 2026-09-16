@@ -4,100 +4,95 @@ sidebar_position: 1
 
 # Java 言語をはじめよう
 
-この節では、まず書き方の最低限をそろえ、**値と参照・実行の仕組み** を掴んだうえで、言語の骨格と標準 API へ進みます。
+この節では、まず **入門編** で言語の書き方と定番 API を一通り押さえ、そのあと **実行・参照の地図** と深掘りへ進みます。
 
 :::info[読み方]
 
-最初の数ページは、変数・制御構文・クラスなど **書き方の最低限** です。  
-たとえ話多めで噛み砕いているので、手が動く人は流し読みで構いません。不安なところだけ戻っても大丈夫です。  
-はじめて近い人は、下のロードマップ **1〜8**（書き方の最低限）を先に通してください。  
-9 以降は、書き方が固まってからで構いません。
+入門編（1〜17）は、変数・クラス・package から static / 継承 / 例外 / コレクション / ラムダ入口まで **教科書の入門範囲を一通り** カバーします。  
+はじめて近い人は **1〜17 を順に** 通してから、18（実行の仕組み）以降へ進んでください。  
+たとえ話多めなので、手が動く人は流し読みでも構いません。
 
 :::
 
 ## この節で分かること
 
 - 小さなプログラムを書いて動かす書き方の入口
-- `.java` がどう `.class` になり、JVM 上で動くか
-- 値と参照、スタックとヒープ、のちに GC とリーク調査
-- `String` 比較、static / final、継承、例外、コレクション
-- ジェネリクス、Stream、日時、ファイル、JDBC、並行処理
-- アノテーションとクラスローディングの入口
+- static / final、継承、例外、コレクション、ラムダ・Stream・Optional の入口
+- `.java` がどう `.class` になり、JVM 上で動くか（実行モデル）
+- 値と参照、スタックとヒープ、GC とリーク調査
+- ジェネリクス深掘り、日時、ファイル、JDBC、並行処理、アノテーション
 
-## 書き方だけ覚えても、あとでつまずく場面
+## なぜ入門のあとに実行・メモリか
 
-入門書は文法中心になりがちですが、実務で最初に迷うのは「書けたけど、なぜこうなるのか」です。
+入門編だけでも小さなプログラムは書けます。  
+それでも実務で最初に迷うのは、「書けたけど、なぜこうなるのか」という **実行と参照** の場面です。
 
-- メソッドに渡したリストの中身が、呼び出し元まで書き換わってしまう
-- エラーが出たのに、どの行が原因か追えない
-- 同じ文字列なのに `==` と `equals` で結果が違う
+- メソッドに渡したリストの中身が、呼び出し元まで書き換わる
+- エラーが出たのに、どの呼び出しが原因か追えない
+- `NullPointerException` の「どこが null だったのか」が追えない
+- GC があるのにヒープが戻らず、「たぶんリーク」で止まる
 
-こういう場面は、`new` で作った値がどこに残るか、`java` がどのファイルを読むかといった **実行の仕組み** とセットで理解する必要があります。  
-この節では書き方を覚えた直後にその地図を置き、あとから読む Maven やアプリ部品の話も「なぜそうするか」から追えるようにしています。
+入門で文法と定番 API に慣れてから、18〜19 で地図を持つと、以降の GC や障害調査が「暗記」になりにくいです。
 
 :::tip[この節のゴール]
 
-小さなクラスを動かし、値と参照・例外・コレクションの会話についていけ、標準 API を選ぶ理由を説明できる状態を目指します。
+入門範囲を書ける状態のあと、型・参照・GC・並行処理の会話についていけ、標準 API の選択理由を説明できる状態を目指します。
 
 :::
 
 ## 学習のロードマップ
 
-次の順で読むと、理解が積み上がりやすいです。  
-地図を先に持ち、道を歩き、あとから倉庫の掃除まで戻る——その順です。
+**入門編 — 書き方の基礎（1〜12）**
 
-**書き方の最低限**
-
-1. [最初のプログラム](./first-program) … クラス、`main`、コンパイルと実行の最短ルート
+1. [最初のプログラム](./first-program) … クラス、`main`、コメント、コンパイルと実行、エラー読みの入口
 2. [変数と計算](./variables-and-calculation) … 変数、型、四則演算、比較
-3. [条件分岐](./branching) … `if` / `else` / `else if`、三項演算子、`switch` 文、条件の組み合わせ
-4. [繰り返し](./loops) … `for` / `while`、`break` / `continue`
-5. [メソッド](./methods) … 定義と呼び出し、`void`、早期 `return`
-6. [クラスと new](./classes) … フィールド、`new`、コンストラクタ
-7. [アクセス修飾子](./access-modifiers) … `public` / `private`、修飾子なし、窓口になるメソッド
-8. [配列と List](./arrays-and-lists) … 添字、拡張 for、前置／後置インクリメント、可変長の一覧
+3. [文字列の基本](./string-basics) … `equals`、長さと空、条件分岐での使い方
+4. [条件分岐](./branching) … `if` / `else` / `else if`、三項演算子、`switch` 文
+5. [繰り返し](./loops) … `for` / `while`、`break` / `continue`
+6. [メソッド](./methods) … 定義と呼び出し、`void`、早期 `return`
+7. [入力と引数](./input-and-args) … `args`、`Scanner`、`parseInt`、表示の整形
+8. [クラスと new](./classes) … フィールド、`new`、初期値、`null`、コンストラクタ
+9. [アクセス修飾子](./access-modifiers) … `public` / `private`、package 入口
+10. [カプセル化と窓口メソッド](./encapsulation-methods) … getter、意味のある操作
+11. [配列と List](./arrays-and-lists) … 配列、List の基本操作、拡張 for
+12. [複数ファイルと package](./packages-and-mini-project) … 2 ファイル構成、小さなまとめ
 
-**実行と参照の地図**
+**入門編 — 言語の定番（13〜17）**
 
-9. [実行の仕組み](./execution-model) … コンパイル、JVM、クラスパス
-10. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
+13. [static と final](./static-final) … 共有と不変、定数
+14. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
+15. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
+16. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
+17. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
 
-**言語の骨格**
+各ページでは、概念の区切りごとに **理解チェック** を挟みます。
 
-11. [String と equals](./string-equals) … `==` / `equals` / `hashCode`、文字列プール、Map のキー
-12. [static と final](./static-final) … 共有と不変、定数
-13. [継承とインタフェース](./inheritance-interface) … 上書き、参照型と実行時の型
-14. [例外とリソース解放](./exceptions) … checked / unchecked、try-with-resources
-15. [コレクションとジェネリクス](./collections-generics) … List / Set / Map、空と null
-16. [ラムダ・Stream・Optional](./lambda-stream-optional) … for との対応から入る入口
+**実行と参照の地図（18〜19）**
 
-各ページでは、概念の区切りごとに **理解チェック**（選択式／穴埋め）を挟みます。  
-「一つ読んで → 短く確認 → 次へ」のリズムです。これらの問題はテストではなく、その場で理解が正しいかを確認するためのものです。
+18. [実行の仕組み](./execution-model) … コンパイル、JVM、クラスパス
+19. [型とメモリ](./types-and-memory) … プリミティブと参照、スタックフレーム、値渡し
 
-**ヒープの回収**
+**参照・回収・実行の深掘り（20〜）**
 
-17. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
-18. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、ヒープ以外、サイズとログ
-
-**標準 API と実行時**
-
-19. [ジェネリクスと現代的な型](./generics-and-modern-types) … 型パラメータ → 不変性 → PECS → 型消去
-20. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
-21. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と欲しい形の選び方
-22. [日時 API](./datetime) … 日付、時刻、タイムゾーン
-23. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
-24. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
-25. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期の範囲
-26. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
-27. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環、スレッドごとの値
-28. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
-29. [Java メモリモデル](./memory-model) … 可視性、happens-before、安全な公開
-30. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
-31. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
+20. [String と equals](./string-equals) … `hashCode`、文字列プール、Map のキー
+21. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
+22. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、サイズとログ
+23. [ジェネリクスと現代的な型](./generics-and-modern-types) … 不変性、PECS、型消去
+24. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
+25. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と Collector
+26. [日時 API](./datetime) … 日付、時刻、タイムゾーン
+27. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
+28. [JDBC の基礎](./jdbc-basics) … SQL 実行とトランザクションの入口
+29. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期
+30. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
+31. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環
+32. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
+33. [Java メモリモデル](./memory-model) … 可視性、happens-before
+34. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
+35. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
 
 各ページのコード例は、Java 17 以降を基準にしています。  
-題材は架空の EC サイト（商品・注文・在庫）でそろえています。  
-利用する Java のバージョンが異なる場合は、API や構文が使えるか公式ドキュメントで確認してください。
+題材は架空の EC サイト（商品・注文・在庫）でそろえています。
 
 先に [Java をはじめよう](../) を読んでおくと、章全体の位置づけがつかみやすいです。  
 この節のあとは [Maven](../maven/) へ進みます。

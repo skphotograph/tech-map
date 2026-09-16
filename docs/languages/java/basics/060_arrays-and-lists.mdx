@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 12
 ---
 
 # 配列と List
@@ -14,7 +14,7 @@ sidebar_position: 9
 - 配列の作り方、添字、`length`
 - 拡張 for で一覧を前から触る
 - 前置インクリメントと後置インクリメント（添字と組み合わせるとき）
-- `List` の入口（`add` / `get` / `size`）と `import`
+- `List` の入口（`add` / `get` / `size` / `remove` / `contains` / `isEmpty`）と `import`
 - 配列と `List` の使い分けの目安
 
 ## 配列: 決まったマスのトレー
@@ -189,12 +189,37 @@ public class StatusListDemo {
 `new ArrayList<>()` の `<>` は、「左と同じ型で作る」短い書き方です。  
 今はこの約束が読めれば十分です。
 
-| 操作           | 意味（ざっくり）     |
-| -------------- | -------------------- |
-| `add(...)`     | 末尾に入れる         |
-| `get(添字)`    | 取り出す（0 始まり） |
-| `size()`       | いまの件数           |
-| `List<String>` | 文字の並びを入れる袋 |
+| 操作            | 意味（ざっくり）       |
+| --------------- | ---------------------- |
+| `add(...)`      | 末尾に入れる           |
+| `get(添字)`     | 取り出す（0 始まり）   |
+| `size()`        | いまの件数             |
+| `isEmpty()`     | 件数が 0 なら `true`   |
+| `contains(...)` | 同じ要素があるか調べる |
+| `remove(...)`   | 指定した要素を除く     |
+| `clear()`       | 中身をすべて空にする   |
+| `List<String>`  | 文字の並びを入れる袋   |
+
+```java
+List<String> statuses = new ArrayList<>();
+statuses.add("OPEN");
+statuses.add("PAID");
+System.out.println(statuses.contains("OPEN")); // true
+statuses.remove("OPEN");
+System.out.println(statuses.isEmpty());        // false
+System.out.println(statuses.size());           // 1
+statuses.clear();
+System.out.println(statuses.isEmpty());        // true
+```
+
+成功例（上から順）:
+
+```text
+true
+false
+1
+true
+```
 
 `List` も拡張 for で回せます。
 
@@ -203,6 +228,25 @@ for (String status : statuses) {
     System.out.println(status);
 }
 ```
+
+<QuizChoice
+title="remove のあと"
+options={[
+{id: 'a', label: 'size は 2、get(0) は OPEN'},
+{id: 'b', label: 'size は 1、get(0) は PAID'},
+{id: 'c', label: 'size は 0'},
+]}
+answer="b"
+explanation="OPEN を remove したあと残るのは PAID だけ。size は 1、先頭 get(0) は PAID です。"
+
+>
+
+  <div>次のコードのあと、<code>statuses.size()</code> と <code>statuses.get(0)</code> はどうなりますか。</div>
+  <pre className="language-java"><code>{`List<String> statuses = new ArrayList<>();
+statuses.add("OPEN");
+statuses.add("PAID");
+statuses.remove("OPEN");`}</code></pre>
+</QuizChoice>
 
 :::info[書き方の入口]
 
@@ -232,7 +276,6 @@ for (String status : statuses) {
 - 配列は固定長。添字は 0 始まり。長さは `length`
 - `i++` は使ってから増やす、`++i` は増やしてから使う（添字と組み合わせると差が見える）
 - 拡張 for で「今の 1 件」を前から触れる
-- `List` は追加しやすい一覧。`import` が必要
+- `List` は add/get/size に加え、contains/remove/isEmpty/clear が使える
 
-ここまでで、小さなプログラムを追う書き方はそろいました。  
-次は [実行の仕組み](./execution-model) へ進みます。
+次は [複数ファイルと package](./packages-and-mini-project) で、ファイルを分けた構成と小さなまとめを通します。

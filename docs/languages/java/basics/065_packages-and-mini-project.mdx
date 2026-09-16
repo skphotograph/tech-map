@@ -1,0 +1,205 @@
+---
+sidebar_position: 13
+---
+
+# 複数ファイルと package
+
+入門編まで、1 つの `.java` に複数クラスを並べる例も出てきました。  
+現場では **クラスごとにファイルを分け**、**package で引き出しを整理** します。  
+このページでは、2 ファイル構成の最短手順と、入門のまとめを通します。
+
+[アクセス修飾子](./access-modifiers) で `package` の入口を見ました。  
+ここでは、package 付きのソースをコンパイルして実行するところまで手を動かします。
+
+## このページで分かること
+
+- 1 ファイル 1 クラス（`public` は 1 つ）のルール
+- `package` とディレクトリの対応
+- 2 ファイルを `javac` / `java` で動かす手順
+- 入門で学んだ要素をつないだ小さな例
+
+## 1 ファイル 1 クラス
+
+`public class` は **ファイルに 1 つ** です。  
+ファイル名は `public class` 名と揃えます（[最初のプログラム](./first-program) と同じルール）。
+
+```text
+Order.java      … public ではない Order クラス
+OrderApp.java   … public class OrderApp（起動用）
+```
+
+`Order` を他のファイルから使うとき、同じ package に置くのが基本です。
+
+## package とフォルダ
+
+package は、クラスをまとめる **引き出しラベル** です。  
+ディレクトリ構造と揃えます。
+
+```text
+src/
+  com/
+    example/
+      order/
+        Order.java
+        OrderApp.java
+```
+
+`Order.java` の先頭:
+
+```java
+package com.example.order;
+
+class Order {
+    private String id;
+    private String status;
+
+    Order(String id, String status) {
+        this.id = id;
+        this.status = status;
+    }
+
+    String getStatus() {
+        return status;
+    }
+
+    void close() {
+        status = "CLOSED";
+    }
+}
+```
+
+`OrderApp.java` の先頭:
+
+```java
+package com.example.order;
+
+public class OrderApp {
+    public static void main(String[] args) {
+        Order order = new Order("ORD-1", "OPEN");
+        order.close();
+        System.out.println(order.getStatus());
+    }
+}
+```
+
+同じ package にいるので、`import` なしで `Order` を参照できます。
+
+## コンパイルと実行
+
+`src` ディレクトリで次を実行します。
+
+```bash
+javac com/example/order/Order.java com/example/order/OrderApp.java
+java com.example.order.OrderApp
+```
+
+成功例:
+
+```text
+CLOSED
+```
+
+- `javac` … コンパイルしたい `.java` をパス付きで指定（複数ファイルを並べてよい）
+- `java` … **完全修飾名**（package + クラス名）を渡す
+
+:::tip[覚えておくこと]
+
+package ありでは、フォルダ構造と package 名を揃える。  
+実行は `java com.example.order.OrderApp` のように package 付きクラス名。
+
+:::
+
+<QuizChoice
+title="package 付きの起動"
+options={[
+{id: 'a', label: 'java OrderApp'},
+{id: 'b', label: 'java com.example.order.OrderApp'},
+{id: 'c', label: 'java com/example/order/OrderApp'},
+]}
+answer="b"
+explanation="package があるとき、java には package を含むクラス名（ドット区切り）を渡します。"
+
+>
+
+  <div><code>package com.example.order;</code> の <code>OrderApp</code> を起動するとき、正しいのはどれですか。</div>
+</QuizChoice>
+
+## 入門のまとめ: 注文一覧
+
+[配列と List](./arrays-and-lists) の `List` と、[カプセル化と窓口メソッド](./encapsulation-methods) の形を組み合わせた小さな例です。  
+`Order.java` は前の節の `Order` クラス（同じ package）をそのまま使います。
+
+```java
+package com.example.order;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class OrderApp {
+    public static void main(String[] args) {
+        List<Order> orders = new ArrayList<>();
+        orders.add(new Order("ORD-1", "OPEN"));
+        orders.add(new Order("ORD-2", "OPEN"));
+
+        for (Order order : orders) {
+            if (order.getStatus().equals("OPEN")) {
+                order.close();
+            }
+        }
+
+        System.out.println("closed=" + countClosed(orders));
+    }
+
+    static int countClosed(List<Order> orders) {
+        int count = 0;
+        for (Order order : orders) {
+            if (order.getStatus().equals("CLOSED")) {
+                count++;
+            }
+        }
+        return count;
+    }
+}
+```
+
+成功例:
+
+```text
+closed=2
+```
+
+- `List` で複数の `Order` を持つ
+- 拡張 for で前から触る
+- [文字列の基本](./string-basics) の `equals` で状態を比較
+- [メソッド](./methods) で処理を切り出す
+
+<QuizChoice
+title="List の件数"
+options={[
+{id: 'a', label: 'closed=0'},
+{id: 'b', label: 'closed=1'},
+{id: 'c', label: 'closed=2'},
+]}
+answer="c"
+explanation="OPEN の 2 件を close したあと、CLOSED は 2 件です。"
+
+>
+
+  <div>上のまとめ例で、2 件とも OPEN から始まり、ループですべて close したあと、<code>countClosed</code> の戻り値はいくつですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- フォルダ構造と `package` 行が食い違う
+- `java OrderApp` のように package を省略して起動する
+- 1 ファイルに `public class` を 2 つ書く
+- 別 package のクラスを `import` せずに使おうとする
+
+## まとめ / 次に学ぶとよいこと
+
+- クラスごとにファイルを分け、`public` は 1 ファイル 1 つ
+- `package` とディレクトリを揃える
+- `javac` でまとめてコンパイルし、`java` には package 付きクラス名を渡す
+- 入門編の要素（クラス、List、equals、メソッド）を組み合わせられる
+
+次は [static と final](./static-final) で、共有と不変の書き方を押さえます。

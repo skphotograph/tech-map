@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 10
 ---
 
 # オブジェクト
@@ -17,6 +17,7 @@ JavaScript の **オブジェクト** を使うと、関係する値に名前を
 - オブジェクトの中にオブジェクトや関数を持たせる
 - `const` とプロパティの書き換えの関係を見分ける
 - 分割代入で必要な値を取り出す
+- キーと値を順にたどる方法
 
 ## オブジェクトは「名前付きの欄を持つカード」
 
@@ -236,26 +237,6 @@ order.status = "CLOSED";
 const { status } = order;
 console.log(status);`}</code></pre>
 </QuizChoice>
-
-<details>
-<summary>プロパティ名の一覧を得る `Object.keys`</summary>
-
-`Object.keys` は、オブジェクトに通常の書き方で追加したプロパティ名を、順番付きの一覧として返します。  
-（一覧の詳しい扱い方は次の [配列](./arrays) で扱います。）
-
-```js
-const order = {
-  id: 'ORD-1001',
-  status: 'OPEN',
-};
-
-const keys = Object.keys(order);
-console.log(keys); // [ 'id', 'status' ]
-```
-
-どんな項目が入っているかを調べるときに使えます。
-
-</details>
 
 ## よくあるつまずき
 

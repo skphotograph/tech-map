@@ -1,0 +1,238 @@
+---
+sidebar_position: 4
+---
+
+# 文字列と入力
+
+画面へ結果を出すだけでは、利用者の入力を受け取れません。  
+また、ログや CSV の一行は、前後に空白が付いたり、大文字小文字が混ざったりすることがあります。  
+ここでは **入力** と、すでに学んだ変数・f-string・型変換だけで扱える **文字列の基本** を押さえます。
+
+[変数と計算](./variables-and-calculation) で学んだ f-string や `int()` を、文字列の読み書きに使います。
+
+## このページで分かること
+
+- `input` でキーボード入力を受け取る方法
+- 文字列の添字・スライスで一部分を読む方法
+- `+` と `*` による連結・繰り返し
+- `.strip()`、`.lower()`、`.replace()` による基本的な加工
+
+## `input` で入力を受け取る
+
+`input(...)` は、利用者が Enter を押すまで待ち、入力された文字列を返します。  
+返る値は常に **文字列** です。
+
+```python
+order_id = input("注文番号: ")
+print(f"受付: {order_id}")
+```
+
+実行例です。利用者が `ORD-1001` と入力すると、次のように表示されます。
+
+```text
+注文番号: ORD-1001
+受付: ORD-1001
+```
+
+数値として計算したい場合は、[変数と計算](./variables-and-calculation) で扱った **`int()` などで変換** します。  
+単価など、コード側で決めている値と、入力で受け取る値は分けて考えます。
+
+```python
+unit_price = 350
+quantity_text = input("数量: ")
+quantity = int(quantity_text)
+total = unit_price * quantity
+print(total)
+```
+
+利用者が数量に `2` と入力した場合、実行結果は次のとおりです。
+
+```text
+数量: 2
+700
+```
+
+`unit_price` の `350` はプログラム内の値で、キーボードから入力したのは数量の `2` だけです。  
+変換できない文字列を `int()` に渡すとエラーになります。  
+ここでは、数字だけを入力する前提で進めます。
+
+:::tip[入力は文字列]
+
+`input` の戻り値は文字列です。計算の前に、必要な型へ変換してください。
+
+:::
+
+<QuizChoice
+title="input の戻り値"
+options={[
+{ id: 'a', label: '整数 3' },
+{ id: 'b', label: '文字列 "3"' },
+{ id: 'c', label: 'None' },
+]}
+answer="b"
+explanation="input は利用者が数字を入力しても、プログラムが受け取るのは文字列です。"
+
+>
+
+ <div>利用者が <code>3</code> と入力したとき、<code>input("数量: ")</code> が返す値はどれですか。</div>
+</QuizChoice>
+
+## 文字列は一文字ずつ並んでいる
+
+文字列は、先頭から順に一文字ずつ並んでいます。  
+添字 `0` が先頭の文字を指します。
+
+```python
+status = "PAID"
+
+print(status[0])   # P
+print(status[-1])  # D
+```
+
+`-1` は **末尾から数える添字** です。最後の文字を取り出すときに使います。
+
+スライスで連続した一部分を取り出せます。
+
+```python
+order_id = "ORD-1001"
+
+print(order_id[:3])   # ORD
+print(order_id[4:])   # 1001
+```
+
+文字列は作成後に中身を書き換えられません。  
+加工するメソッドは新しい文字列を返すため、必要なら変数へ代入して使います。
+
+<QuizChoice
+title="文字列の添字"
+options={[
+{ id: 'a', label: 'O' },
+{ id: 'b', label: 'R' },
+{ id: 'c', label: 'D' },
+]}
+answer="a"
+explanation="添字 0 は先頭の文字 O です。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`code = "ORD-1001"
+print(code[0])`}</code></pre>
+</QuizChoice>
+
+## 連結と繰り返し
+
+短い文字列をつなぐときは `+` を使います。
+
+```python
+prefix = "ORD-"
+number = "1001"
+order_id = prefix + number
+
+print(order_id)
+```
+
+```text
+ORD-1001
+```
+
+同じ文字列を繰り返すときは `*` を使います。
+
+```python
+separator = "-" * 20
+print(separator)
+```
+
+```text
+--------------------
+```
+
+メッセージに変数を埋め込む場面では、前のページで学んだ **f-string** の方が読みやすいことが多いです。  
+`+` は、固定の接頭辞や区切り文字を足すときに向いています。
+
+## 空白除去と置換
+
+前後の空白を取り除くには `.strip()` を使います。
+
+```python
+raw = "  ORD-1001  "
+clean = raw.strip()
+
+print(f"[{clean}]")
+```
+
+```text
+[ORD-1001]
+```
+
+大文字・小文字をそろえるには `.lower()` や `.upper()` を使います。
+
+```python
+status = "Paid"
+print(status.lower())  # paid
+```
+
+部分文字列を別の文字列へ置き換えるには `.replace()` を使います。  
+戻り値は **新しい文字列** で、元の文字列は変わりません。
+
+```python
+message = "status: open"
+updated = message.replace("open", "PAID")
+
+print(updated)
+print(message)
+```
+
+```text
+status: PAID
+status: open
+```
+
+<QuizChoice
+title="strip の効果"
+options={[
+{ id: 'a', label: 'ORD-1001' },
+{ id: 'b', label: ' ORD-1001 ' },
+{ id: 'c', label: 'ORD-1001 ' },
+]}
+answer="a"
+explanation="strip は前後の空白を取り除き、中身だけを返します。"
+
+>
+
+ <div><code>raw.strip()</code> の結果はどれですか。<pre className="language-python"><code>{`raw = "  ORD-1001  "`}</code></pre></div>
+</QuizChoice>
+
+<QuizChoice
+title="replace の結果"
+options={[
+{ id: 'a', label: 'message だけ PAID になる' },
+{ id: 'b', label: 'updated が PAID、message は open のまま' },
+{ id: 'c', label: '両方とも PAID になる' },
+]}
+answer="b"
+explanation="replace は新しい文字列を返します。message 自体は書き換わりません。"
+
+>
+
+ <div>次のコード実行後、<code>message</code> に入る値はどれですか。</div>
+ <pre className="language-python"><code>{`message = "status: open"
+updated = message.replace("open", "PAID")`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `input` の結果をそのまま数値計算に使い、型エラーになる
+- コード内の定数と、利用者が入力した値を取り違える
+- `replace` が元の文字列を書き換えると思い込む
+- 文字列の一文字を添字で読み替えようとしてエラーになる
+- 前後の空白付き入力をそのまま比較し、一致しない
+
+## まとめ / 次に学ぶとよいこと
+
+- `input` は文字列を返す。計算前に `int()` などで型を合わせる
+- 文字列は添字・スライスで一部分を読める。末尾は `[-1]` でも読める
+- `.strip()`、`.lower()`、`.replace()` で基本的な加工ができる
+- f-string と `+` は用途に応じて使い分ける
+
+次は [条件分岐](./branching) で、文字列や数値の比較結果に応じて処理を選びます。

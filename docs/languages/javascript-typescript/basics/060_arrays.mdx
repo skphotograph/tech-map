@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 11
 ---
 
 # 配列
@@ -8,13 +8,16 @@ sidebar_position: 8
 10 件、100 件と増えたときに `order1`、`order2` と変数を増やしていては、数えることも順番に処理することも大変です。  
 JavaScript の **配列** を使うと、複数の値を順番付きの一覧として扱えます。
 
-このページでは、配列の作成と更新から、現場でよく読む `map` / `filter` / `find` までを扱います。
+[オブジェクト](./objects) の `Object.keys` も配列を返していました。  
+ここでは、配列そのものの読み書きと、コールバックを渡すメソッドを学びます。
 
 ## このページで分かること
 
 - 配列を作り、添字と `length` で要素を読む
-- `push` / `pop` で末尾を更新する
-- `for...of` で要素を順番に読む
+- 元の配列を変える操作と、新しい配列を返す操作の違い
+- `for...of` と `includes` / `slice` / `join` / `split` との連携
+- `forEach` で各要素にコールバックを渡す
+- `some` / `every` / `reduce` の使いどころ
 - `map` / `filter` / `find` を目的で選ぶ
 
 ## 配列は「順番付きの一覧」
@@ -35,7 +38,6 @@ console.log(statuses[1]); // PAID
 console.log(statuses[2]); // SHIPPED
 ```
 
-先頭が `0`、2 番目が `1` です。  
 存在しない位置を読むと、エラーではなく `undefined` になります。
 
 ```js
@@ -46,12 +48,6 @@ console.log(statuses[3]); // undefined
 
 ```js
 console.log(statuses.length); // 3
-```
-
-最後の要素の添字は、要素数より 1 小さい `length - 1` です。
-
-```js
-console.log(statuses[statuses.length - 1]); // SHIPPED
 ```
 
 :::tip[添字と要素数]
@@ -77,37 +73,101 @@ explanation="配列の添字は 0 から始まるため、statuses[1] は 2 番�
 console.log(statuses[1]);`}</code></pre>
 </QuizChoice>
 
-## `push` と `pop` で末尾を更新する
+## 元の配列を変える操作
 
-一覧の末尾へ要素を追加するには `push`、末尾から取り出して削除するには `pop` を使います。
+`push` と `pop` は、**元の配列そのもの** を更新します。
 
 ```js
 const orderIds = ['ORD-1001', 'ORD-1002'];
 
-const newLength = orderIds.push('ORD-1003');
+orderIds.push('ORD-1003');
 
-console.log(orderIds); // [ 'ORD-1001', 'ORD-1002', 'ORD-1003' ]
-console.log(newLength); // 3
+console.log(orderIds);
+// [ 'ORD-1001', 'ORD-1002', 'ORD-1003' ]
 ```
 
-`push` は元の配列を更新し、更新後の要素数を返します。
+末尾以外を変える代表例です。
+
+| メソッド  | 動き                       |
+| --------- | -------------------------- |
+| `unshift` | 先頭に追加                 |
+| `shift`   | 先頭を取り除いて返す       |
+| `splice`  | 途中の要素を削除・差し替え |
 
 ```js
-const lastId = orderIds.pop();
-
-console.log(lastId); // ORD-1003
-console.log(orderIds); // [ 'ORD-1001', 'ORD-1002' ]
+const queue = ['B', 'C'];
+queue.unshift('A');
+console.log(queue); // [ 'A', 'B', 'C' ]
 ```
 
-`pop` は元の配列から最後の要素を削除し、その要素を返します。  
-空の配列で `pop` すると、返り値は `undefined` です。
+`const` で宣言した配列でも、`push` などで **中身** は変えられます。  
+[オブジェクト](./objects) と同様、`const` が防ぐのは変数そのものへの再代入です。
 
-`const` で宣言した配列でも、`push` や `pop` で中身を変更できます。  
-[オブジェクト](./objects) と同様に、`const` が防ぐのは変数そのものへの再代入です。
+:::warning[破壊的変更]
+
+`push` / `pop` / `splice` は元の配列を書き換えます。  
+共有している別の変数から見ても中身が変わるため、意図をコメントや変数名で残すと安全です。
+
+:::
+
+## 新しい配列を返す操作
+
+`slice` は、指定範囲を **コピーした新しい配列** を返します。元の配列は変わりません。
+
+```js
+const statuses = ['OPEN', 'PAID', 'SHIPPED'];
+const firstTwo = statuses.slice(0, 2);
+
+console.log(firstTwo); // [ 'OPEN', 'PAID' ]
+console.log(statuses.length); // 3
+```
+
+[文字列とテキスト](./strings-and-text) の `slice` と同様、終了位置は **含みません**。
+
+要素が含まれるか調べる `includes`、配列を文字列へつなぐ `join` も非破壊です。
+
+```js
+console.log(statuses.includes('PAID')); // true
+console.log(statuses.join(' → ')); // OPEN → PAID → SHIPPED
+```
+
+カンマ区切りの一行テキストを配列へ分けるときは、文字列の `split` を使います。
+
+```js
+const line = 'OPEN,PAID,SHIPPED';
+const statusesFromText = line.split(',');
+
+console.log(statusesFromText);
+// [ 'OPEN', 'PAID', 'SHIPPED' ]
+```
+
+`split` で作った配列は、上で学んだ `includes` や `join` と組み合わせられます。
+
+```js
+console.log(statusesFromText.join(' / ')); // OPEN / PAID / SHIPPED
+```
+
+<QuizChoice
+title="slice と元の配列"
+options={[
+{ id: 'a', label: '元の配列も 2 要素になる' },
+{ id: 'b', label: 'firstTwo だけ 2 要素で、元は 3 要素のまま' },
+{ id: 'c', label: 'slice は in-place で書き換える' },
+]}
+answer="b"
+explanation="slice は新しい配列を返し、元の statuses は変更されません。"
+
+>
+
+  <div>次の説明として正しいものはどれですか。</div>
+  <pre className="language-js"><code>{`const statuses = ["OPEN", "PAID", "SHIPPED"];
+const firstTwo = statuses.slice(0, 2);`}</code></pre>
+</QuizChoice>
 
 ## `for...of` で順番に読む
 
-すべての要素を先頭から処理したいときは、`for...of` が読みやすい書き方です。
+すべての要素を先頭から処理したいときは、`for...of` が読みやすい書き方です。  
+[繰り返し](./loops) の `for` がカウンタ中心なのに対し、ここでは **各要素そのもの** を取り出します。
 
 ```js
 const orderIds = ['ORD-1001', 'ORD-1002', 'ORD-1003'];
@@ -117,39 +177,128 @@ for (const orderId of orderIds) {
 }
 ```
 
-実行結果です。
-
 ```text
 ORD-1001
 ORD-1002
 ORD-1003
 ```
 
-`orderId` には、繰り返すたびに配列の要素がひとつずつ入ります。  
-添字そのものが必要でなければ、`for...of` を使うと「一覧の各要素を読む」という意図が伝わります。
+`for (const orderId of orderIds)` の `orderId` は、`for` ループの `{ ... }` の中だけ有効です。  
+[スコープと変数の有効範囲](./scope-and-variables) で学んだブロックスコープと同じ考え方です。
+
+添字が必要なときは、古典的な `for` も使えます。
+
+```js
+for (let i = 0; i < orderIds.length; i++) {
+  console.log(`${i}: ${orderIds[i]}`);
+}
+```
+
+## `forEach` で各要素に処理を渡す
+
+[関数](./functions) で学んだ **コールバック** を、配列の各要素へ渡す代表例が `forEach` です。
+
+```js
+const orderIds = ['ORD-1001', 'ORD-1002'];
+
+orderIds.forEach((orderId) => {
+  console.log(orderId);
+});
+```
+
+```text
+ORD-1001
+ORD-1002
+```
+
+`forEach` に渡した関数は、要素が存在するたびに呼ばれます。  
+**戻り値は使いません**（`forEach` 自体の結果は `undefined` です）。
+
+[オブジェクト](./objects) の `Object.keys` の結果を回すときも、同じ考え方で `forEach` を使えます。
+
+```js
+const order = { id: 'ORD-1001', status: 'OPEN' };
+
+Object.keys(order).forEach((key) => {
+  console.log(`${key}: ${order[key]}`);
+});
+```
+
+:::tip[forEach の位置づけ]
+
+表示や記録のように「各要素に副作用を起こす」処理向きです。新しい配列が欲しいときは `map` を使います。
+
+:::
 
 <QuizChoice
-title="push と length"
+title="forEach の戻り値"
 options={[
-{ id: 'a', label: '2' },
-{ id: 'b', label: '3' },
-{ id: 'c', label: 'ORD-1003' },
+{ id: 'a', label: '["ORD-1001", "ORD-1002"]' },
+{ id: 'b', label: 'undefined' },
+{ id: 'c', label: '2' },
 ]}
 answer="b"
-explanation="push で要素がひとつ追加され、配列の要素数は 3 になります。"
+explanation="forEach は各要素に処理を行いますが、戻り値は undefined です。"
+
+>
+
+  <div>次の <code>result</code> に入る値はどれですか。</div>
+  <pre className="language-js"><code>{`const ids = ["ORD-1001", "ORD-1002"];
+const result = ids.forEach((id) => id);`}</code></pre>
+</QuizChoice>
+
+## `some` と `every` で条件を調べる
+
+「条件に合う要素が **ひとつでも** あるか」は `some`、「**すべて** 合うか」は `every` です。
+
+```js
+const amounts = [800, 1200, 1500];
+
+console.log(amounts.some((amount) => amount >= 1000)); // true
+console.log(amounts.every((amount) => amount >= 1000)); // false
+```
+
+どちらも **true / false** を返し、新しい配列は作りません。
+
+## `reduce` で一覧をひとつの値に畳む
+
+合計や件数のように、配列全体から **ひとつの結果** を作るときは `reduce` を使います。
+
+```js
+const amounts = [800, 1200, 1500];
+
+const total = amounts.reduce((sum, amount) => sum + amount, 0);
+
+console.log(total); // 3500
+```
+
+第 2 引数の `0` は **初期値** です。  
+`reduce` に渡す関数は `(これまでの結果, いまの要素)` を受け取り、次の要素へ渡す値を返します。
+
+<QuizChoice
+title="reduce の合計"
+options={[
+{ id: 'a', label: '6' },
+{ id: 'b', label: '10' },
+{ id: 'c', label: '[1, 2, 3]' },
+]}
+answer="a"
+explanation="0 + 1 + 2 + 3 = 6 です。reduce は配列をひとつの値に畳みます。"
 
 >
 
   <div>次のコードの出力はどれですか。</div>
-  <pre className="language-js"><code>{`const orderIds = ["ORD-1001", "ORD-1002"];
-orderIds.push("ORD-1003");
-console.log(orderIds.length);`}</code></pre>
+  <pre className="language-js"><code>{`const nums = [1, 2, 3];
+const total = nums.reduce((sum, n) => sum + n, 0);
+console.log(total);`}</code></pre>
 </QuizChoice>
 
-## `map` は各要素を変換する
+## `map` / `filter` / `find` — 新しい配列や要素を返す
 
-配列の各要素を別の値へ変え、同じ要素数の新しい配列を作るときは `map` を使います。  
-たとえば、注文オブジェクトの一覧から注文番号だけを取り出せます。
+[関数](./functions) で学んだ **コールバック** を渡す代表例です。  
+いずれも **元の配列は変更しません**（非破壊）。
+
+### `map` — 各要素を変換
 
 ```js
 const orders = [
@@ -164,64 +313,33 @@ console.log(orderIds);
 // [ 'ORD-1001', 'ORD-1002', 'ORD-1003' ]
 ```
 
-`map` に渡す関数は、各要素を受け取り、変換後の値を返します。  
-ここでは `order` を受け取り、`order.id` を返しています。
-
-`map` は元の配列を変更せず、新しい配列を返します。
-
-```js
-console.log(orders[0]);
-// { id: 'ORD-1001', status: 'OPEN' }
-```
-
-## `filter` は条件に合う要素へ絞る
-
-条件に合う要素だけを集めた新しい配列が欲しいときは `filter` を使います。
+### `filter` — 条件に合う要素だけ
 
 ```js
 const openOrders = orders.filter((order) => order.status === 'OPEN');
 
-console.log(openOrders);
-// [
-//   { id: 'ORD-1001', status: 'OPEN' },
-//   { id: 'ORD-1003', status: 'OPEN' }
-// ]
+console.log(openOrders.length); // 2
 ```
 
-渡した関数が `true` を返す要素だけが、新しい配列に残ります。  
-該当する要素がなければ、空の配列 `[]` が返ります。
-
-## `find` は最初に一致した要素を探す
-
-条件に合う要素をひとつ探したいときは `find` を使います。  
-先頭から調べ、最初に一致した要素を返します。
+### `find` — 最初の一致をひとつ
 
 ```js
 const paidOrder = orders.find((order) => order.status === 'PAID');
 
-console.log(paidOrder);
-// { id: 'ORD-1002', status: 'PAID' }
+console.log(paidOrder.id); // ORD-1002
 ```
 
-一致する要素がなければ、`undefined` が返ります。
+| 欲しい結果                 | メソッド  | 元の配列   | 戻り値                         |
+| -------------------------- | --------- | ---------- | ------------------------------ |
+| 全要素を別の形にする       | `map`     | そのまま   | 同じ要素数の新しい配列         |
+| 条件に合う要素だけ残す     | `filter`  | そのまま   | 0 件以上の新しい配列           |
+| 条件に合う要素をひとつ探す | `find`    | そのまま   | 最初の要素、または `undefined` |
+| 合計・集計                 | `reduce`  | そのまま   | 畳み込んだ単一の値             |
+| 末尾の追加・削除           | `push` 等 | **変わる** | 長さや取り出した要素など       |
 
-```js
-const canceledOrder = orders.find((order) => order.status === 'CANCELED');
+:::tip[破壊的かどうかを先に見る]
 
-console.log(canceledOrder); // undefined
-```
-
-3 つの目的を並べると、選びやすくなります。
-
-| 欲しい結果                 | メソッド | 結果                           |
-| -------------------------- | -------- | ------------------------------ |
-| 全要素を別の形にする       | `map`    | 同じ要素数の新しい配列         |
-| 条件に合う要素だけ残す     | `filter` | 0 件以上の新しい配列           |
-| 条件に合う要素をひとつ探す | `find`   | 最初の要素、または `undefined` |
-
-:::tip[名前より目的で選ぶ]
-
-変換は `map`、絞り込みは `filter`、先頭の一致をひとつ探すなら `find` です。
+`push` / `splice` は元を変える。`map` / `filter` / `slice` は新しい結果を返す。
 
 :::
 
@@ -241,37 +359,40 @@ explanation="条件に合うすべての要素を新しい配列として得た�
 </QuizChoice>
 
 <QuizChoice
-title="map の結果"
+title="some の結果"
 options={[
-{ id: 'a', label: "[2, 4, 6]" },
-{ id: 'b', label: "[1, 2, 3]" },
-{ id: 'c', label: "6" },
+{ id: 'a', label: 'true' },
+{ id: 'b', label: 'false' },
+{ id: 'c', label: '["PAID"]' },
 ]}
 answer="a"
-explanation="map は各要素に関数を適用した新しい配列を返します。元の numbers は変更されません。"
+explanation="1200 >= 1000 を満たす要素が 1 件あるため、some は true を返します。"
 
 >
 
-  <div>次のコードで <code>doubled</code> の値はどれですか。</div>
-  <pre className="language-js"><code>{`const numbers = [1, 2, 3];
-const doubled = numbers.map((number) => number * 2);`}</code></pre>
+  <div>次の式の結果はどれですか。</div>
+  <pre className="language-js"><code>{`const amounts = [800, 1200];
+const result = amounts.some((a) => a >= 1000);`}</code></pre>
 </QuizChoice>
 
 ## よくあるつまずき
 
 - 先頭の添字を `1` だと思い、ひとつ後ろの要素を読む
-- 最後の要素を `array[array.length]` で読もうとする
-- `push` の返り値を追加した要素だと思う
+- `push` と `slice` を混同し、どちらが元を変えるか見落とす
 - `find` の結果が見つからない場合の `undefined` を考慮しない
 - `map` の戻り値を受け取らず、元の配列が変わると思い込む
+- `reduce` の初期値を省略し、意図しない型から始める
+- `forEach` の戻り値を配列だと思い込む
 - ひとつ探せばよい場面で `filter` を使い、配列と単一要素を混同する
 
 ## まとめ / 次に学ぶとよいこと
 
 - 配列は順番付きの一覧で、添字は `0` から始まる
-- `length` は要素数、`push` / `pop` は末尾を更新する
-- 全要素を読むだけなら `for...of` が意図を表しやすい
-- `map` は変換、`filter` は絞り込み、`find` は先頭一致に使う
-- `map` と `filter` は、元の配列とは別の新しい配列を返す
+- `push` / `pop` / `splice` は元の配列を変える
+- `slice` / `map` / `filter` / `find` / `reduce` は新しい結果を返す
+- `for...of` で各要素を、`forEach` でコールバックを要素ごとに呼び出す
+- `includes` / `join` / `split` で一覧と文字列を行き来する
+- `some` / `every` で条件の存在・全称を調べる
+- `reduce` で合計のように一覧をひとつの値へ畳める
 
-次は [モジュール](./modules) で、関数や値をファイルに分けて再利用します。
+次は [JSON とデータのやりとり](./json-and-data-shapes) で、オブジェクトと配列をテキスト形式で保存・送受信する方法を学びます。

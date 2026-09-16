@@ -1,5 +1,5 @@
 ---
-sidebar_position: 17
+sidebar_position: 16
 ---
 
 # Map と Set
@@ -35,7 +35,7 @@ console.log(tags); // ['api', 'web', 'api']
 const tags = new Set(['api', 'web', 'api']);
 
 console.log(tags.size); // 2
-console.log([...tags]); // ['api', 'web']
+console.log(Array.from(tags)); // ['api', 'web']
 ```
 
 実行結果です。
@@ -46,7 +46,7 @@ console.log([...tags]); // ['api', 'web']
 ```
 
 `size` は、Set に入っている値の個数です。  
-Set は追加された順序を保って反復できるため、スプレッド構文 `[...tags]` で配列へ変換すると、この例では `'api'`、`'web'` の順になります。
+Set は追加された順序を保って反復できるため、`Array.from(tags)` で配列へ変換すると、この例では `'api'`、`'web'` の順になります。
 
 ## Set の基本操作
 
@@ -120,7 +120,7 @@ console.log(skills.size);`}</code></pre>
 
 ```js
 const categories = ['mug', 'cable', 'mug', 'notebook'];
-const uniqueCategories = [...new Set(categories)];
+const uniqueCategories = Array.from(new Set(categories));
 
 console.log(uniqueCategories);
 ```

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 8
 ---
 
 # 関数
@@ -7,8 +7,7 @@ sidebar_position: 6
 同じ計算を何か所にもコピーすると、変更時に一つだけ直し忘れることがあります。  
 まとまった処理に名前を付け、必要な場所から呼び出せるようにしたものが **関数** です。
 
-前のページのループは、その場に書いた処理を繰り返す仕組みでした。  
-同じ処理を別のループや条件分岐からも使いたいときは、関数にして呼び出すと重複を減らせます。
+[繰り返し](./loops) でその場に書いた処理を繰り返す代わりに、関数にして呼び出すと重複を減らせます。
 
 ## このページで分かること
 
@@ -16,6 +15,7 @@ sidebar_position: 6
 - 引数と戻り値の役割
 - 戻り値が無い関数と早期 `return`
 - アロー関数という現代的な書き方
+- 関数を値として渡す方法（コールバック）
 
 ## 関数は「名前の付いた手順」
 
@@ -267,6 +267,121 @@ console.log(formatOrderLine('mug', 2)); // mug x2
 
 引数の個数や意味が大きく違う処理は、無理に同じ名前へ押し込めず、別の関数名に分ける方が追いやすいこともあります。
 
+## 関数を値として渡す（コールバック）
+
+JavaScript では、関数も **値** です。  
+変数に入れたり、別の関数の引数として渡したりできます。
+
+```js
+function add(a, b) {
+  return a + b;
+}
+
+const calculate = add;
+console.log(calculate(2, 3)); // 5
+```
+
+`calculate` と `add` は、同じ関数を指しています。
+
+引数として渡した関数は、呼び出し側の都合で **あとから実行** されます。  
+この「渡された関数」のことを **コールバック関数** と呼びます。
+
+```js
+function applyDiscount(price, discountFn) {
+  return discountFn(price);
+}
+
+function tenPercentOff(price) {
+  return price * 0.9;
+}
+
+console.log(applyDiscount(1000, tenPercentOff)); // 900
+```
+
+`applyDiscount` は、渡された `discountFn` を中で呼び出しています。  
+処理の共通部分（ここでは「割引を適用する」）と、変わる部分（割引率の計算）を分けられます。
+
+アロー関数をその場で渡す書き方もよく使われます。
+
+```js
+console.log(applyDiscount(1000, (price) => price * 0.9)); // 900
+```
+
+### コールバックを呼び出す側を書く
+
+コールバックは、**受け取った関数を必要なタイミングで呼ぶ側** から見ると理解しやすくなります。
+
+```js
+function repeat(count, action) {
+  for (let i = 0; i < count; i++) {
+    action(i);
+  }
+}
+
+repeat(3, (index) => {
+  console.log(`step ${index}`);
+});
+```
+
+```text
+step 0
+step 1
+step 2
+```
+
+`repeat` は `count` 回ループし、そのたびに渡された `action` を呼び出します。  
+`action(i)` の `i` が、コールバック側の仮引数 `index` に渡されます。
+
+このように、関数を引数へ渡すと、呼び出すタイミングと具体的な処理を分けられます。
+
+:::tip[コールバックの読み方]
+
+「この処理を、あとで実行してね」と関数を渡している、と捉えると追いやすくなります。
+
+:::
+
+<QuizChoice
+title="関数を引数に渡す"
+options={[
+{ id: 'a', label: '800' },
+{ id: 'b', label: '1000' },
+{ id: 'c', label: 'undefined' },
+]}
+answer="a"
+explanation="apply(1000, fn) の中で fn(1000) が呼ばれ、1000 - 200 は 800 です。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`function apply(value, fn) {
+  return fn(value);
+}
+
+console.log(apply(1000, (price) => price - 200));`}</code></pre>
+</QuizChoice>
+
+<QuizChoice
+title="repeat の出力"
+options={[
+{ id: 'a', label: '0\n1\n2' },
+{ id: 'b', label: '1\n2\n3' },
+{ id: 'c', label: '3' },
+]}
+answer="a"
+explanation="repeat(3, action) は i = 0, 1, 2 の順に action(i) を呼び出します。"
+
+>
+
+  <div>次のコードの出力はどれですか。</div>
+  <pre className="language-js"><code>{`function repeat(count, action) {
+  for (let i = 0; i < count; i++) {
+    action(i);
+  }
+}
+
+repeat(3, (i) => console.log(i));`}</code></pre>
+</QuizChoice>
+
 ## よくあるつまずき
 
 - 関数を定義しただけで、呼び出していない
@@ -274,6 +389,7 @@ console.log(formatOrderLine('mug', 2)); // mug x2
 - 戻り値が無い関数の結果を計算に使い、`undefined` になる
 - 波括弧付きのアロー関数で `return` を書き忘れる
 - 同じ名前の関数を引数違いで定義し、オーバーロードになると思う
+- コールバックを渡しただけで、相手側が呼び出すのを忘れる
 
 ## まとめ / 次に学ぶとよいこと
 
@@ -283,5 +399,7 @@ console.log(formatOrderLine('mug', 2)); // mug x2
 - 早期 `return` は処理できない条件を入口で終わらせる
 - 短い処理では `const add = (a, b) => a + b` のようなアロー関数も使われる
 - JavaScript は引数の違いによる関数のオーバーロードをしない
+- 関数は値として変数へ入れ、別の関数の引数に渡せる
+- コールバックは、受け取った側が必要なタイミングで呼び出す
 
-次は [オブジェクト](./objects) で、関連するデータと処理をひとまとまりにします。
+次は [スコープと変数の有効範囲](./scope-and-variables) で、変数がどこから見えるかを整理します。

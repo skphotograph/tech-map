@@ -15,6 +15,7 @@ sidebar_position: 3
 - `int`、`float`、`str`、`bool`、`None` の役割
 - f-string で文字列へ値を埋め込む方法
 - 算術演算、比較、値の更新の書き方
+- `int()` / `str()` / `float()` による型変換
 
 ## 名前を値へ結び付ける
 
@@ -159,6 +160,55 @@ explanation="文字列の直前に f を置くと、波括弧内の式を埋め�
 label = __"order-{order_id}"`}</code></pre></div>
 </QuizFill>
 
+## 型を変換する
+
+文字列と数値は別の型です。  
+計算や表示の前に、**型変換** で形を合わせます。
+
+| 関数         | 主な用途     | 例                     |
+| ------------ | ------------ | ---------------------- |
+| `int(...)`   | 整数へ変換   | `int("10")` → `10`     |
+| `float(...)` | 小数へ変換   | `float("3.5")` → `3.5` |
+| `str(...)`   | 文字列へ変換 | `str(1001)` → `"1001"` |
+| `bool(...)`  | 真偽値へ変換 | `bool(0)` → `False`    |
+
+```python
+quantity_text = "2"
+quantity = int(quantity_text)
+
+subtotal = 350 * quantity
+label = "数量: " + str(quantity)
+
+print(subtotal)
+print(label)
+```
+
+```text
+700
+数量: 2
+```
+
+[文字列と入力](./strings-and-text) では、`input` が文字列を返す前提で、この変換を組み合わせます。  
+変換できない値を渡すとエラーになるため、ここでは数字だけの文字列を使います。
+
+<QuizChoice
+title="文字列から整数へ"
+options={[
+{ id: 'a', label: '700' },
+{ id: 'b', label: '"700"' },
+{ id: 'c', label: 'エラーになる' },
+]}
+answer="a"
+explanation="int に文字列 2 を渡すと整数 2 になり、350 * 2 は 700 です。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`price = 350
+count = int("2")
+print(price * count)`}</code></pre>
+</QuizChoice>
+
 ## 数値を計算する
 
 Python の基本的な算術演算子を確認します。
@@ -301,7 +351,8 @@ result = amount >= 1000`}</code></pre></div>
 - `=` は値を名前へ結び付ける代入で、名前は別の値へ再代入できる
 - 主な値の型には `int`、`float`、`str`、`bool` があり、値なしは `None` で表す
 - f-string は `f"order-{order_id}"` のように値を文字列へ埋め込む
+- `int()` / `str()` / `float()` / `bool()` で型を変換する
 - `/` は通常の割り算、`//` は下方向へ丸める割り算、`%` は余りを求める
 - `+=` で現在の値へ加算し、`==` や `!=` などで値を比較する
 
-次は [条件分岐](./branching) で、比較した結果に応じて処理を選びます。
+次は [文字列と入力](./strings-and-text) で、入力の受け取りと基本的な文字列操作を学びます。
