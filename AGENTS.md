@@ -159,7 +159,7 @@
 - ブログは無効（`blog: false`）。復活させない。
 - ブランド名・ロゴは既存の Tech Map アセット（`static/img/tech-map.png` 由来）を使う。
 - ナビ・フッター・色・フォントを変えるときは、既存デザインとの一貫性を保つ。
-- `baseUrl` は `/tech-map/`。リンクや静的アセットは Docusaurus の仕組み（`Link`、`useBaseUrl` など）に従う。
+- `baseUrl` は `/`（Cloudflare Pages などルート配信向け）。リンクや静的アセットは Docusaurus の仕組み（`Link`、`useBaseUrl` など）に従う。
 - 不要な依存関係や設定の追加は最小限にする。
 
 ## 作業時の確認
