@@ -56,10 +56,10 @@ try {
 
 大きく二つに分かれます。
 
-| 種類          | 代表例                                                                                 | コンパイル時の扱い                    |
-| ------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
-| **checked**   | `IOException`、自作で `Exception` を継承したものなど                                   | キャッチするか、`throws` で宣言が必要 |
-| **unchecked** | `RuntimeException` とその子（`NullPointerException`、`IllegalArgumentException` など） | 宣言なしでもコンパイル可              |
+| 種類                         | 代表例                                                                                 | コンパイル時の扱い                    |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
+| **checked** （検査例外）     | `IOException`、自作で `Exception` を継承したものなど                                   | キャッチするか、`throws` で宣言が必要 |
+| **unchecked** （非検査例外） | `RuntimeException` とその子（`NullPointerException`、`IllegalArgumentException` など） | 宣言なしでもコンパイル可              |
 
 ```java
 void readConfig() throws IOException {
