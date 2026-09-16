@@ -1,0 +1,8 @@
+{
+  "label": "メッセージング",
+  "position": 3,
+  "link": {
+    "type": "doc",
+    "id": "data/messaging/index"
+  }
+}

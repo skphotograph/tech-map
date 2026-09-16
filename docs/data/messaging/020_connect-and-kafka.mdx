@@ -1,0 +1,182 @@
+---
+sidebar_position: 4
+---
+
+# 接続と Kafka
+
+考え方だけでは、プロンプトの形も「何も出ない」の意味も腹落ちしにくいです。  
+このページでは Kafka へつなぎ、コンソールで最初の送受信をします。
+
+## このページで分かること
+
+- 接続に必要な要素（ホスト、ポート、トピック名）
+- トピックの作成と一覧
+- コンソールプロデューサ / コンシューマでの一行送受信
+
+## 接続の部品
+
+アプリもコンソールツールも、だいたい次を揃えて接続します。
+
+| 要素             | よくある値の例   | 意味                       |
+| ---------------- | ---------------- | -------------------------- |
+| ブートストラップ | `localhost:9092` | 最初に話しかけるブローカー |
+| ポート           | `9092`           | Kafka の待ち受けポート     |
+| トピック         | `shop.hello`     | メッセージの名前付きの流れ |
+
+ブートストラップは「この住所に聞けば、あとの案内が得られる」入口です。  
+手元の 1 台構成では、ブローカーそのもののホストとポート、と考えて差し支えありません。
+
+:::warning[本番の接続情報]
+
+本番のホストを検証用ターミナルへ安易に貼らないでください。  
+検証用でも、共有クラスタなら他人のトピックを消す・読む事故が起きます。
+
+:::
+
+## 手元に Kafka を用意する
+
+すでに検証用の Kafka がある場合は、その接続情報を使ってください。  
+手元に何もない場合の一例として、Docker で起動する例を示します。
+
+```bash
+docker run --name kafka-learn -p 9092:9092 -d apache/kafka:4.3.1
+```
+
+成功時はコンテナ ID のような長い文字列が表示されます。  
+`docker ps` で `kafka-learn` が `Up` になっていれば起動できています。
+
+<details>
+<summary>Docker が使えないとき</summary>
+
+公式のバイナリ配布や、クラウドのマネージド Kafka（検証用）でも構いません。  
+この章で重要なのはインストール手順そのものより、「トピックを作り、送って、受け取れること」です。
+
+</details>
+
+起動直後は、コマンドを受け付けるまで数秒かかることがあります。  
+つながらないときは、少し待ってからやり直してください。
+
+## トピックを作る
+
+コンソールツールはコンテナ内に入っています。  
+作成:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic shop.hello
+```
+
+成功時:
+
+```text
+Created topic shop.hello.
+```
+
+一覧:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --list
+```
+
+例:
+
+```text
+shop.hello
+```
+
+トピック名が見えていれば、書く先と読む先が用意できています。
+
+## 一行送る
+
+プロデューサは、標準入力の **1 行が 1 メッセージ** です。  
+起動:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-console-producer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic shop.hello
+```
+
+成功すると、だいたい次のプロンプトになります。
+
+```text
+>
+```
+
+ここに次を打って Enter します。
+
+```text
+hello
+```
+
+成功時は、エラーが出なければ書けています。`OK` のような行は出ません。  
+続けて `paid:1001` のように別の行を打つと、それが次のメッセージです。  
+終了は `Ctrl+C` です。
+
+## 一行受け取る
+
+コンシューマは別の端末（または別の `docker exec`）で起動します。
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic shop.hello \
+  --from-beginning
+```
+
+例:
+
+```text
+hello
+paid:1001
+```
+
+打った行が、そのまま出ていれば受信できています。  
+コンシューマは待ち続けるので、終了は `Ctrl+C` です。
+
+`--from-beginning` は、トピックの先頭から出します。  
+これを付けないと、**起動したあと** に来た行だけが見え、先に送った `hello` は出ません。壊れているわけではありません。
+
+:::tip[先にコンシューマを付ける]
+
+学習では、コンシューマを `--from-beginning` 付きで起動してからプロデューサで送ると、流れが見えやすいです。  
+「送ったのに何も出ない」ときは、フラグと起動の順番を疑います。
+
+:::
+
+<QuizChoice
+title="何も出ないとき"
+options={[
+{ id: 'a', label: 'コンシューマがトピック名を間違えると、Kafka がプロセスを終了する' },
+{ id: 'b', label: '--from-beginning が無いと、起動前に送った行は見えないことがある' },
+{ id: 'c', label: 'コンソールプロデューサは、成功すると必ず OK と表示する' },
+]}
+answer="b"
+explanation="コンソールコンシューマは、既定では起動後の新規分です。学習では --from-beginning を付けます。"
+
+>
+
+  <div>
+    <pre className="language-text"><code>{`kafka-console-consumer.sh --bootstrap-server localhost:9092
+  --topic shop.hello`}</code></pre>
+    先に hello を送ったあと、この起動で何も出ないときの説明として、正しいものはどれですか。
+  </div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- プロデューサとコンシューマでトピック名の綴りが違う
+- コンテナ起動直後にコマンドを打ち、接続エラーになる（数秒待つ）
+- 共有クラスタで `--list` や削除を試し、ほかのアプリのトピックまで触る
+
+## まとめ
+
+- 接続の入口はブートストラップ（手元では `localhost:9092` が多い）
+- トピックを作り、コンソールで 1 行送り 1 行受け取れると、以降のページが追いやすい
+- `--from-beginning` が無いと、起動前の行は見えないことがある
+
+次は [グループとオフセット](./groups-and-offsets) で、読み手の集まり方と「どこまで読んだか」を扱います。

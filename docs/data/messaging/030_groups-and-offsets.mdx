@@ -1,0 +1,158 @@
+---
+sidebar_position: 5
+---
+
+# グループとオフセット
+
+コンソールで送受信できると、次に効くのは「読み手が 2 系統いるとき、同じ行が両方に渡るか、奪い合うか」です。  
+Kafka ではこれを **コンシューマグループ** と **オフセット** で表します。
+
+## このページで分かること
+
+- コンシューマグループが、キューと Pub/Sub の聞き方をどう表すか
+- オフセット（どこまで処理したか）
+- パーティションが、グループ内の並列と順番に効く理由
+
+[接続と Kafka](./connect-and-kafka) のブローカーがある前提です。  
+このページでは支払い完了用のトピックを新しく作ります。
+
+## グループが違うと、同じ行をそれぞれ読む
+
+コンソールコンシューマに `--group` を付けると、その名前のグループとして読みます。  
+先にトピックを作ります。
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic shop.orders.paid
+```
+
+成功時:
+
+```text
+Created topic shop.orders.paid.
+```
+
+メール用:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic shop.orders.paid \
+  --group mailer \
+  --from-beginning
+```
+
+倉庫用（別端末）:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic shop.orders.paid \
+  --group warehouse \
+  --from-beginning
+```
+
+プロデューサで 1 行送ると、**両方の端末に同じ行** が出ます。  
+グループが違うので、[キューと Pub/Sub](./queue-vs-pubsub) の扇形（同じ知らせを複数系統が取る）になります。
+
+:::tip[グループ名が系統]
+
+`mailer` と `warehouse` は、別の仕事の名前です。  
+同じ仕事を表すなら、同じグループ名に揃えます。
+
+:::
+
+## グループが同じだと、一件を奪い合う
+
+倉庫プロセスを 2 つ立て、どちらも `--group warehouse` にします。  
+トピックのパーティションが 1 本（作成時のよくある既定）だと、**片方だけが行を受け取り、もう片方は待ち** になります。
+
+並列に処理したいなら、最初からレーンの本数を指定します。  
+学習用に 2 本で作る例:
+
+```bash
+docker exec -it kafka-learn /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic shop.orders.work \
+  --partitions 2
+```
+
+成功時:
+
+```text
+Created topic shop.orders.work.
+```
+
+**パーティション** は、トピックの中の並行して進むレーンです。  
+同じグループ内では、1 パーティションを同時に読むコンシューマは 1 つ、が基本です。  
+レーンが 2 本あれば、グループ内の 2 プロセスが同時に働けます。これがキュー（一件を一人が取る）の聞き方です。
+
+レーンよりプロセスが多い分は、待ちになります。壊れているわけではありません。
+
+## オフセットは「どこまで読んだか」
+
+グループは、パーティションごとに **オフセット**（何番まで処理したか）を覚えます。  
+同じグループを止めてもう一度起動すると、覚えた位置の続きから読みます。  
+別グループは、自分のオフセットを別途持つので、自分のペースで読めます。
+
+`--from-beginning` は「この起動では先頭から出す」指定です。  
+普段のアプリは、グループのオフセットに従って続きを読みます。
+
+<details>
+<summary>同じ注文の順番</summary>
+
+同じ `order_id` の更新を、順番どおりに処理したいことがあります。  
+Kafka ではメッセージに **キー** を付け、同じキーが同じパーティションへ入るようにできます。  
+順番が保証されるのは、そのパーティションの中だけです。トピック全体の一本の時系列ではありません。
+
+</details>
+
+<QuizChoice
+title="コンシューマグループ"
+options={[
+{ id: 'a', label: 'グループ名が違うコンシューマは、同じメッセージをそれぞれ受け取れる' },
+{ id: 'b', label: 'グループ名が違うと、先に起動した系統だけが全件を独占する' },
+{ id: 'c', label: 'パーティションが 1 本でも、同じグループの 2 プロセスが同じ行を同時に処理する' },
+]}
+answer="a"
+explanation="系統を分けるにはグループ名を分けます。同じグループは一件を分担し、1 パーティションでは同時に動けるのは 1 プロセスです。"
+
+>
+
+  <div>
+    <pre className="language-text"><code>{`--group mailer
+--group warehouse`}</code></pre>
+    同じトピックをこの二つのグループで読むときの説明として、正しいものはどれですか。
+  </div>
+</QuizChoice>
+
+<QuizFill
+title="グループの指定"
+answer="group"
+explanation="--group に系統の名前を付けます。違う名前なら扇形、同じ名前なら一件の分担です。"
+
+>
+
+  <div>
+    メール系統として読むには、空欄に何が入りますか。
+    <pre className="language-text"><code>{`kafka-console-consumer.sh --bootstrap-server localhost:9092
+  --topic shop.orders.paid --_____ mailer`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- テスト用も本番用も同じグループ名にして、テストが本番の仕事を奪う
+- パーティション 1 本のままプロセスだけ増やし、「片方が壊れている」と疑う
+- `--from-beginning` とオフセットの続き読みを混同し、再実行のたびに全件メールが飛ぶ
+
+## まとめ
+
+- グループが違うと扇形、同じだと一件を分担する
+- 同じグループの並列は、パーティションの本数が上限になる
+- オフセットは、そのグループがどこまで処理したかの印である
+
+次は [再配信と二重処理](./delivery) で、失敗したときに同じ行がもう一度来る理由を扱います。
