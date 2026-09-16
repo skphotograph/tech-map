@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # 関数
@@ -14,6 +14,7 @@ sidebar_position: 6
 - `return` と、戻り値がない場合の `None`
 - デフォルト引数とキーワード引数
 - 早期 `return` で条件を整理する方法
+- 関数内の名前（スコープ）と docstring
 - ミュータブルなデフォルト引数の問題と避け方
 
 ## `def` で処理に名前を付ける
@@ -262,6 +263,84 @@ explanation="price が 0 以下なので最初の return 0 で関数が終了し
 calculate_discount(0)`}</code></pre>
 </QuizChoice>
 
+## 関数内の名前は、その関数の中で使う
+
+関数の中で代入した名前は、通常 **その関数の中だけ** で有効です。  
+これを **ローカル**（局所）な名前と呼びます。
+
+```python
+tax_rate = 0.1
+
+
+def calculate_total(price):
+    quantity = 2
+    return price * quantity * tax_rate
+
+
+print(calculate_total(500))  # 100.0
+print(quantity)  # NameError
+```
+
+`quantity` は関数の中だけで作られた名前です。  
+関数の外からは参照できません。
+
+関数の外にある名前を **読む** ことはできます（上の `tax_rate`）。  
+ただし、関数の中で同じ名前へ代入すると、その関数の中では外側の名前は見えなくなります。
+
+```python
+message = "global"
+
+
+def show():
+    message = "local"
+    print(message)
+
+
+show()       # local
+print(message)  # global
+```
+
+:::info[スコープの入口]
+
+ここでは「関数の中で作った名前は外から見えない」だけ押さえます。  
+`global` や `nonlocal` など、外側の名前を書き換える書き方は、必要になったときに調べれば十分です。
+
+:::
+
+<QuizChoice
+title="ローカルな名前"
+options={[
+{ id: 'a', label: '100.0 と 2' },
+{ id: 'b', label: '100.0 だけ表示され、続けて NameError' },
+{ id: 'c', label: '何も表示されない' },
+]}
+answer="b"
+explanation="count は関数の中だけの名前なので、関数の外から参照すると NameError になります。"
+
+>
+
+ <div>次のコードを実行するとどうなりますか。</div>
+ <pre className="language-python"><code>{`def double(count):
+    return count * 2
+
+print(double(3))
+print(count)`}</code></pre>
+</QuizChoice>
+
+## docstring で関数の目的を書く
+
+関数の説明を最初の文字列として書くと **docstring** になります。  
+`help(関数名)` やエディタの補助表示で読まれます。
+
+```python
+def calculate_shipping(price, rate=0.1):
+    """送料を price と rate から計算して返す。"""
+    return price * rate
+```
+
+docstring は処理の意図を短く残すためのものです。  
+実行結果を変えるわけではありません。
+
 ## 変更できる値をデフォルト引数へ直接置かない
 
 リストのように中身を変更できる値を **ミュータブルな値** と呼びます。  
@@ -300,8 +379,8 @@ print(add_item("mug"))    # ['mug']
 print(add_item("cable"))  # ['cable']
 ```
 
-`is None` は、値が `None` かを確かめる標準的な書き方です。  
-呼び出し時にリストが省略された場合だけ新しいリストを作るため、呼び出しごとの結果が混ざりません。
+引数が省略されたときだけ新しいリストを作るため、呼び出しごとの結果が混ざりません。  
+`is None` は、値が `None` そのものかを確認する書き方です。
 
 辞書や集合など、ほかのミュータブルな値もデフォルト引数へ直接置きません。
 
@@ -336,6 +415,8 @@ explanation="None をデフォルト値にし、関数内で必要なリスト�
 - `return` がない関数の戻り値は `None`
 - デフォルト引数は省略時の値を決め、キーワード引数は値の意味を明確にする
 - 早期 `return` は、処理できない条件を先に終わらせる
+- 関数内で作った名前は、その関数の外から参照できない
+- docstring で関数の目的を短く残せる
 - ミュータブルな値はデフォルト引数へ直接置かない
 
 次は [リストとタプル](./lists-and-tuples) で、複数の値を順番付きで扱う方法を学びます。

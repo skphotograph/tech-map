@@ -1,0 +1,205 @@
+---
+sidebar_position: 9
+---
+
+# 文字列の分割と結合
+
+注文 CSV の一行やログの複数行は、文字列のままでは扱いにくいことがあります。  
+[リストとタプル](./lists-and-tuples) で一覧を扱えるようになったので、文字列とリストを行き来する `.split()` と `.join()` を学びます。  
+行ごとの処理には [繰り返し](./loops) の `for` も使います。
+
+## このページで分かること
+
+- `.split()` で文字列をリストへ分ける方法
+- `.join()` でリストを一つの文字列へつなぐ方法
+- `.splitlines()` と `for` で複数行を順に処理する方法
+
+## `.split()` で文字列を分ける
+
+カンマ区切りの一行を分けるには `.split()` を使います。  
+戻り値は **リスト** です。
+
+```python
+line = "ORD-1001,PAID,1200"
+parts = line.split(",")
+
+print(parts)
+print(parts[0])
+```
+
+```text
+['ORD-1001', 'PAID', '1200']
+ORD-1001
+```
+
+区切り文字を引数に渡します。  
+引数を省略すると、空白文字で分割します。CSV では区切り文字を明示する方が安全です。
+
+```python
+raw = "mug  2  350"
+fields = raw.split()
+
+print(fields)
+```
+
+```text
+['mug', '2', '350']
+```
+
+:::tip[split の戻り値]
+
+`.split()` は文字列を **新しいリスト** に分けます。  
+元の文字列は変わりません。
+
+:::
+
+<QuizFill
+title="split の区切り"
+answer=","
+explanation="split の引数にカンマを渡すと、カンマで分割したリストが返ります。"
+
+>
+
+ <div>空欄を埋めて、3 要素のリストを作ってください。</div>
+ <pre className="language-python"><code>{`line = "mug,2,350"
+parts = line.split(_____)`}</code></pre>
+</QuizFill>
+
+## `.join()` でリストをつなぐ
+
+[リストとタプル](./lists-and-tuples) で作った要素を、一つの文字列へつなぐには `.join()` を使います。
+
+```python
+fields = ["ORD-1001", "PAID", "1200"]
+line = ",".join(fields)
+
+print(line)
+```
+
+```text
+ORD-1001,PAID,1200
+```
+
+`.join()` は **区切り文字** の文字列に対して呼び出します。  
+`fields.join(",")` ではなく、`",".join(fields)` と書く点に注意してください。
+
+<QuizChoice
+title="join の書き方"
+options={[
+{ id: 'a', label: '",".join(fields)' },
+{ id: 'b', label: 'fields.join(",")' },
+{ id: 'c', label: 'join(fields, ",")' },
+]}
+answer="a"
+explanation="区切り文字の文字列に対して join を呼び、結合する要素のリストを渡します。"
+
+>
+
+ <div>リスト <code>fields</code> をカンマ区切りの一行へつなぐ正しい書き方はどれですか。</div>
+</QuizChoice>
+
+## 複数行を `for` で処理する
+
+改行を含む文字列は、`.splitlines()` で **行ごとのリスト** に分けられます。  
+[繰り返し](./loops) で学んだ `for` を使い、各行を順に処理します。
+
+```python
+text = "ORD-1001: OPEN\nORD-1002: PAID"
+lines = text.splitlines()
+
+for line in lines:
+    print(line)
+```
+
+```text
+ORD-1001: OPEN
+ORD-1002: PAID
+```
+
+1 行ずつ `.split(",")` へ進めると、CSV 風のデータを段階的に扱えます。
+
+```python
+for line in lines:
+    parts = line.split(": ")
+    order_id = parts[0]
+    status = parts[1]
+    print(order_id, status)
+```
+
+```text
+ORD-1001 OPEN
+ORD-1002 PAID
+```
+
+ここでは、すでに文字列として持っているテキストを行単位で処理する流れを押さえます。
+
+<QuizChoice
+title="splitlines と for"
+options={[
+{ id: 'a', label: '行数だけ数え、各行は表示しない' },
+{ id: 'b', label: 'ORD-1001: OPEN と ORD-1002: PAID を順に表示する' },
+{ id: 'c', label: '1 行目だけ表示する' },
+]}
+answer="b"
+explanation="splitlines で行のリストを作り、for で各行を print しています。"
+
+>
+
+ <div>次のコードの出力はどれですか。</div>
+ <pre className="language-python"><code>{`text = "ORD-1001: OPEN\nORD-1002: PAID"
+for line in text.splitlines():
+    print(line)`}</code></pre>
+</QuizChoice>
+
+## split と join を行き来する
+
+受け取った一行を分け、加工してから再び一行へ戻す流れはよくあります。
+
+```python
+line = "ORD-1001,open,1200"
+parts = line.split(",")
+parts[1] = parts[1].upper()
+updated = ",".join(parts)
+
+print(updated)
+```
+
+```text
+ORD-1001,OPEN,1200
+```
+
+`parts[1].upper()` は [文字列と入力](./strings-and-text) で学んだ文字列メソッドです。  
+リストの添字への代入は [リストとタプル](./lists-and-tuples) の範囲です。
+
+<QuizChoice
+title="split のあと要素数"
+options={[
+{ id: 'a', label: '2' },
+{ id: 'b', label: '3' },
+{ id: 'c', label: '4' },
+]}
+answer="b"
+explanation="カンマが 2 個あるので、3 要素に分かれます。"
+
+>
+
+ <div><code>line.split(",")</code> の結果の要素数はいくつですか。</div>
+ <pre className="language-python"><code>{`line = "mug,2,350"`}</code></pre>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `split` の区切り文字を書き忘れ、空白分割の結果と取り違える
+- `join` の呼び出し側と受け側を逆に書く
+- `split` の戻り値がリストだと気づかず、文字列のメソッドを呼ぼうとする
+- `splitlines` の結果を `for` せず、文字列全体を一度に処理しようとする
+- 行内の区切りと、行と行の区切り（改行）を混同する
+
+## まとめ / 次に学ぶとよいこと
+
+- `.split()` は文字列をリストへ分ける
+- `",".join(list)` はリストを一つの文字列へつなぐ
+- `.splitlines()` と `for` で複数行を順に処理できる
+- 一行の中身は `.split()`、行の区切りは `.splitlines()` と役割が異なる
+
+次は [辞書と集合](./dicts-and-sets) で、名前を付けた値と重複のない集まりを扱います。

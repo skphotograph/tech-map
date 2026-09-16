@@ -47,7 +47,7 @@ print(first_items == copied_items)  # True
 ```
 
 `shared_items` は代入によって同じリストを指しています。  
-一方、`copied_items` は同じ要素を持つ別のリストです。  
+一方、`copied_items` は [リストとタプル](./lists-and-tuples) で学んだスライス `[:]` で作った、別のリストです。  
 したがって、値の比較では等しくても、同一性の比較では異なります。
 
 :::tip[値には `==`、同一性には `is`]
