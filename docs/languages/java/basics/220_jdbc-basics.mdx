@@ -9,14 +9,15 @@ JDBC では、SQL の実行だけでなく接続、パラメーター、トラ�
 
 :::info[このページの前提]
 
-表・行・主キーや `SELECT` の読み方は [データ](../../../data/) の SQL / RDB 側で扱います（章が揃うまでのあいだは、下の SQL 例を「注文テーブルから 1 件取る」程度の読み方で追ってください）。  
-`dataSource` は接続の取り出し口（多くの現場では接続プール）だと考えてください。作り方の詳細はデータ章やアプリ部品側に任せます。
+表・行・主キーは [表とキー](../../../data/sql-rdb/tables-and-keys)、`SELECT` は [SELECT の基本](../../../data/sql-rdb/select-basics)、複数更新のまとめ方は [トランザクション](../../../data/sql-rdb/transactions) です。  
+ここからは、同じ PostgreSQL の `orders` 表を **Java から** どう開いて読むかに進みます。
 
 :::
 
 ## このページで分かること
 
 - JDBC Driver、`Connection`、`PreparedStatement` の役割
+- `DriverManager` と `DataSource`（接続プール）の違い
 - パラメーター化した SQL が必要な理由
 - `commit` と `rollback` によるトランザクションの基本
 
@@ -29,17 +30,107 @@ JDBC は、Java からリレーショナルデータベースを操作する標�
 - `Connection`: データベースとの接続とトランザクション境界を表す
 - `PreparedStatement`: パラメーター化した SQL を実行する
 - `ResultSet`: 検索結果を順に読み取る
+- `DataSource`: 接続の取り出し口。現場では接続プールのことが多い
 
-Driver は通常、利用するデータベースに対応した依存関係として追加します。  
-接続 URL や Driver の設定方法は製品ごとに異なるため、公式ドキュメントを確認します。
+Driver は、利用するデータベースに対応した依存関係として追加します。  
+PostgreSQL なら、次のような依存が典型です（バージョンはプロジェクトに合わせて確認してください）。
+
+```xml
+<dependency>
+  <groupId>org.postgresql</groupId>
+  <artifactId>postgresql</artifactId>
+  <version>42.7.4</version>
+</dependency>
+```
+
+接続 URL の部品（ホスト、ポート、データベース名）は、[接続と psql](../../../data/sql-rdb/connect-and-psql) と同じです。  
+JDBC では先頭が `jdbc:` になります。
+
+```text
+jdbc:postgresql://localhost:5432/appdb
+```
+
+## 接続を開く
+
+学習や短い検証では、`DriverManager` で都度接続できます。  
+パスワードはコードやリポジトリに直書きせず、環境変数などから渡します。
+
+```java
+String url = "jdbc:postgresql://localhost:5432/appdb";
+String user = "appuser";
+String password = System.getenv("APPDB_PASSWORD");
+
+try (Connection connection = DriverManager.getConnection(url, user, password)) {
+    // ここで SQL を実行する
+}
+```
+
+`getConnection` が成功すれば、`psql` でつながったのと同じく、その接続上で SQL を打てる状態です。  
+`try-with-resources` で閉じると、例外パスでも接続が残りにくくなります。
+
+:::warning[都度接続は検証向き]
+
+`DriverManager.getConnection` は、呼ぶたびに新しい接続を張りがちです。  
+リクエストのたびにこれを繰り返すと、接続の確立だけで遅くなり、データベース側の接続数もすぐ逼迫します。
+
+:::
+
+## DataSource と接続プール
+
+実務のアプリケーションでは、`DataSource` から接続を取ります。  
+`DataSource` 自体は「接続を貸す窓口」のインタフェースです。  
+実装の多くは **接続プール** で、あらかじめ張っておいた接続を使い回します。
+
+```java
+HikariDataSource dataSource = new HikariDataSource();
+dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/appdb");
+dataSource.setUsername("appuser");
+dataSource.setPassword(System.getenv("APPDB_PASSWORD"));
+dataSource.setMaximumPoolSize(10);
+```
+
+HikariCP はよく使われる実装の一例です。  
+使うときは専用の依存関係が必要で、フレームワークを使う現場では設定から同等の `DataSource` が用意されることも多いです。
+
+```mermaid
+flowchart LR
+  app[アプリケーション]
+  pool[接続プール DataSource]
+  db[(PostgreSQL)]
+  app -->|"getConnection"| pool
+  pool -->|"使い回す接続"| db
+  app -->|"close で返却"| pool
+```
+
+プールから借りた `Connection` を `close` すると、多くの実装では TCP を切らず **プールへ返します**。  
+返さないと、上限に達したあと `getConnection` が待ち続けたり失敗したりします。  
+これが「接続枯渇」です。
+
+DAO や ORM の選択、トランザクションをどの層に置くかは [データアクセス](../applications/data-access) に任せます。  
+このページでは、「接続は借りて、使い終わったら返す」ことと、SQL の実行手順に集中します。
+
+<QuizChoice
+title="接続の取り方"
+options={[
+{id: 'a', label: 'リクエストごとに DriverManager.getConnection するのが、本番でも常に最善である'},
+{id: 'b', label: 'DataSource（多くの場合は接続プール）から借り、使い終わったら閉じる（返却する）'},
+{id: 'c', label: 'Connection はアプリ起動中ずっと 1 本だけ持ち、close してはいけない'},
+]}
+answer="b"
+explanation="検証では DriverManager でも足ります。本番ではプール付き DataSource から借り、close で返却するのが基本です。1 本を使い回すとトランザクションとスレッド安全が壊れます。"
+
+>
+
+  <div>Web アプリから PostgreSQL へつなぐとき、適切な方針はどれですか。</div>
+</QuizChoice>
 
 ## PreparedStatement で検索する
 
-次は、指定した ID の注文を検索する例です。
+[SELECT の基本](../../../data/sql-rdb/select-basics) と同じく、列を明示し、主キーで 1 行に絞ります。
 
 ```java
 String sql = """
-    SELECT order_id, user_name, amount
+    SELECT order_id, user_id, amount
       FROM orders
      WHERE order_id = ?
     """;
@@ -52,12 +143,15 @@ try (Connection connection = dataSource.getConnection();
     try (ResultSet result = statement.executeQuery()) {
         if (result.next()) {
             long id = result.getLong("order_id");
-            String userName = result.getString("user_name");
+            long userId = result.getLong("user_id");
             int amount = result.getInt("amount");
         }
     }
 }
 ```
+
+SQL の 1 行が `ResultSet` の 1 行、列名が `getLong("order_id")` などの取り出し口です。  
+`result.next()` が `false` なら、条件に合う行が無かっただけで、SQL が壊れているとは限りません。
 
 `?` の位置に `setLong` などで値を設定します。  
 列名を明示すると、SQL と Java 側の対応を追いやすくなります。
@@ -118,6 +212,8 @@ explanation="JDBC の資源も外部リソースです。例外パスも含め�
 
 ## 更新件数を確認する
 
+[追加・更新・削除](../../../data/sql-rdb/insert-update-delete) の `UPDATE 1` と同じ情報を、Java では戻り値で受け取ります。
+
 ```java
 String sql = "UPDATE orders SET amount = ? WHERE order_id = ?";
 
@@ -140,7 +236,7 @@ try (Connection connection = dataSource.getConnection();
 ## commit と rollback
 
 複数の更新をまとめて成功または失敗させるには、トランザクションを使います。  
-チケットを二枚まとめて切る——片方だけ通って片方だけ残る、を防ぐための境界です。
+SQL 側の `BEGIN` / `COMMIT` / `ROLLBACK` に対応するのが、接続上の `setAutoCommit(false)`、`commit`、`rollback` です。
 
 ```java
 try (Connection connection = dataSource.getConnection()) {
@@ -157,6 +253,7 @@ try (Connection connection = dataSource.getConnection()) {
 }
 ```
 
+注文の状態更新と履歴追加を同じ接続・同じトランザクションに載せると、片方だけ残る状態を避けられます。  
 `setAutoCommit(false)` で自動コミットを止め、すべて成功したら `commit` します。  
 途中で失敗したら `rollback` し、中途半端な更新を残さないようにします。
 
@@ -169,6 +266,7 @@ try (Connection connection = dataSource.getConnection()) {
 `rollback` 自体も失敗する可能性があります。  
 本来の例外を失わないよう、利用するライブラリやプロジェクトの例外処理方針に従います。  
 接続プールへ返す前に接続状態を復元する処理は、通常は DataSource や管理基盤へ任せます。
+
 </details>
 
 <QuizChoice
@@ -202,12 +300,14 @@ MyBatis のような SQL マッパーは、SQL を明示しながら結果との
 どちらも選択肢であり、データモデル、SQL の制御範囲、チームの運用などで適性が変わります。
 
 これらの仕組みも下層では JDBC やデータベース接続を利用します。  
-JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザクション境界の調査に役立ちます。
+JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザクション境界の調査に役立ちます。  
+方式の比較は [データアクセス](../applications/data-access) にまとめています。
 
 ## よくあるつまずき
 
 - 外部入力を SQL 文字列へ連結する
-- `Connection`、`PreparedStatement`、`ResultSet` を閉じない
+- `Connection`、`PreparedStatement`、`ResultSet` を閉じない（プールでは返却漏れになる）
+- リクエストごとに `DriverManager` で新規接続し、接続数が膨らむ
 - 更新件数を確認せず、対象がなかったことを見逃す
 - トランザクションの範囲を広げすぎ、接続やロックを長く保持する
 - ORM を使えば SQL やトランザクションを理解しなくてよいと考える
@@ -215,6 +315,7 @@ JDBC の基礎を知っていると、発行 SQL、接続枯渇、トランザ�
 ## まとめ
 
 - JDBC では接続、SQL、結果、トランザクションを明示的に扱う
+- 検証は `DriverManager`、アプリは `DataSource`（接続プール）から借りて返す
 - 値は `PreparedStatement` に設定し、SQL インジェクションを防ぐ
 - 複数更新は `commit` と `rollback` で一貫性を守る
 - JPA や MyBatis などの上位層を使う場合も、JDBC の理解は調査に役立つ

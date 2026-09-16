@@ -1,0 +1,213 @@
+---
+sidebar_position: 3
+---
+
+# 接続と psql
+
+考え方だけでは、エラーメッセージも結果の見方も腹落ちしにくいです。  
+このページでは PostgreSQL へ接続し、対話クライアント **psql** で最初の問い合わせを打ちます。
+
+## このページで分かること
+
+- 接続に必要な要素（ホスト、ポート、データベース名、ユーザー）
+- `psql` での接続と、メタコマンドの使い方
+- サンプル表を作って `SELECT` するまでの最短ルート
+
+## 接続の部品
+
+アプリも `psql` も、だいたい次を揃えて接続します。
+
+| 要素                  | よくある値の例       | 意味                        |
+| --------------------- | -------------------- | --------------------------- |
+| ホスト                | `localhost`          | サーバの場所                |
+| ポート                | `5432`               | PostgreSQL の待ち受けポート |
+| データベース名        | `appdb`              | 接続先の DB                 |
+| ユーザー / パスワード | 環境で付与されたもの | 認証に使うアカウント        |
+
+接続文字列（URL）では次のような形になります。
+
+```text
+postgresql://appuser:secret@localhost:5432/appdb
+```
+
+パスワードを教材やリポジトリに直書きしないでください。  
+ローカル検証用でも、共有する設定からは外し、環境変数やローカル専用ファイルに置きます。
+
+:::warning[本番の接続情報]
+
+本番のホスト・ユーザー・パスワードを、検証用ターミナルへ安易に貼らないでください。  
+権限の強いアカウントで操作を試すと、削除や更新の影響が大きくなります。
+
+:::
+
+## 手元に PostgreSQL を用意する
+
+すでに社内やクラウドで検証用インスタンスがある場合は、その接続情報を使ってください。  
+手元に何もない場合の一例として、Docker で起動する例を示します。
+
+```bash
+docker run --name pg-learn -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=appdb -p 5432:5432 -d postgres:16
+```
+
+成功時はコンテナ ID のような長い文字列が表示されます。  
+`docker ps` で `pg-learn` が `Up` になっていれば起動できています。
+
+<details>
+<summary>Docker が使えないとき</summary>
+
+PostgreSQL の公式インストーラや、クラウドのマネージド DB（検証用）でも構いません。  
+この章で重要なのは製品のインストール手順そのものより、「接続して SQL を実行できること」です。
+
+</details>
+
+## psql でつなぐ
+
+クライアントが入っている環境では、次のように接続します。
+
+```bash
+psql -h localhost -p 5432 -U postgres -d appdb
+```
+
+パスワードを求められたら、用意した値を入力します。  
+成功すると、だいたい次のようなプロンプトになります。
+
+```text
+appdb=#
+```
+
+`appdb=#` の左側が、いま接続しているデータベース名です。  
+ここに SQL を書いて Enter すると実行されます。  
+終了は `\q` です。
+
+<details>
+<summary>Docker コンテナ内の psql を使う例</summary>
+
+ホストに `psql` が無い場合は、コンテナ内で実行できます。
+
+```bash
+docker exec -it pg-learn psql -U postgres -d appdb
+```
+
+</details>
+
+## 最初に覚えるメタコマンド
+
+`psql` では、SQL 以外に **メタコマンド**（`\` で始まる）が使えます。
+
+| コマンド    | 用途                   |
+| ----------- | ---------------------- |
+| `\l`        | データベース一覧       |
+| `\dt`       | 表一覧                 |
+| `\d orders` | 表 `orders` の列・制約 |
+| `\q`        | 終了                   |
+| `\x`        | 結果を縦表示に切り替え |
+
+例:
+
+```text
+appdb=# \dt
+Did not find any relations.
+```
+
+まだ表が無い状態です。壊れているわけではありません。
+
+## サンプル表を作って読む
+
+次を順に実行します。  
+文の末尾の `;` を忘れないでください。
+
+```sql
+CREATE TABLE users (
+  user_id   BIGINT PRIMARY KEY,
+  user_name TEXT NOT NULL
+);
+
+CREATE TABLE orders (
+  order_id  BIGINT PRIMARY KEY,
+  user_id   BIGINT NOT NULL REFERENCES users (user_id),
+  amount    INTEGER NOT NULL,
+  status    TEXT NOT NULL
+);
+
+INSERT INTO users (user_id, user_name) VALUES
+  (10, 'hana'),
+  (11, 'ken');
+
+INSERT INTO orders (order_id, user_id, amount, status) VALUES
+  (1001, 10, 3980, 'paid'),
+  (1002, 11, 1200, 'paid'),
+  (1003, 10, 540, 'canceled');
+```
+
+成功時は、だいたい次のように表示されます。
+
+```text
+CREATE TABLE
+CREATE TABLE
+INSERT 0 2
+INSERT 0 3
+```
+
+`INSERT 0 2` の `2` は挿入した行数です。  
+表の確認:
+
+```sql
+SELECT order_id, user_id, amount, status
+  FROM orders
+ ORDER BY order_id;
+```
+
+例:
+
+```text
+ order_id | user_id | amount |  status
+----------+---------+--------+----------
+     1001 |      10 |   3980 | paid
+     1002 |      11 |   1200 | paid
+     1003 |      10 |    540 | canceled
+(3 rows)
+```
+
+列名と行数 `(3 rows)` を見て、意図どおりか確認します。
+
+:::tip[結果の読み方]
+
+エラーなら英語のメッセージが先に出ます。  
+成功なら列見出しと行、最後に件数が出る、という型を覚えておくと調査が速くなります。
+
+:::
+
+<QuizChoice
+title="psql の接続先"
+options={[
+{ id: 'a', label: 'ホスト・ポート・データベース名・ユーザーが接続の部品になる' },
+{ id: 'b', label: '表名さえ分かれば、ホストやユーザーは不要である' },
+{ id: 'c', label: 'psql では SQL だけ使え、\\dt などのコマンドは使えない' },
+]}
+answer="a"
+explanation="接続にはホスト、ポート、DB 名、ユーザーなどが必要です。\\dt は表一覧を見るメタコマンドです。"
+
+>
+
+  <div>PostgreSQL へつなぐときの説明として、正しいものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `;` を付け忘れ、プロンプトが `appdb-#` のまま次の入力待ちになる（続きを書くか、`Ctrl+C` で中断）
+- 別データベースに接続したまま `\dt` し、「表が消えた」と勘違いする
+- パスワードや接続 URL をチャット・コミットに貼る
+
+## アプリからつなぐとき
+
+ホスト、ポート、データベース名、ユーザーは、Java からつなぐときも同じ部品です。  
+JDBC では URL が `jdbc:postgresql://localhost:5432/appdb` の形になり、接続の使い回しは接続プールが担います。  
+開き方と `PreparedStatement` は [JDBC の基礎](../../languages/java/basics/jdbc-basics) へ進んでください。
+
+## まとめ
+
+- 接続にはホスト、ポート、データベース名、ユーザーが必要である
+- `psql` で SQL と `\dt` などのメタコマンドを使える
+- 小さな表を作り、`SELECT` で行と件数を確認できると、以降のページが追いやすい
+
+次は [表とキー](./tables-and-keys) で、列の型と主キー・外部キーを整理します。

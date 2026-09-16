@@ -1,0 +1,171 @@
+---
+sidebar_position: 5
+---
+
+# SELECT の基本
+
+一覧画面も集計も、土台は「どの表から、どの行を、どの列で返すか」です。  
+このページでは `SELECT` の読み方と、条件・並び・件数制限を押さえます。
+
+## このページで分かること
+
+- `SELECT` / `FROM` / `WHERE` / `ORDER BY` / `LIMIT` の役割
+- 比較演算と `AND` / `OR`、`IN`、`LIKE`
+- 結果が 0 件のときの読み方
+
+## 最小の SELECT
+
+[接続と psql](./connect-and-psql) のサンプル表がある前提です。
+
+```sql
+SELECT order_id, user_id, amount, status
+  FROM orders;
+```
+
+| 句       | 役割                       |
+| -------- | -------------------------- |
+| `SELECT` | 返す列を指定する           |
+| `FROM`   | どの表から読むかを指定する |
+
+`SELECT *` は全列です。  
+対話の確認には便利ですが、アプリの本番問い合わせでは、必要な列だけ書く方が意図と負荷が明確です。
+
+## WHERE で行を絞る
+
+`WHERE` に条件を書くと、条件に合う行だけ残ります。
+
+```sql
+SELECT order_id, amount, status
+  FROM orders
+ WHERE status = 'paid';
+```
+
+例:
+
+```text
+ order_id | amount | status
+----------+--------+--------
+     1001 |   3980 | paid
+     1002 |   1200 | paid
+(2 rows)
+```
+
+よく使う比較:
+
+| 書き方                   | 意味                |
+| ------------------------ | ------------------- |
+| `=` / `<>`               | 等しい / 等しくない |
+| `<` `<=` `>` `>=`        | 大小比較            |
+| `AND` / `OR`             | 条件の組み合わせ    |
+| `IN ('paid', 'shipped')` | いずれかに一致      |
+| `BETWEEN 1000 AND 5000`  | 範囲（両端含む）    |
+| `IS NULL`                | NULL かどうか       |
+
+```sql
+SELECT order_id, amount
+  FROM orders
+ WHERE status = 'paid'
+   AND amount >= 1000;
+```
+
+:::tip[絞り込みは WHERE]
+
+「あとでアプリ側で捨てるから全件取る」は、行数が増えると一気に重くなります。  
+落とせる条件は SQL 側の `WHERE` に寄せます。
+
+:::
+
+## 並び順と件数
+
+`ORDER BY` で並び、`LIMIT` で件数を制限します。
+
+```sql
+SELECT order_id, amount
+  FROM orders
+ WHERE status = 'paid'
+ ORDER BY amount DESC
+ LIMIT 10;
+```
+
+- `ASC` … 昇順（省略時）
+- `DESC` … 降順
+
+ページングで `LIMIT` / `OFFSET` を使うこともありますが、深いページでは遅くなりやすい点に注意します。  
+まずは「上位 N 件」や確認用の件数制限として使いましょう。
+
+## 文字列の部分一致
+
+`LIKE` でパターン照合します。  
+`%` は任意の長さ、`_` は 1 文字です。
+
+```sql
+SELECT user_id, user_name
+  FROM users
+ WHERE user_name LIKE 'ha%';
+```
+
+先頭が固定でない `%hana%` のような条件は、インデックスが効きにくいことがあります。  
+詳細は [インデックスと実行計画](./indexes-and-explain) で扱います。
+
+## 別名（AS）
+
+列や表に短い名前を付けられます。
+
+```sql
+SELECT o.order_id AS id,
+       o.amount
+  FROM orders AS o
+ WHERE o.user_id = 10;
+```
+
+`AS` は省略できることが多いですが、初学のうちは書いて意図を残すと読みやすいです。
+
+<QuizChoice
+title="WHERE の役割"
+options={[
+{ id: 'a', label: '返す列を増やすために使う' },
+{ id: 'b', label: '条件に合う行だけを残すために使う' },
+{ id: 'c', label: '表を新規作成するために使う' },
+]}
+answer="b"
+explanation="WHERE は行の絞り込みです。列の指定は SELECT、表の作成は CREATE TABLE です。"
+
+>
+
+  <div>
+    <pre className="language-sql"><code>{`SELECT order_id, amount
+  FROM orders
+ WHERE status = 'paid';`}</code></pre>
+    この SQL で WHERE が担う役割はどれですか。
+  </div>
+</QuizChoice>
+
+<QuizFill
+title="並び順"
+answer="ORDER BY"
+explanation="並び順は ORDER BY で指定します。DESC を付けると降順です。"
+caseSensitive={false}
+
+>
+
+  <div>
+    金額の大きい順に並べるには、空欄に何が入りますか。
+    <pre className="language-sql"><code>{`SELECT order_id, amount
+  FROM orders
+ ______ amount DESC;`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- `WHERE status = NULL` と書いて、NULL の行が取れない（`IS NULL` を使う）
+- 文字列を引用符で囲まず、列名と解釈されてエラーになる
+- `OR` の優先順位を誤って、意図より広い結果になる（迷ったら括弧でくくる）
+
+## まとめ
+
+- `SELECT` で列、`FROM` で表、`WHERE` で行を指定する
+- `ORDER BY` と `LIMIT` で並びと件数を制御する
+- 0 件はエラーとは限らず、条件に合う行が無いだけ、ということもある
+
+次は [JOIN](./join) で、利用者名など別表の列を一緒に取ります。

@@ -1,0 +1,155 @@
+---
+sidebar_position: 7
+---
+
+# 集計と GROUP BY
+
+「支払済みが何件か」「利用者ごとの合計金額はいくらか」は、行を 1 件ずつ見るだけでは足りません。  
+**集計関数** と **GROUP BY** で、行のまとまりに対する計算結果を返します。
+
+## このページで分かること
+
+- `COUNT` / `SUM` / `AVG` / `MAX` / `MIN`
+- `GROUP BY` と `HAVING` の使い分け
+- 集計と JOIN を混ぜるときの粒度
+
+## 集計関数の基本
+
+表全体（または `WHERE` 後の行全体）を 1 つの結果にまとめる例です。
+
+```sql
+SELECT COUNT(*) AS paid_count,
+       SUM(amount) AS paid_total
+  FROM orders
+ WHERE status = 'paid';
+```
+
+例:
+
+```text
+ paid_count | paid_total
+------------+------------
+          2 |       5180
+(1 row)
+```
+
+| 関数          | 意味                     |
+| ------------- | ------------------------ |
+| `COUNT(*)`    | 行数                     |
+| `COUNT(列)`   | その列が NULL でない行数 |
+| `SUM(列)`     | 合計                     |
+| `AVG(列)`     | 平均                     |
+| `MAX` / `MIN` | 最大 / 最小              |
+
+`COUNT(*)` は「行があるか」を数えます。  
+`COUNT(order_id)` のように列を指定すると、その列が NULL の行は数えません。
+
+## GROUP BY でグループ単位にまとめる
+
+利用者ごとに合計したいときは、`GROUP BY` でグループの鍵を指定します。
+
+```sql
+SELECT user_id,
+       COUNT(*) AS order_count,
+       SUM(amount) AS total_amount
+  FROM orders
+ WHERE status = 'paid'
+ GROUP BY user_id
+ ORDER BY user_id;
+```
+
+例:
+
+```text
+ user_id | order_count | total_amount
+---------+-------------+--------------
+      10 |           1 |         3980
+      11 |           1 |         1200
+(2 rows)
+```
+
+`SELECT` に書く列は、次のどちらかです。
+
+- `GROUP BY` に含めた列
+- 集計関数の結果
+
+グループ鍵でも集計でもない列を `SELECT` に置くと、PostgreSQL ではエラーになります。
+
+## HAVING で集計後に絞る
+
+`WHERE` は集計前の行に効きます。  
+「合計が 3000 以上の利用者だけ」のように **集計結果** で絞るときは `HAVING` を使います。
+
+```sql
+SELECT user_id,
+       SUM(amount) AS total_amount
+  FROM orders
+ WHERE status = 'paid'
+ GROUP BY user_id
+HAVING SUM(amount) >= 3000;
+```
+
+:::tip[WHERE と HAVING]
+
+行を落とす → `WHERE`  
+グループの計算結果で落とす → `HAVING`
+
+迷ったら「まだ 1 行ずつの話か、もうグループの話か」で切り分けます。
+
+:::
+
+## JOIN と集計を組み合わせる
+
+名前付きで集計する例です。
+
+```sql
+SELECT u.user_name,
+       COUNT(*) AS paid_count,
+       SUM(o.amount) AS paid_total
+  FROM orders AS o
+  INNER JOIN users AS u
+    ON o.user_id = u.user_id
+ WHERE o.status = 'paid'
+ GROUP BY u.user_id, u.user_name
+ ORDER BY u.user_name;
+```
+
+`user_name` だけを `GROUP BY` すると、同名利用者がいたときに潰れます。  
+一意な `user_id` もグループ鍵に含める方が安全です。
+
+<details>
+<summary>COUNT が増えすぎるとき</summary>
+
+JOIN で行が増えたあと `COUNT(*)` すると、注文数のつもりが結合後の行数になっていることがあります。  
+先に結合結果を少量で `SELECT` し、粒度を目で確認してから集計します。
+
+</details>
+
+<QuizChoice
+title="WHERE と HAVING"
+options={[
+{ id: 'a', label: '集計前の行の絞り込みは HAVING、集計後は WHERE である' },
+{ id: 'b', label: '集計前の行の絞り込みは WHERE、集計後の条件は HAVING である' },
+{ id: 'c', label: 'GROUP BY を使うと WHERE も HAVING も使えなくなる' },
+]}
+answer="b"
+explanation="WHERE は集計前、HAVING はグループ化したあとの条件です。"
+
+>
+
+  <div>次のうち正しいものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `SELECT` に集計もグループ鍵もない列を置き、エラーになる
+- `WHERE SUM(amount) > 0` のように集計を `WHERE` に書いて失敗する
+- JOIN 後の行増殖に気づかず、`COUNT` や `SUM` が膨らむ
+
+## まとめ
+
+- 集計関数で件数・合計などを求められる
+- `GROUP BY` でグループ単位の結果にし、`HAVING` で集計後に絞る
+- JOIN と組み合わせるときは、結果の粒度を先に確認する
+
+次は [追加・更新・削除](./insert-update-delete) で、データを書き換えます。

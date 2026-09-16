@@ -1,0 +1,151 @@
+---
+sidebar_position: 8
+---
+
+# 追加・更新・削除
+
+読み取りだけでなく、注文の登録や状態変更も SQL で行います。  
+このページでは `INSERT` / `UPDATE` / `DELETE` と、書き込みで特に気をつける点を扱います。
+
+## このページで分かること
+
+- 行の追加・更新・削除の基本構文
+- `WHERE` を付けない更新・削除の危険さ
+- 返り値（影響行数）の見方
+
+## INSERT: 行を追加する
+
+```sql
+INSERT INTO orders (order_id, user_id, amount, status)
+VALUES (1004, 11, 2200, 'paid');
+```
+
+成功例:
+
+```text
+INSERT 0 1
+```
+
+`1` が追加した行数です。  
+複数行をまとめて入れることもできます。
+
+```sql
+INSERT INTO orders (order_id, user_id, amount, status)
+VALUES
+  (1005, 10, 800, 'paid'),
+  (1006, 11, 1500, 'paid');
+```
+
+主キー重複や外部キー違反があるとエラーになり、その文は入りません。
+
+## UPDATE: 行を更新する
+
+```sql
+UPDATE orders
+   SET status = 'shipped'
+ WHERE order_id = 1001;
+```
+
+成功例:
+
+```text
+UPDATE 1
+```
+
+`1` は更新された行数です。  
+複数列を同時に変えられます。
+
+```sql
+UPDATE orders
+   SET status = 'shipped',
+       amount = 3980
+ WHERE order_id = 1001;
+```
+
+:::warning[WHERE を忘れない]
+
+`WHERE` なしの `UPDATE` は、表の全行が対象になります。  
+対話で試すときも、先に同じ条件の `SELECT` で件数を確認する癖が安全です。
+
+:::
+
+## DELETE: 行を削除する
+
+```sql
+DELETE FROM orders
+ WHERE order_id = 1003;
+```
+
+成功例:
+
+```text
+DELETE 1
+```
+
+こちらも `WHERE` なしは全行削除です。  
+「取り消し」業務でも、監査のために行を残し `status` を変える設計（論理削除）を選ぶことがあります。  
+物理削除するか状態変更するかは、要件と保管方針で決めます。
+
+## 書き込む前に SELECT で確認する
+
+更新対象を間違えないための定石です。
+
+```sql
+SELECT order_id, status
+  FROM orders
+ WHERE order_id = 1001;
+
+UPDATE orders
+   SET status = 'shipped'
+ WHERE order_id = 1001;
+```
+
+影響行数が `0` なら、条件に合う行が無かっただけです。  
+「更新したつもりが何も変わっていない」ときは、まず `WHERE` と現在のデータを疑います。
+
+<details>
+<summary>RETURNING で結果を返す（PostgreSQL）</summary>
+
+更新後の行をその場で返すことができます。
+
+```sql
+UPDATE orders
+   SET status = 'shipped'
+ WHERE order_id = 1001
+RETURNING order_id, status;
+```
+
+アプリで「更新できたか・結果の値は何か」を確認するのに便利です。
+
+</details>
+
+<QuizChoice
+title="UPDATE の範囲"
+options={[
+{ id: 'a', label: 'WHERE を書かない UPDATE は、いつも 1 行だけ更新する' },
+{ id: 'b', label: 'WHERE を書かない UPDATE は、表の全行が対象になる' },
+{ id: 'c', label: 'UPDATE では主キーがあっても条件は不要である' },
+]}
+answer="b"
+explanation="WHERE なしの UPDATE / DELETE は全行が対象です。必ず対象を SELECT で確認してから実行します。"
+
+>
+
+  <div>次のうち正しいものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- `WHERE` を付けず、検証データ全体を更新・削除してしまう
+- 影響行数 `0` を成功と誤解し、条件ミスに気づかない
+- 文字列や日付の型を間違え、制約エラーや意図しない変換が起きる
+
+## まとめ
+
+- `INSERT` / `UPDATE` / `DELETE` で行を追加・更新・削除する
+- 書き込み前に同じ条件の `SELECT` で対象を確認する
+- 影響行数を見て、想定件数と一致するか確かめる
+
+プログラムから同じ更新を行うときの件数の見方は、[JDBC の基礎](../../languages/java/basics/jdbc-basics) にあります。
+
+次は [トランザクション](./transactions) で、複数の更新をまとめて確定／取り消します。
