@@ -1,0 +1,223 @@
+---
+sidebar_position: 5
+---
+
+# ハッシュ・リスト・セット
+
+文字列だけでもセッションやカウンターは置けます。  
+一つのキーの中に **フィールド** や **並び** や **重複なしの集まり** を持たせると、カートや履歴のように、まとまりで扱うデータが書きやすくなります。
+
+## このページで分かること
+
+- ハッシュ（`HSET` / `HGET` / `HGETALL`）
+- リスト（`LPUSH` / `LRANGE` / `LTRIM`）
+- セット（`SADD` / `SISMEMBER` / `SMEMBERS`）
+
+[接続と redis-cli](./connect-and-redis-cli) で Redis につながっている前提です。
+
+## ハッシュ: カートの中身
+
+**ハッシュ** は、一つのキーの下にフィールド名と値の組を並べます。  
+利用者 `10` のカートなら、商品 ID がフィールド、個数が値、という形が典型です。
+
+```text
+HSET shop:user:10:cart product:1001 2
+HSET shop:user:10:cart product:1002 1
+```
+
+成功時は、新しく作ったフィールドならだいたい次です。
+
+```text
+(integer) 1
+```
+
+まとめて読む:
+
+```text
+HGETALL shop:user:10:cart
+```
+
+例:
+
+```text
+1) "product:1001"
+2) "2"
+3) "product:1002"
+4) "1"
+```
+
+奇数番がフィールド名、偶数番が値です。  
+1 商品だけ取るなら `HGET` です。
+
+```text
+HGET shop:user:10:cart product:1001
+```
+
+```text
+"2"
+```
+
+個数を足すなら `HINCRBY` です。
+
+```text
+HINCRBY shop:user:10:cart product:1001 1
+```
+
+```text
+(integer) 3
+```
+
+JSON を文字列として `SET` してもよいですが、個数だけ変えたいときに全体を読み書きする必要が出ます。  
+**一部だけ更新する** ならハッシュが向きます。 **毎回まとめて置き換える画面のコピー** なら、文字列に JSON を入れる判断もあります。
+
+:::tip[キーは一人分、フィールドは中身]
+
+`shop:user:10:cart` が「誰のカートか」、`product:1001` が「何が何個か」です。  
+利用者ごとにキーを分けると、一人分の読み書きで済みます。
+
+:::
+
+<QuizChoice
+title="ハッシュの単位"
+options={[
+{ id: 'a', label: 'HSET は Redis 全体に表を 1 枚作るコマンドである' },
+{ id: 'b', label: '一つのキーの下に、フィールドと値の組を持てる' },
+{ id: 'c', label: 'HGETALL はキー名の一覧を返すコマンドである' },
+]}
+answer="b"
+explanation="ハッシュはキー 1 つに複数フィールドを持ちます。HGETALL は、そのキーのフィールドと値です。"
+
+>
+
+  <div>
+    <pre className="language-text"><code>{`HSET shop:user:10:cart product:1001 2`}</code></pre>
+    この使い方の説明として、正しいものはどれですか。
+  </div>
+</QuizChoice>
+
+## リスト: 最近見た商品
+
+**リスト** は、順番のある配列です。  
+左に足して、新しいものが先頭に来る、という使い方が多いです。
+
+```text
+LPUSH shop:user:10:recent 1001
+LPUSH shop:user:10:recent 1003
+```
+
+成功時は、リストの長さが返ります。
+
+```text
+(integer) 1
+(integer) 2
+```
+
+先頭から見る:
+
+```text
+LRANGE shop:user:10:recent 0 -1
+```
+
+例:
+
+```text
+1) "1003"
+2) "1001"
+```
+
+`0` が先頭、`-1` が末尾です。  
+`LPUSH` したので、後から見た `1003` が先に出ます。
+
+放置するとリストは伸び続けます。  
+直近 10 件だけ残すなら、足した直後に切り詰めます。
+
+```text
+LPUSH shop:user:10:recent 1002
+LTRIM shop:user:10:recent 0 9
+```
+
+`LTRIM` は、指定範囲以外を捨てます。  
+「履歴は新しい 10 件まで」を Redis 側で守れるので、メモリが黙って増えにくいです。
+
+<QuizChoice
+title="リストを伸ばしすぎない"
+options={[
+{ id: 'a', label: 'LPUSH だけ繰り返せば、古い要素は自動的に消える' },
+{ id: 'b', label: 'LTRIM で残す範囲を切ると、直近だけを残せる' },
+{ id: 'c', label: 'LRANGE 0 -1 を実行すると、リストが空になる' },
+]}
+answer="b"
+explanation="リストは LPUSH のたびに伸びます。長さを守るのは LTRIM の役割です。"
+
+>
+
+  <div>
+    <pre className="language-text"><code>{`LPUSH shop:user:10:recent 1002
+LTRIM shop:user:10:recent 0 9`}</code></pre>
+    この組み合わせの目的として、正しいものはどれですか。
+  </div>
+</QuizChoice>
+
+## セット: 重複しない印
+
+**セット** は、同じ値が二度入らない集まりです。  
+商品のタグや、「この商品を見た利用者」のユニーク数が向きます。
+
+```text
+SADD shop:product:1001:tags electronics sale
+```
+
+成功時は、新たに入った要素数が返ります。
+
+```text
+(integer) 2
+```
+
+もう一度同じタグを足すと `0` です。  
+入っているかは `SISMEMBER`、一覧は `SMEMBERS` です。
+
+```text
+SISMEMBER shop:product:1001:tags sale
+```
+
+```text
+(integer) 1
+```
+
+```text
+SMEMBERS shop:product:1001:tags
+```
+
+```text
+1) "electronics"
+2) "sale"
+```
+
+`1` は含まれている、`0` は含まれていません。  
+リストで同じ確認をすると、重複や「入っているか」の走査を自分で書くことになります。
+
+キーの型は `TYPE` で確認できます。
+
+```text
+TYPE shop:user:10:cart
+```
+
+```text
+hash
+```
+
+ハッシュなら `hash`、リストなら `list`、セットなら `set`、文字列なら `string` です。
+
+## よくあるつまずき
+
+- 文字列に JSON を入れたキーへ `HGET` して、型が違うとエラーになる
+- リストの添字を SQL の `LIMIT` だと思い、`LRANGE` が削除だと誤解する
+- セットとリストを混同し、重複を許したい履歴に `SADD` してしまう（順番も残りません）
+
+## まとめ
+
+- ハッシュは、一つのキーの下でフィールドを個別に読み書きできる
+- リストは順番を持ち、`LTRIM` で長さを抑えられる
+- セットは重複しない集まりで、所属の判定が向く
+
+次は [ソート済みセット](./sorted-sets) で、点数付きの順位を扱います。
