@@ -19,7 +19,7 @@ sidebar_position: 1
 - 小さなプログラムを書いて動かす書き方の入口
 - static / final、継承、例外、コレクション、ラムダ・Stream・Optional の入口
 - `.java` がどう `.class` になり、JVM 上で動くか（実行モデル）
-- 値と参照、スタックとヒープ、GC とリーク調査
+- 値と参照、ラッパと Integer キャッシュ、スタックとヒープ、GC とリーク調査
 - ジェネリクス深掘り、日時、ファイル、JDBC、並行処理、アノテーション
 
 ## なぜ入門のあとに実行・メモリか
@@ -75,21 +75,22 @@ sidebar_position: 1
 **参照・回収・実行の深掘り（20〜）**
 
 20. [String と equals](./string-equals) … `hashCode`、文字列プール、Map のキー
-21. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
-22. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、サイズとログ
-23. [ジェネリクスと現代的な型](./generics-and-modern-types) … 不変性、PECS、型消去
-24. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
-25. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と Collector
-26. [日時 API](./datetime) … 日付、時刻、タイムゾーン
-27. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
-28. [JDBC の基礎](./jdbc-basics) … 接続、SQL 実行、接続プール、トランザクションの入口
-29. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期
-30. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
-31. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環
-32. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
-33. [Java メモリモデル](./memory-model) … 可視性、happens-before
-34. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
-35. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
+21. [ラッパ型と Integer キャッシュ](./wrappers-and-integer-cache) … `int` と `Integer`、オートボクシング、`==` の罠
+22. [ヒープとガベージコレクション](./heap-and-gc) … 到達可能性、世代別の仮説、STW
+23. [GC の地図とチューニング入口](./gc-collectors-and-tuning) … コレクタ、弱い参照、サイズとログ
+24. [ジェネリクスと現代的な型](./generics-and-modern-types) … 不変性、PECS、型消去
+25. [設計としてのコレクション](./collections-as-design) … API 境界での公開方法
+26. [Stream と Collector](./stream-and-collectors) … パイプラインの読み方と Collector
+27. [日時 API](./datetime) … 日付、時刻、タイムゾーン
+28. [ファイルとリソース管理](./files-and-resources) … NIO.2 と確実なクローズ
+29. [JDBC の基礎](./jdbc-basics) … 接続、SQL 実行、接続プール、トランザクションの入口
+30. [並行処理（プールと同期）](./concurrency) … Executor、プール、レース、同期
+31. [並行コレクションと CompletableFuture](./concurrent-collections-futures) … 共有 Map、非同期の合成
+32. [終了・デッドロック・ThreadLocal](./shutdown-deadlock-threadlocal) … 停止、ロック循環
+33. [メモリリークとヒープダンプ](./memory-leaks-and-dumps) … 切れない参照と調査手順
+34. [Java メモリモデル](./memory-model) … 可視性、happens-before
+35. [アノテーションとリフレクション](./annotations-reflection) … フレームワークの裏側
+36. [JVM とクラスローディング](./jvm-and-classloading) … ロード階層と性能調査の入口
 
 各ページのコード例は、Java 17 以降を基準にしています。
 

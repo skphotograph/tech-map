@@ -1,0 +1,247 @@
+---
+sidebar_position: 22
+---
+
+# ラッパ型と Integer キャッシュ
+
+[変数と計算](./variables-and-calculation) では、`int` 同士の比較に `==` を使いました。  
+[String と equals](./string-equals) では、文字列の中身は `equals`、`==` は同一性、と切り分けました。
+
+数字でも、同じ切り分けが必要になることがあります。  
+API や `Map` から受け取った在庫数を `Integer` のまま `==` で比べると、テストの 127 個は通り、128 個になった結合試験で突然 `false` になる、という切れ方です。  
+`int` の比較が壊れたのではありません。**数字に見えるオブジェクト**側の話です。
+
+このページでは、`int` と `Integer` の違い、オートボクシング、そして小さな整数の使い回し（Integer キャッシュ）を押さえます。  
+ここでいうキャッシュは、アプリのキャッシュ基盤ではなく、JVM がよく使う整数オブジェクトを使い回す仕組みです。
+
+## このページで分かること
+
+- `int` は値、`Integer` は参照型（ラッパ）であること
+- 代入や計算のときに起きるオートボクシング／アンボクシング
+- `-128`〜`127` が同じインスタンスになりやすく、`==` がテストだけ通る理由
+- `Integer` 同士の中身比較は `equals` にすること
+
+## 先に切る：`int` の `==` は今までどおり
+
+`int` はプリミティブです。  
+変数の箱に入っているのは数量そのものなので、`==` は中身の比較になります。
+
+```java
+int left = 128;
+int right = 128;
+System.out.println(left == right); // true
+```
+
+危ないのは、型が `Integer` に変わったときです。  
+[コレクションとジェネリクス](./collections-generics) で見た `List<Integer>` や `Map<String, Integer>` の値は、`int` ではなくオブジェクトです。  
+[型とメモリ](./types-and-memory) の地図で言えば、箱に入っているのは値ではなく **行き先** です。
+
+```java
+Integer left = 128;
+Integer right = 128;
+System.out.println(left == right);      // false になりやすい
+System.out.println(left.equals(right)); // true
+```
+
+見た目はどちらも「128」です。  
+ログに出しても区別がつきません。  
+だから「数値だから `==`」と手癖で書くと、型がラッパに変わった瞬間に意味が変わります。
+
+:::tip[覚えておくこと]
+
+`int` の `==` は値比較のまま。  
+`Integer` の `==` は「同じインスタンスか」。中身を見るなら `equals`。
+
+:::
+
+<QuizChoice
+title="比べてよい =="
+options={[
+{id: 'a', label: 'int と int'},
+{id: 'b', label: 'Integer と Integer'},
+{id: 'c', label: 'どちらも常に中身の比較になる'},
+]}
+answer="a"
+explanation="int の == は値比較です。Integer は参照型なので、== は同一性です。"
+
+>
+
+  <div>中身が同じかを <code>==</code> で見てよい組み合わせはどれですか。</div>
+</QuizChoice>
+
+## ラッパ型とオートボクシング
+
+`Integer` は `int` をオブジェクトに包んだ型です。  
+`Long` / `Double` / `Boolean` なども同様で、まとめて **ラッパ型** と呼びます。  
+ジェネリクスの型引数にはプリミティブを書けないので、コレクションではラッパが必要になります。
+
+```java
+Integer stock = 127;
+int copied = stock;
+```
+
+1 行目は、コンパイラが `Integer.valueOf(127)` 相当へ直します。  
+`int` をオブジェクトへ包む操作が **オートボクシング** です。  
+2 行目は逆で、オブジェクトから `int` を取り出す **アンボクシング** です。
+
+`stock` が `null` のままアンボックスすると、実行時に `NullPointerException` になります。  
+ラッパは参照型なので、「値が無い」を `null` で表せてしまうのが、`int` との最大の差です。
+
+```java
+Integer stock = null;
+// int copied = stock; // 実行時に NPE
+```
+
+null を表す必要がなければ、計算やローカル変数は `int` のまま持つのが安全です。  
+「無いかもしれない数量」だけ `Integer` にする、と役割を分けると事故が減ります。
+
+## 小さな整数は使い回される
+
+`Integer.valueOf` は、よく使う範囲の整数について、**同じインスタンスを返す**ことがあります。  
+仕様上、`-128` から `127` まではこの使い回しが保証されます。
+
+倉庫の定番サイズだけ、あらかじめ同じ箱を用意して渡す、くらいのイメージです。  
+127 個までは同じ箱が来やすく、128 個は新しい箱になりやすい、という切れ目です。
+
+```java
+Integer a = 127;
+Integer b = 127;
+Integer c = 128;
+Integer d = 128;
+
+System.out.println(a == b); // true（キャッシュ。同じインスタンス）
+System.out.println(c == d); // false になりやすい（別インスタンス）
+System.out.println(c.equals(d)); // true（中身は同じ）
+```
+
+テストデータが全部 1 桁や 2 桁だと、`==` でも通ってしまいます。  
+数量が 128 を超えた結合試験や本番で、いきなり `false` になります。  
+[String と equals](./string-equals) の文字列プールと同じ種類の事故で、**たまたま同じインスタンスだと `==` が通る** だけです。  
+仕組み自体は別物で、文字列リテラルの共有ではありません。
+
+範囲を暗記して「127 までなら `==` でよい」とはしません。  
+JVM の設定で上限が伸びることもあり、128 でも `true` になる環境があります。  
+頼る対象ではない、が結論です。
+
+:::info[片方が int なら]
+
+`stock == 128` のように片方が `int` だと、`Integer` 側がアンボックスされ、**中身の比較**になります。  
+キャッシュは関係しません。  
+その代わり、`stock` が `null` なら NPE です。  
+危ないのは、両方とも `Integer` のときです。
+
+:::
+
+<QuizChoice
+title="127 と 128"
+options={[
+{id: 'a', label: '両方 true'},
+{id: 'b', label: 'a == b は true、c == d は false になりやすい'},
+{id: 'c', label: '両方 false'},
+]}
+answer="b"
+explanation="127 は仕様上キャッシュされ、同じインスタンスになりやすいです。128 は既定では別インスタンスです。中身の比較は equals です。"
+
+>
+
+  <div>既定の JVM で、次の結果として近いのはどれですか。</div>
+  <pre className="language-java"><code>{`Integer a = 127;
+Integer b = 127;
+Integer c = 128;
+Integer d = 128;
+
+// a == b
+// c == d`}</code></pre>
+</QuizChoice>
+
+## 中身を比べるとき
+
+`Integer` 同士の同値は `equals` です。  
+`null` があり得るなら `Objects.equals` を使います。
+
+```java
+import java.util.Objects;
+
+Integer stock = readStockFromApi(); // 外部から来た値。無いこともある
+Integer expected = 128;
+
+Objects.equals(stock, expected); // 両方 null なら true、片方だけなら false
+stock != null && stock.equals(expected);
+```
+
+計算に使うなら、null を先に片付けてから `int` に戻します。
+
+```java
+Integer stock = readStockFromApi();
+if (stock == null) {
+    throw new IllegalStateException("stock is required");
+}
+int qty = stock;
+if (qty >= 128) {
+    // 値としての比較
+}
+```
+
+:::tip[実務での目安]
+
+両方 `Integer` なら `equals`（または `Objects.equals`）。  
+null が要らなければ `int` で持つ。  
+キャッシュ範囲を条件に使わない。
+
+:::
+
+<QuizChoice
+title="Integer 同士の比較"
+options={[
+{id: 'a', label: '=='},
+{id: 'b', label: 'equals（null があり得るなら Objects.equals）'},
+{id: 'c', label: '値が 127 以下なら ==、それ以外は equals'},
+]}
+answer="b"
+explanation="Integer は参照型です。中身の同値は equals です。範囲で == を切り替えると、設定や経路で結果が変わります。"
+
+>
+
+  <div>両方とも <code>Integer</code> で、中身が同じかを知りたいとき、使うべきなのはどれですか。</div>
+</QuizChoice>
+
+<details>
+<summary>他のラッパと、キャッシュの範囲</summary>
+
+ボクシングの使い回しは `Integer` だけではありません。  
+仕様上、次も同じインスタンスになることが保証されます。
+
+- `Boolean` の `true` / `false`
+- `Byte` 全体
+- `Short` と `Integer` の `-128`〜`127`
+- `Character` の 0〜127（ASCII 相当）
+
+`Long` も、多くの JVM では同じ範囲を使い回します。  
+`Double` と `Float` は、同じ値でも別インスタンスになりやすいです。
+
+上限は JVM の設定で伸びることがあります。  
+だから「128 以上なら必ず `==` が false」も、保証ではありません。  
+どのラッパでも、中身の比較は `equals` に揃えるのが安全です。
+
+古いコードの `new Integer(n)` は、127 でも毎回別インスタンスを作ります。  
+コンストラクタは非推奨なので、新規コードでは `valueOf` かオートボクシングを使います。  
+比較を `==` にしない、という結論は同じです。
+
+</details>
+
+## よくあるつまずき
+
+- テスト数量が小さいので、`Integer` 同士の `==` が通ってしまう
+- JSON や `Map` の値が `Integer` なのに、`int` と同じつもりで `==` する
+- `stock == 1` はアンボックスで通り、`stock == expected`（両方 `Integer`）だけ落ちる
+- `null` の `Integer` を `int` に戻して NPE
+- 文字列プールと Integer キャッシュを、同じ仕組みだと思って範囲を暗記する
+
+## まとめ / 次に学ぶとよいこと
+
+- `int` は値。`Integer` は箱に入った参照
+- オートボクシングの実体は `valueOf`。小さな整数は使い回される
+- `Integer` 同士の `==` は同一性。中身は `equals`
+- 片方が `int` ならアンボックス（null なら NPE）
+
+次は [ヒープとガベージコレクション](./heap-and-gc) で、オブジェクトがいつ不要と判定されるかを見ます。
