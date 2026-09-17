@@ -1,0 +1,133 @@
+---
+sidebar_position: 4
+---
+
+# Blob Storage
+
+コンテナの匿名アクセスを「画像配信用」で有効にし、同じストレージアカウントに請求書も置いてしまう。  
+Azure のオブジェクトストレージは **Blob** です。入れ物の外側が **ストレージアカウント**、その中のフォルダに近い単位が **コンテナ**、中身が Blob です。  
+S3 / Cloud Storage と同じ役割で、名前の階層が一段多い、と捉えると迷いにくいです。
+
+## このページで分かること
+
+- ストレージアカウント名の制約
+- コンテナの公開アクセス
+- アップロードと、アプリからの向き
+
+## ストレージアカウントとコンテナ
+
+ストレージアカウント名は、世界で一意、3〜24 文字の英小文字と数字です。  
+`shopdev123456` のように、衝突しにくい名前にします。  
+場所は `japaneast`。リソースグループは `rg-shop-dev`。
+
+```bash
+az storage account create \
+  --name shopdev123456 \
+  --resource-group rg-shop-dev \
+  --location japaneast \
+  --sku Standard_LRS \
+  --kind StorageV2
+```
+
+成功時は、アカウントの JSON が出ます。`provisioningState` が `Succeeded` なら作成できています。
+
+コンテナを作ります。既定は非公開です。
+
+```bash
+az storage container create \
+  --account-name shopdev123456 \
+  --name invoices \
+  --auth-mode login
+```
+
+成功時は `"created": true` を含む JSON です。  
+`--public-access blob` は、匿名で Blob を取れる設定です。請求書コンテナに付けないでください。
+
+## オブジェクトを置く
+
+```bash
+az storage blob upload \
+  --account-name shopdev123456 \
+  --container-name invoices \
+  --name 1001.pdf \
+  --file invoice-1001.pdf \
+  --auth-mode login
+```
+
+成功時は、アップロード結果の JSON です。  
+一覧:
+
+```bash
+az storage blob list \
+  --account-name shopdev123456 \
+  --container-name invoices \
+  --auth-mode login \
+  --output table
+```
+
+```text
+Name      Blob Type    Length
+--------  -----------  ------
+1001.pdf  BlockBlob    20480
+```
+
+表にはコンテナと Blob 名（`invoices` / `1001.pdf`）を残します。  
+URL の形は次です（非公開なら、この URL を知っているだけでは取れません）。
+
+```text
+https://shopdev123456.blob.core.windows.net/invoices/1001.pdf
+```
+
+:::warning[匿名アクセスを既定にしない]
+
+ポータルの「コンテナレベルの匿名アクセスを許可」は、S3 のパブリックブロックを外すのと同じ方向です。  
+公開サムネイルが必要なら、公開用アカウントまたは CDN 用コンテナを分けます。  
+アプリからの取得は、マネージド ID の RBAC にします。
+
+:::
+
+`--auth-mode login` は、今の `az login` の身分を使います。  
+アカウントキーをコマンドに埋め込むより、こちらの方が教材と現場の両方で安全です。  
+実行には、データ面のロール（Storage Blob Data Contributor など）が別途必要なことがあります。コントロールプレーンの Contributor だけでは足りない、が Azure らしいつまずきです。
+
+<QuizChoice
+title="階層"
+options={[
+{ id: 'a', label: 'Blob はストレージアカウントの直下にだけ置き、コンテナは使わない' },
+{ id: 'b', label: 'ストレージアカウントの中にコンテナを作り、その中に Blob を置く' },
+{ id: 'c', label: 'ストレージアカウント名はリソースグループ内だけで一意なら足りる' },
+]}
+answer="b"
+explanation="アカウント → コンテナ → Blob です。アカウント名はグローバルに近い一意制約があります。"
+
+>
+
+  <div>Azure のオブジェクト保存の説明として、適切なものはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="入れ物の単位"
+answer="container"
+explanation="ストレージアカウントの中の入れ物はコンテナ（container）です。"
+
+>
+
+  <div>
+    invoices を作るコマンドの引数です。空欄を埋めてください。
+    <pre className="language-text"><code>{`az storage ______ create --account-name shopdev123456 --name invoices`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- コントロールプレーンの権限だけで `AuthorizationFailure` になり、キーをコマンドに貼ってしまう
+- アカウントのファイアウォールで自分の IP だけ許可し、App Service から突然届かない
+- 冗長性 SKU を本番のまま検証に使い、保管代だけ先に増える
+
+## まとめ
+
+- Azure はストレージアカウント、コンテナ、Blob の三段である
+- 既定は非公開、匿名アクセスは公開してよい入れ物だけ
+- アプリはマネージド ID、人間の CLI は `--auth-mode login`
+
+次は [仮想ネットワークと VM](./vnet-and-vm) で、ネットワークと仮想マシンを扱います。

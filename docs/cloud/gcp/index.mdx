@@ -1,0 +1,47 @@
+---
+sidebar_position: 1
+---
+
+# GCP をはじめよう
+
+この章では、[クラウドの考え方](../fundamentals/) で押さえた部品を、**Google Cloud（GCP）** の名前と操作に落とします。  
+手を動かす入口は **プロジェクト** とコマンドラインの `gcloud` です。  
+通販の `shop-api` を想定し、画像は Cloud Storage、注文は Cloud SQL、HTTP の出し方は Cloud Run、必要なら Compute Engine、と組み立てます。
+
+## この章で分かること
+
+- プロジェクト、課金アカウント、`gcloud` の現在地
+- IAM とサービスアカウント（アプリの身分）
+- Cloud Storage、VPC と Compute Engine、Cloud Run と Cloud SQL
+- 構成を一枚にしたときの、レビュー観点
+
+## こんな場面で効く
+
+コンソールでは検証プロジェクトを開いているのに、ターミナルの `gcloud` は本番プロジェクトを向いている。  
+サービスアカウント鍵をリポジトリに置き、Cloud Storage の権限が本番の削除まで含む。  
+Cloud Run は 200 を返しているのに、Cloud SQL へはプライベート接続が無くタイムアウトする。
+
+GCP の製品名を覚える前に、[よくある構成](../fundamentals/typical-architecture) の役割へ戻せるようにします。
+
+:::tip[この章のゴール]
+
+いまのプロジェクトを CLI で確認し、非公開のバケットとアプリの身分を扱い、Cloud Run と Cloud SQL の線が「誰が誰に届くか」として説明できる状態を目指します。
+
+:::
+
+## 学習のロードマップ
+
+1. [プロジェクトと gcloud](./project-and-cli) … 箱の選択、API 有効化、成功時の見え方
+2. [IAM とサービスアカウント](./iam) … 人間とアプリの権限
+3. [Cloud Storage](./cloud-storage) … バケット、公開範囲、オブジェクトの読み書き
+4. [VPC と Compute Engine](./vpc-and-compute) … 仮想ネットワークと仮想マシン
+5. [Cloud Run と Cloud SQL](./cloud-run-and-sql) … アプリ基盤とマネージド PostgreSQL
+6. [組み立てと運用](./assemble) … 一枚の構成、ログ、消し忘れ
+
+## 手を動かす前提
+
+コマンド例は、検証用プロジェクトがある場合の形です。  
+課金アカウントが無い場合は、成功時の出力を読み、現場の画面と対応づけてください。  
+検証で作った資源は、[料金とコスト感覚](../fundamentals/billing) のとおり、作業後に削除します。
+
+この章の CLI 例は `gcloud` の一般的な出力です。フラグの細部は `gcloud サブコマンド --help` で確認してください。

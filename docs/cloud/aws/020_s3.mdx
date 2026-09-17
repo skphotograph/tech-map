@@ -1,0 +1,125 @@
+---
+sidebar_position: 4
+---
+
+# S3
+
+バケットを公開にして画像を配ったつもりが、同じバケットに個人情報の CSV もあった。  
+AWS のオブジェクトストレージは **S3**（Simple Storage Service）です。入れ物はバケット、中身はオブジェクトです。  
+[Cloud Storage](../gcp/cloud-storage) と同じ役割で、公開の止め方が製品として強い、という違いがあります。
+
+## このページで分かること
+
+- バケット名とリージョン
+- パブリックアクセスブロック
+- `aws s3` でのコピーと一覧
+
+## バケットを作る
+
+名前はグローバルに一意です。リージョンはアプリと同じ `ap-northeast-1` にします。
+
+```bash
+aws s3api create-bucket \
+  --bucket shop-dev-images-123456 \
+  --region ap-northeast-1 \
+  --create-bucket-configuration LocationConstraint=ap-northeast-1
+```
+
+成功時は、バケットの場所を示す JSON が返ります。
+
+```text
+{
+    "Location": "http://shop-dev-images-123456.s3.amazonaws.com/"
+}
+```
+
+公開事故を減らすため、作成直後にパブリックアクセスブロックを確認します。  
+新規バケットでは既定でブロックが有効なことが多いです。検証で外し、本番に残す、が事故です。
+
+```bash
+aws s3api get-public-access-block --bucket shop-dev-images-123456
+```
+
+成功時、`BlockPublicAcls` などが `true` なら、匿名公開への近道が塞がっています。  
+外すときは、公開してよいオブジェクトだけを別バケットにする、を先に検討します。
+
+## オブジェクトを置く
+
+```bash
+aws s3 cp invoice-1001.pdf s3://shop-dev-images-123456/invoices/1001.pdf
+```
+
+成功時:
+
+```text
+upload: ./invoice-1001.pdf to s3://shop-dev-images-123456/invoices/1001.pdf
+```
+
+一覧:
+
+```bash
+aws s3 ls s3://shop-dev-images-123456/invoices/
+```
+
+```text
+2026-04-01 12:00:00      20480 1001.pdf
+```
+
+`s3://` は S3 のアドレスの書き方です。表にはキー `invoices/1001.pdf` を残します。
+
+:::warning[静的 Web ホスティングの公開を請求書に使わない]
+
+S3 の静的ウェブサイト公開は、バケットを読み取り可能にします。  
+商品の静的ファイル用と、請求書用を分けてください。  
+アプリからの取得は、EC2 / ECS のロールによる `s3:GetObject` にします。
+
+:::
+
+## アプリからのアクセス
+
+タスクロールまたはインスタンスプロファイルに、そのバケット ARN への `s3:PutObject` / `s3:GetObject` を付けます。  
+`Resource` を `arn:aws:s3:::*` にしないでください。
+
+署名付き URL は、非公開オブジェクトを短時間だけブラウザへ渡すときに使います。GCP の話と同じ役割です。
+
+<QuizChoice
+title="S3 の公開"
+options={[
+{ id: 'a', label: 'パブリックアクセスブロックを外し、バケット全体を公開するのが検証の標準である' },
+{ id: 'b', label: '既定は非公開のまま、公開が必要なファイルは範囲を分けて扱う' },
+{ id: 'c', label: 'バケット名はアカウント内だけで一意なら足りる' },
+]}
+answer="b"
+explanation="バケット名はグローバルに一意です。公開は意図した範囲だけにします。"
+
+>
+
+  <div>S3 の使い方として、適切なものはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="アドレスの接頭辞"
+answer="s3://"
+explanation="S3 のバケットとオブジェクトは s3:// で書きます。"
+
+>
+
+  <div>
+    バケットを指す書き方の先頭です。空欄を埋めてください。
+    <pre className="language-text"><code>{`______shop-dev-images-123456/invoices/1001.pdf`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- `us-east-1` で作り、東京のアプリから遠くへ取りに行く
+- コンソールの「公開」ウィザードを、請求書バケットに適用する
+- バージョニング無しで上書きし、戻し方がない
+
+## まとめ
+
+- S3 はバケットとオブジェクト、名前はグローバル、中身はリージョンにある
+- パブリックアクセスブロックを検証の便利のために外しっぱなしにしない
+- アプリはロールで、特定バケットの Action だけを使う
+
+次は [VPC と EC2](./vpc-and-ec2) で、仮想ネットワークと仮想マシンを扱います。

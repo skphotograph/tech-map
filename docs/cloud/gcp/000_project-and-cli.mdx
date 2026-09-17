@@ -1,0 +1,147 @@
+---
+sidebar_position: 2
+---
+
+# プロジェクトと gcloud
+
+同じ会社の GCP でも、検証の操作が本番プロジェクトに混ざると、請求も障害も切り分け不能になります。  
+GCP では、資源の箱が **プロジェクト** です。コンソールで開いている箱と、CLI が見ている箱は、別々にずれます。
+
+## このページで分かること
+
+- プロジェクトと課金アカウントの関係
+- `gcloud` の認証と、現在プロジェクトの確認
+- API を有効にしてからサービスを使う流れ
+
+## プロジェクトという箱
+
+GCP の仮想マシン、バケット、Cloud SQL は、どれかの **プロジェクト** に属します。  
+プロジェクト ID はグローバルに一意で、例は `shop-dev-123456` のように英数字です。  
+表示名（`shop-dev`）と ID は別です。CLI と IAM は ID を使います。
+
+その上に、組織（Organization）とフォルダがある会社もあります。  
+日常の「今どこに作るか」は、まずプロジェクトです。  
+**課金アカウント** はプロジェクトに紐づきます。箱が違っても、同じ請求に乗る構成があり得ます。内訳はラベルで追います。
+
+:::tip[作業の最初]
+
+コンソール右上（またはプロジェクト選択）と、`gcloud config get-value project` が同じ ID かを見る。
+
+:::
+
+## gcloud で現在地を見る
+
+[Google Cloud SDK](https://cloud.google.com/sdk) を入れ、検証用のユーザでログインします。  
+成功すると、ブラウザまたはコマンドの指示に従って認証が終わり、アカウントが一覧に出ます。
+
+```bash
+gcloud auth login
+```
+
+```bash
+gcloud auth list
+```
+
+成功時の例です。`*` が、CLI が使うアカウントです。
+
+```text
+Credentialed Accounts
+ACTIVE  ACCOUNT
+*       you@example.com
+```
+
+プロジェクトを指定します。
+
+```bash
+gcloud config set project shop-dev-123456
+```
+
+成功時:
+
+```text
+Updated property [core/project].
+```
+
+いまの箱を確認します。
+
+```bash
+gcloud config get-value project
+```
+
+```text
+shop-dev-123456
+```
+
+ここが想定と違うと、このあと作るバケットも VM も、別請求・別権限の箱に入ります。  
+`gcloud config list` で、アカウントとプロジェクトをまとめて見られます。
+
+<details>
+<summary>アプリケーション既定の認証</summary>
+
+手元の開発で Google のクライアントライブラリを使うとき、`gcloud auth application-default login` で、ライブラリ向けの認証を別途用意することがあります。  
+これは人間の開発用です。本番のアプリ実行環境では、実行環境のサービスアカウントを使い、このログインを前提にしません。
+
+</details>
+
+## API を有効にする
+
+GCP では、使うサービスごとに API を有効化します。  
+有効化していないプロジェクトでコマンドを打つと、権限ではなく「API が無効」で失敗することがあります。壊れたわけではありません。
+
+例として、Cloud Storage を使う前です。
+
+```bash
+gcloud services enable storage.googleapis.com
+```
+
+成功時は、操作 ID を含むメッセージが出ます。  
+`gcloud services list --enabled` で、有効済みを確認できます。
+
+:::warning[本番プロジェクトで検証 API を雑に有効にしない]
+
+検証は検証プロジェクトで行います。  
+本番で試し打ちすると、資源と IAM と請求が混ざります。
+
+:::
+
+<QuizChoice
+title="CLI の現在地"
+options={[
+{ id: 'a', label: 'コンソールで検証を開いていれば、gcloud も必ず同じプロジェクトを向く' },
+{ id: 'b', label: 'gcloud config get-value project で、CLI が操作するプロジェクト ID を確認する' },
+{ id: 'c', label: 'プロジェクト表示名とプロジェクト ID は、CLI では同じ値として扱われる' },
+]}
+answer="b"
+explanation="コンソールと CLI の箱は独立してずれます。操作前にプロジェクト ID を確認します。"
+
+>
+
+  <div>gcloud で資源を作る前に確認することはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="現在プロジェクト"
+answer="project"
+explanation="gcloud config get-value project で、CLI が向いているプロジェクト ID が出ます。"
+
+>
+
+  <div>
+    いま CLI が操作する箱を確認するコマンドです。空欄に入る語を入れてください。
+    <pre className="language-text"><code>{`gcloud config get-value ______`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- 表示名で検索し、似た名前の本番プロジェクトを選択する
+- `gcloud auth login` のアカウントと、会社の組織の権限が別で、見えるプロジェクトが空
+- API 無効のエラーを IAM 不足と読み、ロールを広げすぎる
+
+## まとめ
+
+- GCP の資源はプロジェクトに属し、CLI はプロジェクト ID を見る
+- コンソールと `gcloud` の箱は、明示的に揃える
+- サービスは API 有効化が前段で、検証は検証プロジェクトで行う
+
+次は [IAM とサービスアカウント](./iam) で、誰が何をしてよいかを扱います。

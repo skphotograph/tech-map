@@ -1,0 +1,45 @@
+---
+sidebar_position: 1
+---
+
+# Azure をはじめよう
+
+この章では、同じ `shop-api` の部品を **Microsoft Azure** の名前と操作に落とします。  
+入口は **サブスクリプション** と **リソースグループ**、コマンドは Azure CLI の `az` です。  
+オブジェクトは Blob、仮想マシンは Virtual Machines、HTTP のアプリは App Service、表は Azure Database for PostgreSQL、権限は Microsoft Entra ID と RBAC、と読み替えます。
+
+## この章で分かること
+
+- テナント、サブスクリプション、リソースグループ
+- RBAC とマネージド ID
+- Blob、仮想ネットワークと VM、App Service とマネージド PostgreSQL
+- 一枚の構成と、ログ・削除
+
+## こんな場面で効く
+
+検証と本番の資源が、同じリソースグループに混ざっていて、削除確認の一覧が読めない。  
+サブスクリプションの Owner を開発者全員に付け、誰が VM を作ったか追えない。  
+Blob コンテナを匿名読み取りにし、App Service の接続文字列がソースリポジトリに残っている。
+
+[よくある構成](../fundamentals/typical-architecture) の役割列に戻しながら読むと、GCP / AWS と三重暗記にならずに済みます。
+
+:::tip[この章のゴール]
+
+今のサブスクリプションとリソースグループを CLI で確認し、非公開の Blob と DB を扱い、App Service の線を説明できる状態を目指します。
+
+:::
+
+## 学習のロードマップ
+
+1. [サブスクリプションと Azure CLI](./subscription-and-cli) … 箱の選択、`az account show`
+2. [Entra ID と RBAC](./entra-and-rbac) … 人間とマネージド ID
+3. [Blob Storage](./blob-storage) … ストレージアカウントとコンテナ
+4. [仮想ネットワークと VM](./vnet-and-vm) … VNet、NSG、仮想マシン
+5. [App Service と Azure Database](./app-service-and-sql) … アプリ基盤とマネージド PostgreSQL
+6. [組み立てと運用](./assemble) … 一枚、Monitor、消し忘れ
+
+## 手を動かす前提
+
+コマンド例は、検証用サブスクリプションがある場合の形です。  
+個人のサブスクリプションに会社の本番を混ぜないでください。  
+CLI 例は Azure CLI の一般的な出力です。

@@ -1,0 +1,110 @@
+---
+sidebar_position: 5
+---
+
+# 仮想ネットワークと VM
+
+NSG で 22 番と 3389 番を `0.0.0.0/0` に開け、週末にスキャンされる。  
+Azure の仮想ネットワークは **VNet**、仮想マシンは **Virtual Machines**、許可ルールは **NSG**（ネットワークセキュリティグループ）です。  
+AWS の VPC に近く、VNet もリージョン（場所）に閉じます。
+
+## このページで分かること
+
+- サブネットの分け方
+- NSG の優先順位と、DB を世界に開けないこと
+- 小さな VM の作成と削除
+
+## VNet とサブネット
+
+```bash
+az network vnet create \
+  --resource-group rg-shop-dev \
+  --name vnet-shop-dev \
+  --location japaneast \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name snet-app \
+  --subnet-prefix 10.0.1.0/24
+```
+
+成功時は、VNet と最初のサブネットが `Succeeded` になります。  
+DB 用サブネットは別に切り、委任やプライベートエンドポイントの要件は製品に合わせます。  
+アプリは `snet-app`、データは `snet-data`、公開の入口は別、が読みやすいです。
+
+## NSG
+
+NSG は、サブネットまたは NIC に付ける許可・拒否の一覧です。  
+番号の小さいルールが優先されます。  
+SSH（22）や RDP（3389）、PostgreSQL（5432）を Internet から許可しない、が [ネットワーク](../fundamentals/networking) の Azure での具体です。
+
+```bash
+az network nsg list --resource-group rg-shop-dev --output table
+```
+
+成功時は、NSG 名と場所が表で出ます。  
+ポータルの「受信ポートの規則」で、ソース `Any` と 22 が並んでいないかを見ます。
+
+:::warning[Bastion か、限定したソース]
+
+管理ポートを世界に開けないでください。  
+Azure Bastion や、会社の IP、Just-in-Time アクセスに寄せます。  
+PostgreSQL のポートを NSG で Internet に開けないのは、RDS / Cloud SQL と同じ判断です。
+
+:::
+
+## 小さな VM
+
+課金が発生します。サイズは最小、作業後に削除します。  
+イメージとサイズの正確な名前は時期で変わるので、`az vm list-skus` やポータルでその時点の値を引き、形だけ示します。
+
+```bash
+az vm create \
+  --resource-group rg-shop-dev \
+  --name vm-shop-bastion \
+  --image Debian11 \
+  --size Standard_B1s \
+  --vnet-name vnet-shop-dev \
+  --subnet snet-app \
+  --public-ip-sku Standard
+```
+
+成功時は、公開 IP と `provisioningState` が出ます。  
+中に入ったあとは [Linux](../../foundations/linux/) と [SSH](../../foundations/remote-access/ssh) です。  
+パスワードをコマンド履歴に残さないでください。SSH 鍵を使います。
+
+削除は、リソースグループごと消す方法が検証では速いです。  
+グループに本番が混ざっていないことを、先に `az resource list` で確認します。
+
+```bash
+az vm delete --resource-group rg-shop-dev --name vm-shop-bastion --yes
+```
+
+公開 IP とディスクが残ることがあるので、グループの資源一覧を見ます。
+
+<QuizChoice
+title="NSG"
+options={[
+{ id: 'a', label: '検証 VM なら 22 番を Internet に開けておくのが標準である' },
+{ id: 'b', label: '管理ポートと 5432 は、必要なソースだけに限定する' },
+{ id: 'c', label: 'VNet はグローバルなので、japaneast と westus の VM を同じサブネットに置ける' },
+]}
+answer="b"
+explanation="VNet は場所に閉じます。管理ポートと DB ポートはソースを限定します。"
+
+>
+
+  <div>Azure の仮想ネットワークについて、適切なものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- NSG を NIC とサブネットの両方に付け、拒否の出所が分からない
+- VM を消しても OS ディスクと公開 IP が残る
+- アドレス空間が会社 VPN と重なり、ハイブリッド接続で経路が壊れる
+
+## まとめ
+
+- Azure の VNet は場所に閉じ、サブネットで役割を分ける
+- NSG で 22 / 3389 / 5432 を世界に開けない
+- 検証 VM はディスクと IP の残存まで見て削除する
+
+次は [App Service と Azure Database](./app-service-and-sql) で、注文 API の載せ方を扱います。

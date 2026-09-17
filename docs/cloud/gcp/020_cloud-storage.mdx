@@ -1,0 +1,137 @@
+---
+sidebar_position: 4
+---
+
+# Cloud Storage
+
+商品画像を Compute Engine のディスクに置き続け、ディスク警告のあとに注文画面が止まります。  
+GCP のオブジェクトストレージは **Cloud Storage** です。入れ物は **バケット**、中身はオブジェクトです。  
+[保存](../fundamentals/storage) の考え方を、コマンドに落とします。
+
+## このページで分かること
+
+- バケット名とリージョン
+- 均一なバケットレベルアクセスと、公開の扱い
+- オブジェクトのアップロードと、アプリからの読み書きの向き
+
+## バケットを作る
+
+バケット名はグローバルに一意です。`shop-dev-images` だけでは、既に取られていることが多いです。  
+プロジェクト ID を含めるなど、衝突しにくい名前にします。  
+場所はアプリと同じリージョン（例: `asia-northeast1`）にします。[リージョン](../fundamentals/regions-and-availability) の遅延の話です。
+
+```bash
+gcloud storage buckets create gs://shop-dev-images-123456 \
+  --location=asia-northeast1 \
+  --uniform-bucket-level-access
+```
+
+成功時の例:
+
+```text
+Creating gs://shop-dev-images-123456/...
+```
+
+`--uniform-bucket-level-access` は、オブジェクトごとのバラバラな ACL ではなく、バケットの IAM で権限を揃える設定です。  
+公開と非公開の事故を、オブジェクト単位の例外で増やしにくくします。
+
+一覧:
+
+```bash
+gcloud storage buckets list
+```
+
+成功時は、バケット名と場所が表で出ます。  
+`gs://` は Cloud Storage のアドレスの書き方です。
+
+## オブジェクトを置く
+
+ローカルのファイルをキー（パス）付きで置きます。
+
+```bash
+gcloud storage cp invoice-1001.pdf gs://shop-dev-images-123456/invoices/1001.pdf
+```
+
+成功時:
+
+```text
+Copying file://invoice-1001.pdf to gs://shop-dev-images-123456/invoices/1001.pdf
+```
+
+一覧:
+
+```bash
+gcloud storage ls gs://shop-dev-images-123456/invoices/
+```
+
+```text
+gs://shop-dev-images-123456/invoices/1001.pdf
+```
+
+表の `invoice_key` には `invoices/1001.pdf` を残し、実体はこのバケットです。
+
+:::warning[公開はバケット全体で始めない]
+
+コンソールの「公開」や `allUsers` への `roles/storage.objectViewer` は、中身すべてが匿名で読める設定になり得ます。  
+サムネイルだけ公開したいなら、公開用バケットを分けるか、署名付き URL で期限付きの取得にする、を先に検討します。  
+請求書と商品サムネイルを同じ公開設定にしないでください。
+
+:::
+
+## アプリからのアクセス
+
+shop-api は、人間の `gcloud` ではなく、[サービスアカウント](./iam) で読み書きします。  
+アプリの実行環境に `shop-api@...` を付け、そのプリンシパルへ `roles/storage.objectAdmin` より狭い、オブジェクト作成と読み取りだけを **そのバケットに** 付けます。
+
+コード上の操作は、クライアントライブラリでバケット名とキーを指定する形です。  
+接続文字列にパスワードを書く RDB と違い、GCP 内では実行環境の身分が認証になります。
+
+<details>
+<summary>署名付き URL</summary>
+
+非公開オブジェクトを、ログイン済み利用者だけが短時間取得する場合、アプリが署名付き URL を発行してブラウザへ渡す方法があります。  
+バケットを `allUsers` 読み取りにする代わりになります。期限と、どのキーを署名したかを、アプリの認可と揃えます。
+
+</details>
+
+<QuizChoice
+title="バケットの公開"
+options={[
+{ id: 'a', label: '請求書もサムネイルも、同じバケットを allUsers 読み取りにすると運用が楽である' },
+{ id: 'b', label: '既定は非公開にし、公開が必要なオブジェクトは範囲を分けて扱う' },
+{ id: 'c', label: 'バケット名はプロジェクト内だけで一意なら、世界で重複してよい' },
+]}
+answer="b"
+explanation="バケット名はグローバルに一意です。公開は意図した範囲だけにします。"
+
+>
+
+  <div>Cloud Storage の使い方として、適切なものはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="アドレスの接頭辞"
+answer="gs://"
+explanation="Cloud Storage のバケットとオブジェクトは gs:// で書きます。"
+
+>
+
+  <div>
+    バケット shop-dev-images-123456 を指す書き方の先頭です。空欄を埋めてください。
+    <pre className="language-text"><code>{`______shop-dev-images-123456`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- リージョンを `US` のまま作り、東京のアプリから毎回遠くへ取りに行く
+- オブジェクト ACL とバケット IAM が混ざり、誰が読めるか説明できない
+- ライフサイクル未設定で、検証画像が本番バケットに溜まる
+
+## まとめ
+
+- Cloud Storage はバケットとオブジェクト、名前はグローバルに一意である
+- 均一アクセスと既定非公開で、公開事故を減らす
+- アプリはサービスアカウントで、必要なバケットだけを触る
+
+次は [VPC と Compute Engine](./vpc-and-compute) で、仮想ネットワークと仮想マシンを扱います。

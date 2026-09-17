@@ -1,0 +1,8 @@
+{
+  "label": "GCP",
+  "position": 2,
+  "link": {
+    "type": "doc",
+    "id": "cloud/gcp/index"
+  }
+}

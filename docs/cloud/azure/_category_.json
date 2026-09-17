@@ -1,0 +1,8 @@
+{
+  "label": "Azure",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "cloud/azure/index"
+  }
+}

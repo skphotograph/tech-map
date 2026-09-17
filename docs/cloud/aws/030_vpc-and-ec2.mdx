@@ -1,0 +1,111 @@
+---
+sidebar_position: 5
+---
+
+# VPC と EC2
+
+RDS のセキュリティグループに `0.0.0.0/0` の 5432 を付けて「アプリから繋がった」と安心すると、世界からも同じ穴が見えます。  
+AWS の仮想ネットワークは **VPC**（リージョンに閉じる）、仮想マシンは **EC2** です。  
+GCP との差は、VPC がリージョン単位であることと、**セキュリティグループ** が資源に付く許可ルールであることです。
+
+## このページで分かること
+
+- 公開サブネットと非公開サブネット
+- セキュリティグループのステートフルな許可
+- 小さな EC2 の起動と削除
+
+## VPC はリージョンの網
+
+1 つの AWS リージョンに VPC を作り、中をサブネットに分けます。  
+サブネットはさらにゾーン（Availability Zone）に属します。  
+アプリを 2 ゾーンに置くなら、サブネットも 2 ゾーン分あります。
+
+| サブネット | よく置くもの           | インターネットゲートウェイ |
+| ---------- | ---------------------- | -------------------------- |
+| 公開       | ロードバランサ、踏み台 | 付ける                     |
+| 非公開     | アプリ、RDS            | 直接は付けない（NAT は別） |
+
+default VPC は検証で触りやすい一方、広い公開設定が残っていることがあります。  
+本番は、必要なサブネットだけを切る方が説明しやすいです。
+
+## セキュリティグループ
+
+セキュリティグループは、インスタンスや RDS、ロードバランサに付ける **許可リスト** です。  
+ステートフルで、入方向を許せば戻り通信は付いてきます。  
+ソースに別のセキュリティグループ ID を書けるので、「アプリ用 SG から 5432 だけ」が基本です。  
+IP の `0.0.0.0/0` を DB に書かない、が [ネットワーク](../fundamentals/networking) の AWS での具体です。
+
+```bash
+aws ec2 describe-security-groups --region ap-northeast-1
+```
+
+成功時は、グループ ID、ポート、`IpRanges` が JSON で出ます。  
+`CidrIp` が `0.0.0.0/0` で `FromPort` が 22 や 5432 なら、世界に開いています。
+
+:::warning[22 と 5432 を 0.0.0.0/0 にしない]
+
+SSH は自分の IP か、Session Manager（SSM）に寄せます。  
+RDS はアプリのセキュリティグループだけをソースにします。
+
+:::
+
+## 小さな EC2
+
+課金が発生します。Amazon Linux などの無料枠対象でも、ディスクと IP は残ります。  
+AMI ID はリージョンと時期で変わるので、コンソールまたは `aws ssm get-parameters` でその時点の公式 AMI を引きます。ここでは形だけ示します。
+
+```bash
+aws ec2 run-instances \
+  --region ap-northeast-1 \
+  --image-id ami-xxxxxxxx \
+  --instance-type t3.micro \
+  --subnet-id subnet-xxxxxxxx \
+  --associate-public-ip-address
+```
+
+成功時は `InstanceId` が `i-` で始まります。
+
+```bash
+aws ec2 describe-instances --region ap-northeast-1 --query "Reservations[].Instances[].InstanceId"
+```
+
+SSH 鍵を使う場合は、秘密鍵を Git に置かないでください。  
+SSM が使えると、22 を開けずにシェルに入れます。中に入ったあとは [Linux](../../foundations/linux/) です。
+
+削除（終了）:
+
+```bash
+aws ec2 terminate-instances --region ap-northeast-1 --instance-ids i-xxxxxxxx
+```
+
+成功時、状態が `shutting-down` に向かいます。  
+終了しても、別途作った EBS ボリュームと Elastic IP は残ることがあります。一覧で確認します。
+
+<QuizChoice
+title="RDS への許可"
+options={[
+{ id: 'a', label: 'RDS のセキュリティグループは 0.0.0.0/0 の 5432 が検証の標準である' },
+{ id: 'b', label: 'アプリ用セキュリティグループからの 5432 だけを RDS に許可する' },
+{ id: 'c', label: 'VPC はグローバルなので、東京とバージニアの EC2 は同じサブネットに置ける' },
+]}
+answer="b"
+explanation="VPC はリージョンに閉じます。DB はアプリの SG からのみ許可します。"
+
+>
+
+  <div>AWS のネットワークについて、適切なものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- 公開サブネットに RDS を置き、公開 IP まで付ける
+- セキュリティグループとネットワーク ACL を同時にいじり、どちらが拒否か分からない
+- インスタンスを止めても Elastic IP が残り、請求が続く
+
+## まとめ
+
+- AWS の VPC はリージョン単位、サブネットで公開寄りと非公開を分ける
+- セキュリティグループは資源への許可リストで、DB はアプリ SG だけをソースにする
+- EC2 は IaaS で、終了後もディスクと IP の残存を見る
+
+次は [アプリと RDS](./apps-and-rds) で、負荷分散とマネージド PostgreSQL を扱います。

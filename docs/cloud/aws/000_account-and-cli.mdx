@@ -1,0 +1,123 @@
+---
+sidebar_position: 2
+---
+
+# アカウントと AWS CLI
+
+ルートユーザでコンソールに入り、アクセスキーまで発行して日常作業に使うと、その鍵が漏れたときの被害がアカウント全体になります。  
+AWS では、請求と資源の箱が **アカウント**（12 桁の ID）です。日常は IAM ユーザまたは IAM Identity Center の身分で操作します。
+
+## このページで分かること
+
+- アカウントとリージョンの独立性
+- `aws sts get-caller-identity` で呼び出し元を見ること
+- プロファイルと既定リージョン
+
+## アカウントという箱
+
+AWS の資源は、アカウント × リージョンに置かれるものが多いです。  
+S3 のバケット名はグローバルに一意でも、中身はリージョンにあります。  
+IAM はアカウントに対してグローバル、EC2 と VPC はリージョン単位、と覚えると「無い」の多くがリージョン違いです。
+
+会社では、検証アカウントと本番アカウントを分けることがよくあります。  
+GCP のプロジェクト分割に相当します。同じログインでも、今操作しているアカウント ID が違う、が起きます。
+
+:::warning[ルートユーザを日常使いしない]
+
+アカウント作成時のルートは、請求と最上位の操作向けです。  
+多要素認証を付け、アクセスキーは作らず、日常は弱い身分を使います。
+
+:::
+
+## 呼び出し元を見る
+
+AWS CLI を入れ、検証用の身分で設定します。  
+成功の確認は、次が一番先です。
+
+```bash
+aws sts get-caller-identity
+```
+
+成功時の例です。`Account` が 12 桁の箱、`Arn` が今の身分です。
+
+```text
+{
+    "UserId": "AIDAIOSFODNN7EXAMPLE",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/dev"
+}
+```
+
+`123456789012` と `AIDAIOSFODNN7EXAMPLE` は公式ドキュメントでも使う形式のプレースホルダです。  
+自分の出力では、検証アカウントの ID と、ルートではない ARN になっているかを見ます。
+
+既定リージョンを確認します。
+
+```bash
+aws configure get region
+```
+
+```text
+ap-northeast-1
+```
+
+東京は `ap-northeast-1` です。  
+ここが `us-east-1` のままだと、EC2 一覧が空に見え、別の請求リージョンに VM を作ることがあります。
+
+```bash
+aws ec2 describe-instances --region ap-northeast-1
+```
+
+成功時は JSON で予約（reservation）とインスタンスが出ます。無ければ `Reservations` が空です。壊れたわけではありません。
+
+<details>
+<summary>プロファイル</summary>
+
+`~/.aws/credentials` に複数プロファイルを置き、`--profile shop-dev` で切り替えます。  
+本番プロファイルを検証コマンドに付けないよう、プロンプトや環境変数 `AWS_PROFILE` を意識します。  
+認証情報ファイルそのものを Git に含めないでください。
+
+</details>
+
+<QuizChoice
+title="呼び出し元"
+options={[
+{ id: 'a', label: 'コンソールが東京なら、CLI の既定リージョンも必ず東京である' },
+{ id: 'b', label: 'aws sts get-caller-identity で、アカウント ID と今の身分の ARN を確認する' },
+{ id: 'c', label: 'ルートユーザのアクセスキーを開発者全員で共有すると、監査がしやすい' },
+]}
+answer="b"
+explanation="コンソールと CLI は独立します。呼び出し元とリージョンをコマンドで確認します。ルート鍵の共有は監査も被害も悪化します。"
+
+>
+
+  <div>AWS CLI で資源を触る前に確認することはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="東京リージョン"
+answer="ap-northeast-1"
+explanation="AWS の東京リージョン識別子は ap-northeast-1 です。"
+
+>
+
+  <div>
+    東京リージョンの識別子を入れてください。
+    <pre className="language-text"><code>{`aws configure get region
+______`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- リージョン違いで「権限が無い」と IAM を広げ始める
+- 検証と本番で同じアクセスキー
+- 出力の `Account` を見ず、別会社のハンズオンアカウントに資源を作る
+
+## まとめ
+
+- AWS の箱はアカウント、多くの資源はさらにリージョンに属する
+- ルートは日常使いせず、`get-caller-identity` で身分を確認する
+- CLI の既定リージョンを、作業対象と揃える
+
+次は [IAM](./iam) で、ユーザとロールとアクセスキーを扱います。

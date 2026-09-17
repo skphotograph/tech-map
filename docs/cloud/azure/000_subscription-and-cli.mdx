@@ -1,0 +1,135 @@
+---
+sidebar_position: 2
+---
+
+# サブスクリプションと Azure CLI
+
+同じ Entra ID のログインでも、今選んでいる **サブスクリプション** が本番だと、検証のつもりで作った VM が本番請求に乗ります。  
+Azure では、課金と権限の箱がサブスクリプション、その中のまとまりが **リソースグループ** です。
+
+## このページで分かること
+
+- テナント、サブスクリプション、リソースグループの入れ子
+- `az login` と `az account show`
+- 場所（リージョン）`japaneast`
+
+## 入れ子
+
+| 層                 | ざっくり言うと                       | 失敗例                           |
+| ------------------ | ------------------------------------ | -------------------------------- |
+| テナント           | 組織の Entra ID の境界               | 個人テナントに会社資源を建てる   |
+| サブスクリプション | 課金と、広い RBAC の単位             | 検証と本番を同じ請求・同じ Owner |
+| リソースグループ   | 一緒に作り、一緒に消しやすいまとまり | 全環境を 1 グループに詰める      |
+
+GCP のプロジェクト、AWS のアカウントに近い日常の箱は、サブスクリプションです。  
+ただし Azure は、資源の削除単位としてリソースグループがよく使われます。  
+`rg-shop-dev` と `rg-shop-prod` のように、環境で分けると、消し忘れ確認が一覧で済みます。
+
+場所の例: 東日本は `japaneast`、西日本は `japanwest` です。  
+アプリと DB とストレージを、同じ場所に寄せます。
+
+:::tip[作業の最初]
+
+`az account show` の `id`（サブスクリプション）と、`--resource-group` が検証か。
+
+:::
+
+## az で現在地を見る
+
+```bash
+az login
+```
+
+成功すると、ブラウザ認証のあと、アクセスできるサブスクリプションの一覧が出ます。  
+使う箱を選びます。
+
+```bash
+az account set --subscription 00000000-0000-0000-0000-000000000000
+```
+
+確認:
+
+```bash
+az account show
+```
+
+成功時の例です。`name` と `id`、`user` を見ます。
+
+```text
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "name": "shop-dev",
+  "state": "Enabled",
+  "user": {
+    "name": "you@example.com"
+  }
+}
+```
+
+リソースグループを作ります。場所を明示します。
+
+```bash
+az group create --name rg-shop-dev --location japaneast
+```
+
+成功時は、`provisioningState` が `Succeeded` の JSON です。
+
+```bash
+az group list --output table
+```
+
+```text
+Name         Location    Status
+-----------  -----------  ---------
+rg-shop-dev  japaneast     Succeeded
+```
+
+<details>
+<summary>管理グループ</summary>
+
+大きな組織では、サブスクリプションの上に管理グループを置き、ポリシーをまとめて掛けます。  
+日常のデプロイでは、サブスクリプションとリソースグループが分かれば十分です。
+
+</details>
+
+<QuizChoice
+title="箱の選択"
+options={[
+{ id: 'a', label: '同じログインなら、どのサブスクリプションに作っても請求は同じで問題ない' },
+{ id: 'b', label: 'az account show でサブスクリプションを確認し、資源は環境ごとのリソースグループに置く' },
+{ id: 'c', label: 'リソースグループ名は世界で一意でなければならない' },
+]}
+answer="b"
+explanation="請求と権限はサブスクリプション、削除のまとまりはリソースグループです。グループ名はサブスクリプション内の名前です。"
+
+>
+
+  <div>Azure で検証資源を作る前に確認することはどれですか。</div>
+</QuizChoice>
+
+<QuizFill
+title="東日本の場所"
+answer="japaneast"
+explanation="Azure の東日本リージョンは japaneast です。"
+
+>
+
+  <div>
+    リソースグループを東日本に作るときの location です。空欄を埋めてください。
+    <pre className="language-text"><code>{`az group create --name rg-shop-dev --location ______`}</code></pre>
+  </div>
+</QuizFill>
+
+## よくあるつまずき
+
+- `az login` 後、一覧の先頭サブスクリプションが本番のまま
+- リソースグループの場所と、中の DB の場所が違う
+- グループを消すと、関係ない本番資源まで入っていた
+
+## まとめ
+
+- テナントの中にサブスクリプション、その中にリソースグループがある
+- `az account show` で課金の箱を確認してから作る
+- 環境ごとにグループを分け、場所は `japaneast` などに揃える
+
+次は [Entra ID と RBAC](./entra-and-rbac) で、誰が何をしてよいかを扱います。

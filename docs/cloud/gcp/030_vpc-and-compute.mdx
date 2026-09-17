@@ -1,0 +1,120 @@
+---
+sidebar_position: 5
+---
+
+# VPC と Compute Engine
+
+外から SSH できた瞬間はうれしいですが、ファイアウォールが `0.0.0.0/0` の 22 番だと、世界中から同じ穴が見えています。  
+GCP の仮想ネットワークは **VPC**、仮想マシンは **Compute Engine** です。  
+[ネットワーク](../fundamentals/networking) と [計算資源](../fundamentals/compute) を、東京リージョンの具体にします。
+
+## このページで分かること
+
+- デフォルト VPC と、サブネットがリージョン単位であること
+- ファイアウォールルールの読み方
+- 小さな VM の起動・SSH・削除
+
+## VPC の感覚
+
+GCP の VPC は、プロジェクト内で **グローバル** に 1 つの網を張り、サブネットをリージョンごとに切る、という形が基本です。  
+AWS のように「VPC 自体がリージョンに閉じる」とは少し違います。  
+アプリと Cloud SQL を同じ VPC に載せ、プライベート IP で繋ぐ、という用途で効きます。
+
+新規プロジェクトには default ネットワークが付いていることが多いです。  
+検証では default を理解して使い、本番では必要なサブネットだけを設計する、がよくある分かれ方です。
+
+ファイアウォールは VPC に対する許可ルールです。  
+`gcloud compute firewall-rules list` で、方向、IP 範囲、ポート、対象タグが見えます。
+
+```bash
+gcloud compute firewall-rules list
+```
+
+成功時は、名前と `ALLOW` のポートが表で出ます。  
+`0.0.0.0/0` と `tcp:22` が並んでいたら、SSH が世界に開いています。検証でも、自分の IP や IAP（Identity-Aware Proxy）に寄せられないかを先に見ます。
+
+:::warning[22 と 5432 を世界に開けない]
+
+SSH も PostgreSQL も、`0.0.0.0/0` は検証の「とりあえず」から本番事故になります。  
+DB は公開 IP を付けず、VM は必要なら一時的な自分の IP か、会社の踏み台に限定します。
+
+:::
+
+## 小さな VM を起動する
+
+課金が発生します。作業後に削除する前提で、最小に近い例です。  
+ゾーンは [リージョンと可用性](../fundamentals/regions-and-availability) の単位です。
+
+```bash
+gcloud compute instances create shop-bastion \
+  --zone=asia-northeast1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-12 \
+  --image-project=debian-cloud
+```
+
+成功時は、内部 IP と、場合によって外部 IP、マシンタイプが表で出ます。  
+`RUNNING` になっていれば起動できています。
+
+```bash
+gcloud compute instances list
+```
+
+```text
+NAME          ZONE               MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
+shop-bastion  asia-northeast1-a  e2-micro                    10.146.0.2   34.xx.xx.xx     RUNNING
+```
+
+SSH（SDK 経由の例）:
+
+```bash
+gcloud compute ssh shop-bastion --zone=asia-northeast1-a
+```
+
+成功すると、Linux のシェルに入ります。あとの見方は [Linux / Shell](../../foundations/linux/) と同じです。  
+終わったら `exit` し、インスタンスを削除します。
+
+```bash
+gcloud compute instances delete shop-bastion --zone=asia-northeast1-a
+```
+
+確認プロンプトに対して意図どおりなら実行します。  
+削除は取り消せません。検証用の名前だけを指定してください。
+
+<details>
+<summary>IAP で SSH する</summary>
+
+外部 IP を付けずに、Identity-Aware Proxy 経由で SSH する方法があります。  
+ファイアウォールは、IAP の IP 範囲からの 22 番に限定できます。  
+日常の管理ポートを世界に開けないための、GCP らしい手段です。
+
+</details>
+
+<QuizChoice
+title="ファイアウォール"
+options={[
+{ id: 'a', label: 'default ネットワークなら、22 番を 0.0.0.0/0 に開けても問題にならない' },
+{ id: 'b', label: 'SSH と DB ポートは、必要な送り元だけに限定する' },
+{ id: 'c', label: 'Compute Engine はマネージドなので、OS のパッチは不要である' },
+]}
+answer="b"
+explanation="Compute Engine は IaaS なので OS は自分たちです。管理ポートは送り元を限定します。"
+
+>
+
+  <div>GCP の仮想マシンについて、適切なものはどれですか。</div>
+</QuizChoice>
+
+## よくあるつまずき
+
+- ゾーンを間違えて `ssh` が「見つからない」
+- 外部 IP を削除せず、インスタンスだけ止めて請求が残る
+- default の広いルールを本番 VPC にコピーする
+
+## まとめ
+
+- GCP の VPC はプロジェクトの網、サブネットはリージョン、ファイアウォールで穴を制限する
+- Compute Engine は IaaS で、SSH とパッチと削除まで自分たちである
+- 検証 VM は起動だけでなく、削除までが作業である
+
+次は [Cloud Run と Cloud SQL](./cloud-run-and-sql) で、注文 API を載せる側と、表を置く側を扱います。
