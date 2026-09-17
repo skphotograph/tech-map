@@ -1,0 +1,204 @@
+---
+sidebar_position: 8
+---
+
+# 観察する
+
+画面では成功なのに、サーバ間の連携だけ 401 になる。  
+フレームワークのログは長く、何を送ったかが埋もれます。  
+このときは、ブラウザやアプリの代わりに **同じ HTTP の文を自分で送り**、返事をそのまま見ます。
+
+道具は `curl` と、ブラウザの開発者ツールです。  
+新しい概念は増やさず、これまで学んだメソッド、URL、ヘッダ、ステータスを目に見える形にします。
+
+## このページで分かること
+
+- `curl` で GET / POST を再現する方法
+- `-i` と `-v` の読み方
+- ブラウザの Network パネルで見る項目
+- 共有してよい出力と、伏せる出力
+
+## まず GET を再現する
+
+`curl` は、URL へ HTTP リクエストを送るコマンドです。  
+[Linux の実務](../linux/daily-ops) ではヘッダだけ取る `-I` を見ました。  
+ここでは本文とステータスを見ます。
+
+```bash
+curl -sS -D - -o body.json \
+  -H "Accept: application/json" \
+  https://shop.example.com/orders/42
+```
+
+`-sS` は進捗を静かにしつつ、失敗は示す指定、`-D -` は応答ヘッダを標準出力へ、`-o` は本文の保存先です。  
+成功時の応答ヘッダ例:
+
+```text
+HTTP/2 200
+content-type: application/json
+cache-control: no-store
+```
+
+`body.json` の例:
+
+```json
+{ "id": "42", "status": "OPEN", "total": 2400 }
+```
+
+読み方のポイント:
+
+- 先頭の `200` … HTTP としては成功
+- `content-type` … 本文を JSON として読んでよいか
+- 本文の `status` … 業務上の状態。HTTP のステータスとは別物
+
+ステータスだけ欲しいときは、[調べ方](../network/inspect) で使った `-w "%{http_code}"` でも足ります。  
+再現が目的なら、ヘッダと本文が揃っている方が、次の仮説を立てやすいです。
+
+:::tip[アプリと同じホストで叩く]
+
+自分の PC では 200、サーバ上では 401、はよくあります。  
+名前解決も Cookie も違うからです。  
+失敗しているプロセスに近い場所で、同じ URL を打ちます。
+
+:::
+
+## POST とヘッダ
+
+作成は、メソッドと `Content-Type` と本文を揃えます。
+
+```bash
+curl -sS -D - -o body.json \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"userId":"u-1","sku":"SKU-9","qty":2}' \
+  https://shop.example.com/orders
+```
+
+`-X POST` がメソッド、`-d` が本文、`-H` がヘッダです。  
+`<token>` はプレースホルダです。本物を履歴に残さないでください。  
+シェルの履歴に載るのが心配なら、ファイルから読む形にします。
+
+```bash
+curl -sS -D - -o body.json \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  --data-binary @order.json \
+  https://shop.example.com/orders
+```
+
+成功時は `201` と、作成した資源の JSON、または `Location` ヘッダが付くことがあります。  
+`405` ならメソッド、`415` なら `Content-Type`、`401` なら印、という番号の読みは [ステータスコード](./status-codes) のままです。
+
+## `-v` で握手まで見る
+
+届かないとき、HTTP の前で止まっているかを見るのに `-v` が効きます。  
+[SSH の `-v`](../remote-access/ssh) と同じく、途中経過の詳細です。
+
+```bash
+curl -v --connect-timeout 5 https://shop.example.com/orders/42
+```
+
+例（抜粋・イメージ）:
+
+```text
+*  Trying 203.0.113.10:443...
+* Connected to shop.example.com (203.0.113.10) port 443
+* SSL connection using TLSv1.3
+> GET /orders/42 HTTP/2
+> Host: shop.example.com
+> Accept: */*
+< HTTP/2 200
+< content-type: application/json
+```
+
+読み方のポイント:
+
+- `Trying` / `Connected` … 名前が引け、TCP ができた
+- `SSL connection` … TLS が成立した
+- `>` … 送ったリクエスト
+- `<` … 返ってきたレスポンス
+
+`Trying` のあと沈黙して切れるなら、[ネットワークの timed out](../network/tcp-and-udp) 側です。  
+`Connected` のあとに証明書エラーなら [HTTPS](./https) 側です。  
+`< HTTP/2 404` まで来ていれば、届いたあとの HTTP です。
+
+出力には Cookie や Authorization が載ります。  
+貼る前に伏せます。
+
+<QuizChoice
+title="curl -v の読み方"
+options={[
+{ id: 'a', label: 'Connected のあとに証明書エラーが出るときは、HTTP ステータス 500 が既に返っている' },
+{ id: 'b', label: 'Trying で止まり応答番号が無いときは、HTTP より前の層を疑う' },
+{ id: 'c', label: '-v の出力は、トークンが載っていてもそのままチケットへ貼ってよい' },
+]}
+answer="b"
+explanation="TCP や TLS の失敗には HTTP ステータスがありません。-v は秘密を含むことがあるので、共有前に伏せます。"
+
+>
+
+  <div>観察結果の読み方として、適切なものはどれですか。</div>
+</QuizChoice>
+
+## ブラウザの Network パネル
+
+画面操作の再現には、開発者ツールの Network（ネットワーク）が向きます。  
+操作してから、該当の行を開きます。
+
+見る順は、コマンドと同じです。
+
+1. メソッドと URL（パスとクエリ）
+2. ステータス（赤い行は 4xx / 5xx のことが多い）
+3. Request Headers（Cookie と Authorization）
+4. Request Payload / Body
+5. Response Headers と Response 本文
+6. 失敗が CORS や mixed content なら、Console も見る
+
+「画面では成功」に見える操作が、実は 302 のあと別 GET で HTML を取っている、といったことがここで分かります。  
+API の JSON と、ドキュメントの HTML を取り違えないように、行の URL を先に固定します。
+
+Fetch/XHR でフィルタすると、画面資産（CSS など）を除けます。  
+サーバ間連携の調査では、ブラウザより `curl` の方が、Cookie 自動付与の有無を制御しやすいです。
+
+<details>
+<summary>コピー機能で curl に落とす</summary>
+
+多くのブラウザは、リクエストを「Copy as cURL」できます。  
+再現の出発点としては速いです。  
+貼る先がチャットなら、Cookie とトークンを必ず削ります。  
+Windows と Linux で引用符の種類が違うので、失敗したら引用符を疑います。
+
+</details>
+
+## 共有してよいもの
+
+残してよい事実です。
+
+- メソッド、パス（個人情報を含まない ID の範囲）、ステータス
+- `Content-Type`、時刻、所要時間
+- `-v` の `Trying` / `Connected` / 証明書エラーの種類（値は伏せる）
+
+残さないものです。
+
+- `Authorization` の値、セッション Cookie、パスワード
+- 個人名、メール、カード番号が入った本文
+- 証明書ファイルそのものや、秘密鍵
+
+## よくあるつまずき
+
+- ブラウザでは Cookie 付き、`curl` では印無しで、401 を API のバグだと思う
+- `-v` 全文をチケットに貼り、トークンが残る
+- Network の別リクエスト（ファビコンや 302 先）を、今の API だと思い込む
+- 成功した古い `curl` を、ヘッダ変更後の証明に使い回す
+
+## まとめ / 次に学ぶとよいこと
+
+- `curl` は仕様と同じメソッド・ヘッダ・本文で再現する
+- `-v` で TCP / TLS / HTTP のどこまで進んだかを読む
+- ブラウザは Network で同じ項目を見る。秘密は共有前に伏せる
+
+次は、タイムアウト、再試行、CORS、キャッシュといった実務の判断です。  
+[API の実務](./api-practice) へ進みましょう。

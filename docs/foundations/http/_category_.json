@@ -1,0 +1,8 @@
+{
+  "label": "HTTP",
+  "position": 6,
+  "link": {
+    "type": "doc",
+    "id": "foundations/http/index"
+  }
+}

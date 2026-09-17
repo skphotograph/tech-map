@@ -1,0 +1,8 @@
+{
+  "label": "ネットワーク基礎",
+  "position": 5,
+  "link": {
+    "type": "doc",
+    "id": "foundations/network/index"
+  }
+}
